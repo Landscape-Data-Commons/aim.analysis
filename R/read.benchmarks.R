@@ -1,9 +1,18 @@
-## Reading in the benchmarks from the Data Explorer
+#' Reading in the benchmarks from the Data Explorer
+#'
+#' @param data.path A string specifying the path to the folder containing the .XLSX with the benchmarks
+#' @param benchmarks.filename A string specifying the filename of the .XLSX containing the benchmarks
+#' @param indicator.lut A data frame with the column \code{"indicator.name"} matching the values in the Data Explorer "Indicator" field and one called \code{"indicator.tdat"} with corresponding value for the indicators' names in TerrADat.
+#' @param indicator.lut.benchmarkfield The name of the column in \code{indicator.lut} that matches the "Indicator column of Data Explorer. Defaults to \code{"indicator.name"}
+#' @return A data frame of the benchmarks from the Data Explorer with a field containing an evaluation string to use in testing indicator values against the benchmarks.
+#' @example
+#' read.benchmarks()
+
 ## TODO: Add capitalization sanitization stuff
-read.benchmarks <- function(data.path = "", ## Path to the folder containing the Data Explorer with the benchmarks in it
-                            benchmarks.filename = "", ## The filename of the Data Explorer workbook
-                            indicator.lut, ## A lookup table with a column called "indicator.name" matching the values in the Data Explorer "Indicator" field and one called "indicator.tdat" with corresponding value for the indicators' names in TerrADat
-                            indicator.lut.benchmarkfield = "indicator.name" ## In case you are ignoring the instructions for indicator.lut
+read.benchmarks <- function(data.path = "",
+                            benchmarks.filename = "",
+                            indicator.lut,
+                            indicator.lut.benchmarkfield = "indicator.name"
 ){
   ## Sanitizing inputs because users can't be trusted
   if (!grepl(x = data.path, pattern = "/$")) {

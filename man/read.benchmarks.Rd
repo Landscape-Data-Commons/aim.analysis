@@ -23,3 +23,6 @@ A data frame of the benchmarks from the Data Explorer with a field containing an
 \description{
 Reading in the benchmarks from the Data Explorer
 }
+\examples{
+read.benchmarks()
+}

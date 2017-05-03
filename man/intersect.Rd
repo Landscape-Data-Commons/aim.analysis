@@ -37,3 +37,6 @@ A SpatialPolygonsDataFrame with the attributes inherited from \code{spdf1} and \
 \description{
 Basically a wrapping of \code{rgeos::gIntersection()} and \code{raster::intersect()} with additional opportunity to call area.add() and automatically added unique identifiers for each resultant polygon
 }
+\examples{
+intersect()
+}

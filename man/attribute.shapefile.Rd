@@ -24,3 +24,6 @@ The original SPDF spdf1 with the new field containing the values inherited from 
 \description{
 This function will take a Spatial Points/Polygons Data Frame and add one attribute fields from a second Spatial Points/Polygons Data Frame
 }
+\examples{
+attribute.shapefile()
+}

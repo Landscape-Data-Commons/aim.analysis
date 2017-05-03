@@ -5,7 +5,7 @@
 #' @param tdat A data frame imported from TerrADat's terrestrial or remote sensing indicators feature classes AND a field defining the evaluation stratum/group each plot should be considered part of, probably added using \code{attribute.shapefile()}.
 #' @param evalstratumfield A string of the name of the field in \code{tdat} that contains the evaluation stratum/group identities. Defaults to \code{"Evaluation.Stratum"}.
 #' @return A data frame with the variables \code{"PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY"}
-#' @example
+#' @examples
 #' benchmark()
 
 benchmark <- function(benchmarks, ## The data frame imported with read.benchmarks()

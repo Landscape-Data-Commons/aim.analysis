@@ -19,3 +19,6 @@ A data frame with the variables \code{"PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTI
 \description{
 This evaluates the indicator values in TerrADat against the supplied benchmarks. If a plot should be evaluated in multiple evaluation strata/groups, there should be one copy of the plot per stratum/group.
 }
+\examples{
+benchmark()
+}

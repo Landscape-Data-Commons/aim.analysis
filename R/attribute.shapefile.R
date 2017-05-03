@@ -7,7 +7,7 @@
 #' @param newfield The name of the field in \code{spdf1} as a string to add the values from \code{spdf2$attributefield} to. If NULL, the field will use \code{attributefield}. Defaults to NULL.
 #' @param projection An \code{sp::CRS()} argument to apply in the event that \code{spdf1} and \code{spdf2} have different projections. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}
 #' @return The original SPDF spdf1 with the new field containing the values inherited from spdf2.
-#' @example
+#' @examples
 #' attribute.shapefile()
 
 

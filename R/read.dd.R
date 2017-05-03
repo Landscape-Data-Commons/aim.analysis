@@ -37,19 +37,19 @@ read.dd <- function(src = "", ## A filepath as a string
     print("The argument func needs to be 'arcgisbinding' or 'readOGR'")
   }
 
-  ## Only keeping the SDD filenames that actually exist in the src filepath provided
-  sdd.src.exist <- sdd.src[sdd.src %in% list.files(path = src)]
+  ## Only keeping the DD filenames that actually exist in the src filepath provided
+  dd.src.exist <- dd.src[dd.src %in% list.files(path = src)]
 
   ## Reporting the filenames it couldn't find in the folder
-  if (length(sdd.src) != length(sdd.src.exist)) {
-    print(paste0("Couldn't find the following .gdb[s]: ", paste(sdd.src[!(sdd.src %in% list.files(path = src))], collapse = ", ")))
+  if (length(dd.src) != length(dd.src.exist)) {
+    print(paste0("Couldn't find the following .gdb[s]: ", paste(dd.src[!(dd.src %in% list.files(path = src))], collapse = ", ")))
   }
 
   switch(func,
          READOGR = {
-           ## Looped so that it can execute across all the SDDs in the vector (if there are more than one)
-           for (s in sdd.src.exist) {
-             ## Read in the sample frame feature class inside the current SDD.
+           ## Looped so that it can execute across all the DDs in the vector (if there are more than one)
+           for (s in dd.src.exist) {
+             ## Read in the sample frame feature class inside the current DD.
              sf <- safe.readOGR(dsn = paste(src, s, sep = "/"),
                                 layer = "Terra_Sample_Frame",
                                 stringsAsFactors = F)[[1]] ## The [[]] is to get the SPDF (or NULL) out of the list returned by the safely()
@@ -59,7 +59,7 @@ read.dd <- function(src = "", ## A filepath as a string
              }
              ## Sanitize the column names
              names(sf@data) <- str_to_upper(names(sf@data))
-             ## Stores the current sf SPDF with the name sf.[SDD name]
+             ## Stores the current sf SPDF with the name sf.[DD name]
              assign(x = paste("sf", s, sep = "."), value = sf)
 
              #Read in the Strata
@@ -68,8 +68,8 @@ read.dd <- function(src = "", ## A filepath as a string
                                     stringsAsFactors = F)[[1]]
              if (!is.null(strata)) {
                strata <- spTransform(strata, projection)
+               names(strata@data) <- str_to_upper(names(strata@data))
              }
-             names(strata@data) <- str_to_upper(names(strata@data))
              assign(x = paste("strata", s, sep = "."), value = strata)
 
              #Read in the Points
@@ -88,10 +88,10 @@ read.dd <- function(src = "", ## A filepath as a string
            }
          },
          ARCGISBINDING = {
-           for (s in sdd.src.exist) {
-             ## Identify/create the filepath to the sample frame feature class inside the current SDD
+           for (s in dd.src.exist) {
+             ## Identify/create the filepath to the sample frame feature class inside the current DD
              sf <- paste(src, s, "Terra_Sample_Frame", sep = "/")
-             ## Creates an SPDF with the name sf.[SDD name] using the filepath to that feature class
+             ## Creates an SPDF with the name sf.[DD name] using the filepath to that feature class
              assign(x = paste("sf", s, sep = "."),
                     value = sf %>% arc.open() %>% arc.select %>%
                       SpatialPolygonsDataFrame(Sr = {arc.shape(.) %>% arc.shape2sp()}, data = .) %>% spTransform(projection)
@@ -100,15 +100,15 @@ read.dd <- function(src = "", ## A filepath as a string
 
              #Read in the Strata
              #first check for strata
-             ## Identify/create the filepath to the design stratification feature class inside the current SDD
+             ## Identify/create the filepath to the design stratification feature class inside the current DD
              strata <- paste(src, s, "Terra_Strtfctn", sep = "/")
              #this loads enough of the feature class to tell if there are strata
              strata <- strata %>% arc.open() %>% arc.select
              #check for strata, if there are, then we will finish loading the file.
              if (nrow(strata) > 0) {
-               ## Identify/create the filepath to the design stratification feature class inside the current SDD
+               ## Identify/create the filepath to the design stratification feature class inside the current DD
                strata <- paste(src, s, "Terra_Strtfctn", sep = "/")
-               ## Creates an SPDF with the name strat.[SDD name] using the filepath to that feature class
+               ## Creates an SPDF with the name strat.[DD name] using the filepath to that feature class
                assign(x = paste("strata", s, sep = "."),
                       value = strata %>% arc.open() %>% arc.select %>%
                         SpatialPolygonsDataFrame(Sr = {arc.shape(.) %>% arc.shape2sp()},
@@ -122,9 +122,9 @@ read.dd <- function(src = "", ## A filepath as a string
              }
 
              #Read in the Points
-             ## Identify/create the filepath to the design points feature class inside the current SDD
+             ## Identify/create the filepath to the design points feature class inside the current DD
              pts <- paste(src, s, "Terra_Sample_Points", sep = "/")
-             ## Creates an SPDF with the name pts.[SDD name] using the filepath to that feature class
+             ## Creates an SPDF with the name pts.[DD name] using the filepath to that feature class
              assign(x = paste("pts", s, sep = "."),
                     value = pts %>% arc.open() %>% arc.select %>%
                       #read in the feature class, notice the difference between Polygons and points (different function with different arguments needs)
@@ -142,7 +142,7 @@ read.dd <- function(src = "", ## A filepath as a string
   ## This programmatically create a string of the existing object names that start with "sf." separated by commas
   ## then wraps that in "list()" and runs the whole string through parse() and eval() to execute it, creating a list from those SPDFs
   sf.list <- eval(parse(text = paste0("list(`", paste(ls()[grepl(x = ls(), pattern = "^sf\\.") & !grepl(x = ls(), pattern = "^sf.list$")], collapse = "`, `"), "`)")))
-  ## Rename them with the correct SDD name because they'll be in the same order that ls() returned them earlier. Also, we need to remove sf.list itself
+  ## Rename them with the correct DD name because they'll be in the same order that ls() returned them earlier. Also, we need to remove sf.list itself
   names(sf.list) <- ls()[grepl(x = ls(), pattern = "^sf\\.") & !grepl(x = ls(), pattern = "^sf.list$")] %>% str_replace(pattern = "^sf\\.", replacement = "")
 
   ## Creating the named list of all the pts SPDFs created by the loop

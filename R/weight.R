@@ -3,7 +3,7 @@
 #' This function takes the output from the function read.dd() and optionally a SpatialPolygonsDataFrame defining the extent of reporting units. Returns a list of two data frames: strata.weights with the weighting information by stratum and point.weights with the weighting information by point.
 #' @param dd.import Output from read.dd(). This can be the result of running read.dd() on one or many sample design databases
 #' @param combine Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to TRUE.
-#' @param reorder Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If FALSE, the DDs are considered in the order they appear in sdd.import. If combine is FALSE, then this only potentially affects the order of the output information. Defaults to T.
+#' @param reorder Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If FALSE, the DDs are considered in the order they appear in dd.import. If combine is FALSE, then this only potentially affects the order of the output information. Defaults to T.
 #' @param reporting.units.spdf SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to NULL
 #' @param reportingunitfield Character string. If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
 #' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
@@ -11,9 +11,9 @@
 #' @param nontarget.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
 #' @param inaccessible.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
 #' @param unneeded.values Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param fatefieldname Character string defining the field name in the points SPDF[s] in sdd.import that contains the point fate. Defaults to "final_desig"
-#' @param pointstratumfieldname Character string defining the field name in the points SPDF[s] in sdd.import that contains the design stratum. Defaults to "dsgn_strtm_nm
-#' @param designstratumfield Character string defining the field name in the strata SPDF[s] in sdd.import that contains the design stratum. Defaults to "dmnt_strtm"
+#' @param fatefieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to "final_desig"
+#' @param pointstratumfieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the design stratum. Defaults to "dsgn_strtm_nm
+#' @param designstratumfield Character string defining the field name in the strata SPDF[s] in dd.import that contains the design stratum. Defaults to "dmnt_strtm"
 #' @param projection \code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations.
 #' @keywords weights
 #' @examples
@@ -23,29 +23,29 @@
 
 ## This function produces point weights by design stratum (when the DD contains them) or by sample frame (when it doesn't)
 weight <- function(dd.import, ## The output from read.dd()
-                     combine = T, ## If provided multiple DDs, should those be combined into a single analysis? Otherwise the weights will be calculated on a per-DD basis
-                     reorder = T, ## Should the DDs be reordered by size or ar they provided in the order that they should be considered? Depends on how they overlap and user discretion
-                     reporting.units.spdf = NULL, ## An optional reporting unit SPDF that will be used to clip the DD import before calculating weights
-                     reportingunitfield = "REPORTING.UNIT", ## If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
-                     ## Keywords for point fate—the values in the vectors unknown and nontarget are considered nonresponses.
-                     target.values = c("Target Sampled",
-                                       "TS"),
-                     unknown.values = c("Unknown",
-                                        "UNK"),
-                     nontarget.values = c("Non-Target",
-                                          "NT",
-                                          NA),
-                     inaccessible.values = c("Inaccessible",
-                                             "IA"),
-                     unneeded.values = c("Not Needed"),
-                     ## These shouldn't need to be changed from these defaults, but better to add that functionality now than regret not having it later
-                     fatefieldname = "final_desig", ## The field name in the points SPDF to pull the point fate from
-                     pointstratumfieldname = "dsgn_strtm_nm", ## The field name in the points SPDF to pull the design stratum
-                     designstratumfield = "dmnnt_strtm", ## The field name in the strata SPDF to pull the stratum identity from
-                     projection = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"), ## Standard NAD83
-                     sliverdrop = T,
-                     sliverwarn = T,
-                     sliverthreshold = 0.01
+                   combine = T, ## If provided multiple DDs, should those be combined into a single analysis? Otherwise the weights will be calculated on a per-DD basis
+                   reorder = T, ## Should the DDs be reordered by size or ar they provided in the order that they should be considered? Depends on how they overlap and user discretion
+                   reporting.units.spdf = NULL, ## An optional reporting unit SPDF that will be used to clip the DD import before calculating weights
+                   reportingunitfield = "REPORTING.UNIT", ## If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
+                   ## Keywords for point fate—the values in the vectors unknown and nontarget are considered nonresponses.
+                   target.values = c("Target Sampled",
+                                     "TS"),
+                   unknown.values = c("Unknown",
+                                      "UNK"),
+                   nontarget.values = c("Non-Target",
+                                        "NT",
+                                        NA),
+                   inaccessible.values = c("Inaccessible",
+                                           "IA"),
+                   unneeded.values = c("Not Needed"),
+                   ## These shouldn't need to be changed from these defaults, but better to add that functionality now than regret not having it later
+                   fatefieldname = "final_desig", ## The field name in the points SPDF to pull the point fate from
+                   pointstratumfieldname = "dsgn_strtm_nm", ## The field name in the points SPDF to pull the design stratum
+                   designstratumfield = "dmnnt_strtm", ## The field name in the strata SPDF to pull the stratum identity from
+                   projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"), ## Standard NAD83
+                   sliverdrop = T,
+                   sliverwarn = T,
+                   sliverthreshold = 0.01
 ){
   ## Sanitization
   if (!is.null(reporting.units.spdf)) {
@@ -85,13 +85,13 @@ weight <- function(dd.import, ## The output from read.dd()
 
 
   ## We need to work our way up from the smallest-framed DD to the largest, so we need to establish that order starting with this initialized list to work from
-  sdd.order <- list()
+  dd.order <- list()
 
   ## For each DD that was imported, bring in the points and the frame (strata if they exist, otherwise the sample frame) and clip them to reporting units if appropriate
-  for (s in names(sdd.import$sf)) {
+  for (s in names(dd.import$sf)) {
     ## First, bring in the relevant SPDFs
-    ## Get the pts file in sdd.src that corresponds to s and call it pts.spdf, then create and init the WGT attribute
-    pts.spdf <- sdd.import$pts[[s]]
+    ## Get the pts file in dd.src that corresponds to s and call it pts.spdf, then create and init the WGT attribute
+    pts.spdf <- dd.import$pts[[s]]
     pts.spdf@data[, fatefieldname] <- str_to_upper(pts.spdf@data[, fatefieldname])
     pts.spdf@data$WGT <- 0
     ## Add in the REPORTING.UNITS field with the value "Unspecified" if it's not there already.
@@ -110,18 +110,18 @@ weight <- function(dd.import, ## The output from read.dd()
     pts.spdf@data$WEIGHT.ID <- pts.spdf@data[, pointstratumfieldname]
 
     ## Get the stratum SPDF for this DD and call it frame.spdf
-    frame.spdf <- sdd.import$strata[[s]]
+    frame.spdf <- dd.import$strata[[s]]
     ## If the frame.spdf was actually NULL, then grab the sample frame to use instead
     if (is.null(frame.spdf)) {
-      frame.spdf <- sdd.import$sf[[s]]
+      frame.spdf <- dd.import$sf[[s]]
     }
 
 
-    ## If there's a reporting.units.spdf provided, then we'll assign those identities to the SPDFs from sdd.import and restrict by them reporting.units.spdf
+    ## If there's a reporting.units.spdf provided, then we'll assign those identities to the SPDFs from dd.import and restrict by them reporting.units.spdf
     if (!is.null(reporting.units.spdf)) {
       ## Deal with the points
-      pts.spdf <- attribute.shapefile(shape1 = pts.spdf,
-                                      shape2 = reporting.units.spdf,
+      pts.spdf <- attribute.shapefile(spdf1 = pts.spdf,
+                                      spdf2 = reporting.units.spdf,
                                       newfield = "REPORTING.UNIT",
                                       attributefield = reportingunitfield)
       ## Overwrite whatever value was brought in from the reporting.units.spdf with T because we only want to know if they were restricted or not
@@ -219,18 +219,18 @@ weight <- function(dd.import, ## The output from read.dd()
               pts.spdf.temp.attribute <- pts.spdf.temp.attribute %>% spTransform(pts.spdf@proj4string)
             }
             pts.spdf <- rbind(pts.spdf, pts.spdf.temp.attribute)
-            ## Remove the points that fell in the current frame from the temporary points and write it back into sdd.import
+            ## Remove the points that fell in the current frame from the temporary points and write it back into dd.import
             ## This should find all the rows
-            sdd.import$pts[[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
+            dd.import$pts[[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
           }
         }
 
 
         ## Then bring in the frame
-        frame.spdf.temp <- sdd.import$strata[[r]]
+        frame.spdf.temp <- dd.import$strata[[r]]
         if (is.null(frame.spdf.temp)) {
           print(paste("There aren't stratification polygons for", r))
-          frame.spdf.temp <- sdd.import$sf[[r]]
+          frame.spdf.temp <- dd.import$sf[[r]]
           if (is.null(frame.spdf.temp)) {
             print(paste("There aren't sample frame polygons for", r))
           }
@@ -241,7 +241,7 @@ weight <- function(dd.import, ## The output from read.dd()
           print(paste("There were frame SPDFs for both", s, "and", r))
           if (nrow(frame.spdf.temp@data) > 0 & nrow(frame.spdf@data) > 0) {
             print(paste("Both frames had values in the @data slot"))
-            ## Remove the current frame from the temporary frame. This will let us build concentric frame areas as we work up to larger designs through sdd.order
+            ## Remove the current frame from the temporary frame. This will let us build concentric frame areas as we work up to larger designs through dd.order
             ## Note: I'm not sure what happens if these don't overlap or if x is completely encompassed by y
             print(paste("Attempting to remove the", s, "frame from the", r, "frame with gDifference()"))
 
@@ -301,13 +301,13 @@ weight <- function(dd.import, ## The output from read.dd()
               }
             }
 
-            ## Write that into sdd.import
-            if (!is.null(sdd.import$strata[[r]])) {
+            ## Write that into dd.import
+            if (!is.null(dd.import$strata[[r]])) {
               print(paste("Writing the temp frame into the stratification slot for", r))
-              sdd.import$strata[[r]] <- frame.spdf.temp
+              dd.import$strata[[r]] <- frame.spdf.temp
             } else {
               print(paste("Writing the temp frame into the sample frame slot for", r))
-              sdd.import$sf[[r]] <- frame.spdf.temp
+              dd.import$sf[[r]] <- frame.spdf.temp
             }
           }
         }
@@ -338,7 +338,7 @@ weight <- function(dd.import, ## The output from read.dd()
 
     ## TODO: Needs to handle a polygon OR a raster df
     ## If the value for the current DD in the list strata is not NULL, then we have a strata SPDF
-    if (!is.null(sdd.import$strata[[s]])) {
+    if (!is.null(dd.import$strata[[s]])) {
       ## Because we have strata, use the design stratum attribute
 
       ## Create a data frame to store the area values in hectares for strata. The as.data.frame() is because it was a tibble for some reason
@@ -556,7 +556,7 @@ weight <- function(dd.import, ## The output from read.dd()
     }
 
     ## Add this DD to the vector that we use to screen out points from consideration above
-    sdd.completed <- c(sdd.completed, s)
+    dd.completed <- c(dd.completed, s)
   }
 
   ## Diagnostics in case something goes pear-shaped

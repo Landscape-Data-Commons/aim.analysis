@@ -17,5 +17,6 @@ Imports:
   tidyverse,
   digest,
   readxl,
-  arcgisbinding,
   spdplyr
+Suggests:
+  arcgisbinding

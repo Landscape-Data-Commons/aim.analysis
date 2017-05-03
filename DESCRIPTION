@@ -15,6 +15,7 @@ Imports:
   rgeos,
   plyr,
   tidyverse,
-  spdplyr,
   digest,
-  arcgisbinding
+  readxl,
+  arcgisbinding,
+  spdplyr

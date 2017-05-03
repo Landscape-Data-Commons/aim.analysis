@@ -1,8 +1,8 @@
-#' Attributing a Spatial Data Frame using another Spatial Data Frame
+#' Attributing a spatial data frame using another spatial data frame
 #'
-#' This function will take a Spatial Points/Polygons Data Frame and add one attribute fields from a second Spatial Points/Polygons Data Frame
-#' @param spdf1 A Spatial Points/Polygons Data Frame containing the geometry to add an attribute to
-#' @param spdf2 A Spatial Points/Polygons Data Frame containing the geometry to add an attribute from
+#' This function will take a SpatialPoints/PolygonsDataFrame and add one attribute fields from a second SpatialPoints/PolygonsDataFrame
+#' @param spdf1 A SpatialPoints/PolygonsDataFrame containing the geometry to add an attribute to
+#' @param spdf2 A SpatialPoints/PolygonsDataFrame containing the geometry to add an attribute from
 #' @param attributefield The name of the field in \code{spdf2} as a string containing the values to add to \code{spdf1}
 #' @param newfield The name of the field in \code{spdf1} as a string to add the values from \code{spdf2$attributefield} to. If NULL, the field will use \code{attributefield}. Defaults to NULL.
 #' @param projection An \code{sp::CRS()} argument to apply in the event that \code{spdf1} and \code{spdf2} have different projections. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}

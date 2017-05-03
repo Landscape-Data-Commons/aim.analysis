@@ -9,6 +9,7 @@
 #' @keywords area
 #' @examples
 #' area.add()
+#' @export
 
 area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
                      area.ha = T, ## Add area in hectares?

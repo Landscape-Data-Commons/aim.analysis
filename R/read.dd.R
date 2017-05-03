@@ -2,21 +2,21 @@
 #'
 #' This function imports one or more Sample Design Database[s] and returns a list of the named lists sf, pts, and strata. The named lists contain SpatialPoints/PolygonsDataFrames of the sample frame, points, and strata from each of the geodatabases. The SPDFs are named using the filename of the geodatabase source, so that each list has one SPDF named for each geodatabase imported and those names are identical between lists. If a Sample Design Database is missing any one of those features, a NULL value replaces the SPDF.
 #' @param src Character string defining the filepath containing the sample design database[s].
-#' @param sdd.src Character string or character vector containing the filenames of the geodatabases to import. Each filename should include the extension ".gdb"
+#' @param dd.src Character string or character vector containing the filenames of the geodatabases to import. Each filename should include the extension ".gdb"
 #' @param func Character string. Defines whether to use the \code{rgdal::} or \code{arcgisbinding::} package to read in the geodatabases. Defaults to \code{"arcgisbinding"}. Valid values are \code{"arcgisbinding"} and \code{"readogr"}. This is not case sensitive
 #' @param projection \code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations
 #' @keywords weights
 #' @examples
 #' weighter()
 
-## TODO: Should try to handle raster location/import either within sdd.reader() or as an independent function
-## Reads in SDDs. Returns a named list of lists of SPDFs: sf, pts, strata.
-## The index order is maintained as well, so output[1][1] and output[2][1] correspond to the same SDD source
-## If a feature class couldn't be found, there will be a NULL instead of SPDF for that SDD in the list
+## TODO: Should try to handle raster location/import either within dd.reader() or as an independent function
+## Reads in DDs. Returns a named list of lists of SPDFs: sf, pts, strata.
+## The index order is maintained as well, so output[1][1] and output[2][1] correspond to the same DD source
+## If a feature class couldn't be found, there will be a NULL instead of SPDF for that DD in the list
 read.dd <- function(src = "", ## A filepath as a string
-                    sdd.src, ## A character string or vector of character strings with the filename[s] for the relevant .gdb in the filepath src
+                    dd.src, ## A character string or vector of character strings with the filename[s] for the relevant .gdb in the filepath src
                     func = "arcgisbinding", ## This can be "readOGR" or "arcgisbinding" depending on which you prefer to or can use
-                    validate.keys = T, ## Should the process also produce a data frame in the output of points in the design dtabases that have issues with final designations or TerrAdat primary keys?
+                    # validate.keys = T, ## Should the process also produce a data frame in the output of points in the design dtabases that have issues with final designations or TerrAdat primary keys?
                     target.values = c("Target Sampled",
                                       "TS"),
                     omitNAdesignations = F, ## Strip out plots with a final designation value of NA

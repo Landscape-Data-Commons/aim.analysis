@@ -4,19 +4,22 @@
 \alias{attribute.shapefile}
 \title{Attributing a Spatial Data Frame using another Spatial Data Frame}
 \usage{
-attribute.shapefile(shape1, shape2, attributefield = NULL, newfield = NULL,
-  projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
+attribute.shapefile(spdf1, spdf2, attributefield = NULL, newfield = NULL,
+  projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
 }
 \arguments{
-\item{shape1}{An Spatial Points/Polygons Data Frame containing the geometry to add an attribute to}
+\item{spdf1}{A Spatial Points/Polygons Data Frame containing the geometry to add an attribute to}
 
-\item{shape2}{An Spatial Points/Polygons Data Frame containing the geometry to add an attribute from}
+\item{spdf2}{A Spatial Points/Polygons Data Frame containing the geometry to add an attribute from}
 
-\item{attributefield}{The name of the field in \code{shape2} as a string containing the values to add to \code{shape1}}
+\item{attributefield}{The name of the field in \code{spdf2} as a string containing the values to add to \code{spdf1}}
 
-\item{newfield}{The name of the field in \code{shape1} as a string to add the values from \code{shape2$attributefield} to. If NULL, the field will use \code{attributefield}. Defaults to NULL.}
+\item{newfield}{The name of the field in \code{spdf1} as a string to add the values from \code{spdf2$attributefield} to. If NULL, the field will use \code{attributefield}. Defaults to NULL.}
 
-\item{projection}{An \code{sp::CRS()} argument. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}}
+\item{projection}{An \code{sp::CRS()} argument to apply in the event that \code{spdf1} and \code{spdf2} have different projections. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}}
+}
+\value{
+The original SPDF spdf1 with the new field containing the values inherited from spdf2.
 }
 \description{
 This function will take a Spatial Points/Polygons Data Frame and add one attribute fields from a second Spatial Points/Polygons Data Frame

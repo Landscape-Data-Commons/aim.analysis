@@ -11,16 +11,16 @@
 #' weight.adjuster()
 
 weight.adjust <- function(points, ## The weighted output from weighter(), so weighter()["point.weights"] | weighter()[2] IF YOU RESTRICTED THE SDD INPUT BY THE REPORTING UNIT POLYGON
-                            wgtcat.spdf, ## The SPDF that's represents all the weird possible combinations of the reporting unit and strata
-                            spdf.area.field = "AREA.HA.UNIT.SUM", ## The name of the field in the SPDF that contains the areas of the weight categories
-                            spdf.wgtcat.field = "UNIQUE.IDENTIFIER", ## The name of the field in the SPDF that contains the identifiers for weight categories
-                            projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs") ## NAD83, standard issue as always
+                          wgtcat.spdf, ## The SPDF that's represents all the weird possible combinations of the reporting unit and strata
+                          spdf.area.field = "AREA.HA.UNIT.SUM", ## The name of the field in the SPDF that contains the areas of the weight categories
+                          spdf.wgtcat.field = "UNIQUE.IDENTIFIER", ## The name of the field in the SPDF that contains the identifiers for weight categories
+                          projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs") ## NAD83, standard issue as always
 ){
   ## Sanitization
-  names(points) <- str_to_upper(names(points))
-  names(wgtcat.spdf@data) <- str_to_upper(names(wgtcat.spdf@data))
-  spdf.area.field <- str_to_upper(spdf.area.field)
-  spdf.wgtcat.field <- str_to_upper(spdf.wgtcat.field)
+  names(points) <- stringr::str_to_upper(names(points))
+  names(wgtcat.spdf@data) <- stringr::str_to_upper(names(wgtcat.spdf@data))
+  spdf.area.field <- stringr::str_to_upper(spdf.area.field)
+  spdf.wgtcat.field <- stringr::str_to_upper(spdf.wgtcat.field)
 
   ## Convert points to an SPDF
   points.spdf <- SpatialPointsDataFrame(coords = points[, c("LONGITUDE", "LATITUDE")],
@@ -28,8 +28,8 @@ weight.adjust <- function(points, ## The weighted output from weighter(), so wei
                                         proj4string = projection)
 
   ## Attribute the points.spdf with the wgtcat identities from wgtcat.spdf
-  points.spdf <- attribute.shapefile(shape1 = points.spdf,
-                                     shape2 = wgtcat.spdf,
+  points.spdf <- attribute.shapefile(spdf1 = points.spdf,
+                                     spdf2 = wgtcat.spdf,
                                      attributefield = spdf.wgtcat.field,
                                      newfield = spdf.wgtcat.field)
 
@@ -57,7 +57,7 @@ weight.adjust <- function(points, ## The weighted output from weighter(), so wei
   names(framesize.current) <- wgtcat.spdf@data[, spdf.wgtcat.field]
 
   ## Run the weight adjustment
-  data.current$ADJWGT <- adjwgt(sites.current, wgt.current, wtcat.current, framesize.current)
+  data.current$ADJWGT <- spsurvey::adjwgt(sites.current, wgt.current, wtcat.current, framesize.current)
 
   return(data.current)
 }

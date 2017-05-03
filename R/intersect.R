@@ -27,16 +27,16 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
                       projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs") ## Standard NAD83
 ){
   ## Sanitization
-  if (shape1@proj4string@projargs != shape2@proj4string@projargs) {
+  if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
     ## Make sure that the points also adhere to the same projection
     spdf1 <- spdf1 %>% spTransform(projection)
     spdf2 <- spdf2 %>% spTransform(projection)
   }
-  method <- string_to_upper(method)
-  names(spdf1@data) <- str_to_upper(names(spdf1@data))
-  names(spdf2@data) <- str_to_upper(names(spdf2@data))
-  spdf1.attributefieldname <- str_to_upper(spdf1.attributefieldname)
-  spdf2.attributefieldname <- str_to_upper(spdf2.attributefieldname)
+  method <- stringr::str_to_upper(method)
+  names(spdf1@data) <- stringr::str_to_upper(names(spdf1@data))
+  names(spdf2@data) <- stringr::str_to_upper(names(spdf2@data))
+  spdf1.attributefieldname <- stringr::str_to_upper(spdf1.attributefieldname)
+  spdf2.attributefieldname <- stringr::str_to_upper(spdf2.attributefieldname)
   ## Create new columns that we can drop later. This is in case the field names were the same in both SPDFs
   spdf1@data[, paste0(spdf1.attributefieldname, ".spdf1")] <- spdf1@data[, spdf1.attributefieldname]
   spdf2@data[, paste0(spdf2.attributefieldname, ".spdf2")] <- spdf2@data[, spdf2.attributefieldname]

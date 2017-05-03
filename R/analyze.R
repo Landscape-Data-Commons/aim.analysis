@@ -2,7 +2,7 @@
 #'
 #' This function takes the outputs from the functions \code{weight()} optionally passed through \code{weight.adjust()}, \code{benchmarker()}, and a TerrADat SpatialPointsDataFrame with a field for reporting units. It applies \code{spsurvey::cat.analysis()} and returns the results
 #' @param evaluated.points Data frame output from \code{benchmark()}.
-#' @param weights Data frame output from \code{weight()}, equivalent to \code{weight()[["point.weights"]]} or \code{weight()[[2]]}.
+#' @param point.weights Data frame output from \code{weight()}, equivalent to \code{weight()[["point.weights"]]} or \code{weight()[[2]]}.
 #' @param default.reportingunit A string to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}
 #' @param reportingunit.type A string to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.
 #' @param adjustedweights Logical. If \code{T}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{T}.
@@ -12,17 +12,17 @@
 #' analyze()
 
 analyze <- function(evaluated.points,
-                     weights,
+                     point.weights,
                      default.reportingunit = "No reporting unit",
                      reportingunit.type = NA,
                      adjustedweights = T
                      ){
 
   ## Sanitization
-  names(evaluated.points) <- str_to_upper(names(evaluated.points))
-  names(point.weights) <- str_to_upper(names(point.weights))
+  names(evaluated.points) <- stringr::str_to_upper(names(evaluated.points))
+  names(point.weights) <- stringr::str_to_upper(names(point.weights))
   ## Limiting to points that have valid PrimaryKey values
-  point.weights <- weights %>% filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
+  point.weights <- point.weights %>% filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
   evaluated.points <- evaluated.points %>% filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
   if (is.null(reportingunit.type)){
     reportingunit.type <- NA

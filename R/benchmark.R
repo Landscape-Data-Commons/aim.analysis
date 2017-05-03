@@ -13,7 +13,7 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
                         evalstratumfield = "Evaluation.Stratum" ## The field in tdat that contains the evaluation strata
 ){
   ## Sanitization as always
-  names(benchmarks) <- str_to_upper(names(benchmarks))
+  names(benchmarks) <- stringr::str_to_upper(names(benchmarks))
   ## In case someone didn't read the instructions and fed in an SPDF
   if (class(tdat)[1] == "SpatialPointsDataFrame") {
     tdat <- tdat@data
@@ -50,14 +50,17 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   ## This is likely the result of exporting an attribute table from a geodatabase to a spreadsheet, converting that to a .csv, then reading it in and converting it to an SPDF
   tdat.tall$Value[tdat.tall$Value == "<Null>"] <- NA
 
+  ## It's not clear what this column will be called, so we'll just get it now
+  eval.name.benchmarks <- names(benchmarks)[grep(x = names(benchmarks), pattern = "evaluation.group$|^evaluation.stratum", ignore.case = T)]
+
   ## Strip down benchmarks to just the distinct ones that matter because sometimes the same benchmark appears for multiple reasons?
-  benchmarks.distinct <- distinct(benchmarks[, c("MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR.TDAT", "EVALUATION.CATEGORY", "EVAL.STRING.LOWER", "EVAL.STRING.UPPER")])
+  benchmarks.distinct <- distinct(benchmarks[, c("MANAGEMENT.QUESTION", eval.name.benchmarks, "INDICATOR.TDAT", "EVALUATION.CATEGORY", "EVAL.STRING.LOWER", "EVAL.STRING.UPPER")])
 
   ## Merge the tall TerrADat with the benchmark information
   tdat.tall.benched <- merge(x = tdat.tall,
                              y = benchmarks.distinct,
                              by.x = c(names(tdat.tall)[grepl(x = names(tdat.tall), pattern = evalstratumfield, ignore.case = T)], "Indicator"),
-                             by.y = c("EVALUATION.STRATUM", "INDICATOR.TDAT"))
+                             by.y = c(eval.name.benchmarks, "INDICATOR.TDAT"))
 
   ## Create parseable evaluation strings
   tdat.tall.benched$EVAL.STRING.LOWER <- paste0(tdat.tall.benched$EVAL.STRING.LOWER, tdat.tall.benched$Value)
@@ -70,11 +73,14 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   ## Parse the strings to determing if the value falls within the upper and lower bounds for that benchmark evaluation category
   tdat.tall.benched$meeting <- lapply(tdat.tall.benched$EVAL.STRING.LOWER, parser) %>% unlist() & lapply(tdat.tall.benched$EVAL.STRING.UPPER, parser) %>% unlist()
 
-  names(tdat.tall.benched) <- str_to_upper(names(tdat.tall.benched))
+  names(tdat.tall.benched) <- stringr::str_to_upper(names(tdat.tall.benched))
+
+  names(tdat.tall.benched)[names(tdat.tall.benched) %in% "EVALUATION.GROUP"] <- "EVALUATION.STRATUM"
 
   ## Because all the benchmark evaluation categories should be mutually exclusive, applying the vector from $meeting should result in one row per indicator per plot
   ## Also restricting this to the relevant columns that are required for the next step
-  output <- tdat.tall.benched[tdat.tall.benched$MEETING, c("PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY")]
+  output <- tdat.tall.benched[tdat.tall.benched$MEETING, c("PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY")] %>%
+    filter(!is.na(PRIMARYKEY))
   names(output) <- str_to_upper(names(output))
   return(output)
 }

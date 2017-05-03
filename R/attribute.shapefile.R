@@ -9,6 +9,7 @@
 #' @return The original SPDF spdf1 with the new field containing the values inherited from spdf2.
 #' @examples
 #' attribute.shapefile()
+#' @export
 
 
 attribute.shapefile <- function(spdf1,

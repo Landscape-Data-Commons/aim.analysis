@@ -7,6 +7,7 @@
 #' @return A data frame with the variables \code{"PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY"}
 #' @examples
 #' benchmark()
+#' @export
 
 benchmark <- function(benchmarks, ## The data frame imported with read.benchmarks()
                         tdat, ## The data frame from TerrADat. It needs to already be attributed with evaluation strata

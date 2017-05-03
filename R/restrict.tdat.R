@@ -1,3 +1,5 @@
+#' Restricting imported TerrADat data to the boundaries of the imported design databases
+#' @export
 restrict.tdat <- function(dd.raw, tdat.spdf){
   ## NAD83 sp::CRS()
   nad83.prj <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")

@@ -9,6 +9,7 @@
 #' @keywords weights
 #' @examples
 #' weight.adjuster()
+#' @export
 
 weight.adjust <- function(points, ## The weighted output from weighter(), so weighter()["point.weights"] | weighter()[2] IF YOU RESTRICTED THE SDD INPUT BY THE REPORTING UNIT POLYGON
                           wgtcat.spdf, ## The SPDF that's represents all the weird possible combinations of the reporting unit and strata

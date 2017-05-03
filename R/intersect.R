@@ -14,6 +14,7 @@
 #' @return A SpatialPolygonsDataFrame with the attributes inherited from \code{spdf1} and \code{spdf2}, areas as appropriate, and a unique identifier.
 #' @examples
 #' intersect()
+#' @export
 
 intersect <- function(spdf1, ## A SpatialPolygonsShapefile
                       spdf1.attributefieldname, ## Name of the field in SPDF1 unique to the unit groups or units to take values from

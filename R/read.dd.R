@@ -8,6 +8,7 @@
 #' @keywords weights
 #' @examples
 #' weighter()
+#' @export
 
 ## TODO: Should try to handle raster location/import either within dd.reader() or as an independent function
 ## Reads in DDs. Returns a named list of lists of SPDFs: sf, pts, strata.

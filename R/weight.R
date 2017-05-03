@@ -18,6 +18,7 @@
 #' @keywords weights
 #' @examples
 #' weighter()
+#' @export
 
 ## TODO: Figure out what to do about DDs that have future points
 

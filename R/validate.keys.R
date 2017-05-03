@@ -1,3 +1,5 @@
+#' Confirming that design database points flagged as sampled have valid primary keys
+#' @export
 validate.keys <- function(dd.raw, target.values = c("Target Sampled",
                                                     "TS")){
   ## Initialize the output data frame

@@ -7,6 +7,7 @@
 #' @return A data frame of the benchmarks from the Data Explorer with a field containing an evaluation string to use in testing indicator values against the benchmarks.
 #' @examples
 #' read.benchmarks()
+#' @export
 
 ## TODO: Add capitalization sanitization stuff
 read.benchmarks <- function(data.path = "",

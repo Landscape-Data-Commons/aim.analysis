@@ -10,6 +10,7 @@
 #' @keywords analysis
 #' @examples
 #' analyze()
+#' @export
 
 analyze <- function(evaluated.points,
                      point.weights,

@@ -9,11 +9,11 @@ License: MIT License
 LazyData: TRUE
 RoxygenNote: 6.0.1
 Imports:
+  plyr,
   sp,
   spsurvey,
   rgdal,
   rgeos,
-  plyr,
   tidyverse,
   digest,
   readxl,

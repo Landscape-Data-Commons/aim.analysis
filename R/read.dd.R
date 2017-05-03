@@ -155,48 +155,12 @@ read.dd <- function(src = "", ## A filepath as a string
 
   output <- list(sf = sf.list, pts = pts.list, strata = strata.list)
 
-  if (validate.keys) {
-    ## Initialize the output data frame
-    key.errors.df <- data.frame()
-
-    ## Check each design database in turn
-    for (sdd in names(output$pts)) {
-      ## Get the @data slot from the SPDF for the points for this design
-      pts.df <- sdd.list$pts[[sdd]] %>% .@data
-      ## Sanitize the field names
-      names(pts.df) <- str_to_upper(names(pts.df))
-
-      ## Grab all the lines where the point was sampled, but there's not a correct PrimaryKey value
-      errors.missing.tdat <- pts.df %>%
-        filter(FINAL_DESIG %in% target.values,
-               !grepl(x = TERRA_TERRADAT_ID, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$")) %>% .[, c("TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")]
-      ## If that turned up anything, then alert the user and add the information about all the points with that error to the output data frame
-      if (nrow(errors.missing.tdat) > 0) {
-        message(paste0("In ", sdd, ", ", nrow(errors.missing.tdat), " points were designated as 'target sampled' but missing a valid PrimaryKey value. See the data frame 'errors' in the output for details."))
-        errors.missing.tdat$SDD <- sdd
-        errors.missing.tdat$ERROR <- "Point is designated as 'target sampled' but is missing a valid PrimaryKey value"
-        key.errors.df <- rbind(key.errors.df, errors.missing.tdat[, c("SDD", "ERROR", "TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")])
-      }
-
-      ## Grab all the lines where there's a proper PrimaryKey value but there's not a target designation
-      errors.missing.desig <- pts.df %>%
-        filter(!(FINAL_DESIG %in% target.values),
-               grepl(x = TERRA_TERRADAT_ID, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$")) %>% .[, c("TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")]
-      if (nrow(errors.missing.desig) > 0) {
-        message(paste0("In ", sdd, ", ", nrow(errors.missing.desig), " points have a valid PrimaryKey value but are not designated as 'target sampled.' See the data frame 'errors' in the output for details."))
-        errors.missing.desig$SDD <- sdd
-        errors.missing.desig$ERROR <- "Point has a valid PrimaryKey value but is not designated as 'target sampled'"
-        key.errors.df <- rbind(key.errors.df, errors.missing.desig[, c("SDD", "ERROR", "TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")])
-      }
-    }
-
-    if (nrow(key.errors.df) < 1) {
-      message("No points designated as 'target sampled' were missing valid TerrADat primary key values and no points with valid primary keys were designated as anything but 'target sampled.'")
-    }
-
-    ## Append this to the output list
-    output <- list(output, "errors" = key.errors.df)
-  }
+  # if (validate.keys) {
+  #   key.errors.df <- validate.keys(output)
+  #
+  #   ## Append this to the output list
+  #   output <- list(output, "errors" = key.errors.df)
+  # }
 
   return(output)
 }

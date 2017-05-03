@@ -144,42 +144,42 @@ weight <- function(dd.import, ## The output from read.dd()
 
     ## Add the size of this DD's frame to my list of them so I can use it
     ## We use sum() here because each polygon's area was calculated individually because that streamlines some future use of the area information
-    sdd.order[s] <- sum(frame.spdf$AREA.HA)
+    dd.order[s] <- sum(frame.spdf$AREA.HA)
 
-    ## Put the manipulated SPDFs back into the sdd.import for future use
-    sdd.import$pts[[s]] <- pts.spdf
-    if (!is.null(sdd.import$strata[[s]])) {
-      sdd.import$strata[[s]] <- frame.spdf
+    ## Put the manipulated SPDFs back into the dd.import for future use
+    dd.import$pts[[s]] <- pts.spdf
+    if (!is.null(dd.import$strata[[s]])) {
+      dd.import$strata[[s]] <- frame.spdf
     } else {
-      sdd.import$sf[[s]] <- frame.spdf
+      dd.import$sf[[s]] <- frame.spdf
     }
   }
 
-  ## Time to reorder that list of DDs, if the user wants that, otherwise keep the order that they were fed to sdd.reader() (and therefore appear in sdd.import)
+  ## Time to reorder that list of DDs, if the user wants that, otherwise keep the order that they were fed to dd.reader() (and therefore appear in dd.import)
   if (reorder) {
     ## Turn the lsit into a vector and then sort it in ascending order
-    sdd.order <- unlist(sdd.order)[sdd.order %>% unlist() %>% sort.list(decreasing = F)]
+    dd.order <- unlist(dd.order)[dd.order %>% unlist() %>% sort.list(decreasing = F)]
     ## Then take the names of the DDs assigned to those values because we want those, not the areas
-    sdd.order <- names(sdd.order)
+    dd.order <- names(dd.order)
   } else {
-    sdd.order <- names(sdd.order)
+    dd.order <- names(dd.order)
   }
 
 
-  ## Initialize our vector of already-considered DDs which we'll use to work our way out sequentially through sdd.order
-  sdd.completed <- c()
+  ## Initialize our vector of already-considered DDs which we'll use to work our way out sequentially through dd.order
+  dd.completed <- c()
 
   ## Loop through each DD starting with the smallest-framed one and working up
-  for (s in sdd.order) {
+  for (s in dd.order) {
     print(paste("Currently s is", s))
     ## Bring in this DD's frame, either strata or sample frame as appropriate
-    frame.spdf <- sdd.import$strata[[s]]
+    frame.spdf <- dd.import$strata[[s]]
     if (is.null(frame.spdf)) {
-      frame.spdf <- sdd.import$sf[[s]]
+      frame.spdf <- dd.import$sf[[s]]
     }
     ## If this isn't the first pass through the loop, then the areas on the frame are incorrect because the SPDF has been subjected to erase()
     ## We also need to make sure that there's something left to even run this on, hence the nrow()
-    if (!is.null(sdd.completed) & !is.null(frame.spdf) > 0) {
+    if (!is.null(dd.completed) & !is.null(frame.spdf) > 0) {
       if (nrow(frame.spdf) > 0) {
         print("(Re)calculating areas for frame.spdf")
         frame.spdf <- area.add(frame.spdf)
@@ -187,20 +187,20 @@ weight <- function(dd.import, ## The output from read.dd()
     }
 
     ## Bring in this DD's points
-    pts.spdf <- sdd.import$pts[[s]]
+    pts.spdf <- dd.import$pts[[s]]
 
     ## Only do this if the user wants the DDs to be considered as one unit for analysis
-    if (combine & length(sdd.order) > 1) {
+    if (combine & length(dd.order) > 1) {
       ## For each DD that hasn't been considered yet:
-      ## Retrieve the points, see if they land in this current frame, keep the ones that do as part of the current points, and write it back into sdd.import without those
-      for (r in sdd.order[!(sdd.order %in% c(sdd.completed, s))]) {
+      ## Retrieve the points, see if they land in this current frame, keep the ones that do as part of the current points, and write it back into dd.import without those
+      for (r in dd.order[!(dd.order %in% c(dd.completed, s))]) {
         print(paste("Currently r is", r))
         ## First bring in the points
-        pts.spdf.temp <- sdd.import$pts[[r]]
+        pts.spdf.temp <- dd.import$pts[[r]]
         if (nrow(pts.spdf.temp@data) > 0) {
           ## Get a version of the points clipped to the current frame
-          pts.spdf.temp.attribute <- attribute.shapefile(shape1 = pts.spdf.temp,
-                                                         shape2 = frame.spdf,
+          pts.spdf.temp.attribute <- attribute.shapefile(spdf1 = pts.spdf.temp,
+                                                         spdf2 = frame.spdf,
                                                          ## This will pick the appropriate field for a sample frame or strata
                                                          attributefield = c("TERRA_SAMPLE_FRAME_ID", designstratumfield)[(c("TERRA_SAMPLE_FRAME_ID", designstratumfield) %in% names(frame.spdf@data))],
                                                          newfield = "WEIGHT.ID"

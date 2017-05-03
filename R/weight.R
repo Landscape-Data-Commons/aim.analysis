@@ -544,9 +544,9 @@ weight <- function(dd.import, ## The output from read.dd()
 
         if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
           pointsweights.current <- weight.adjust(points = pointsweights.current,
-                                                   wgtcat.spdf = frame.spdf,
-                                                   spdf.area.field = "AREA.HA.UNIT.SUM",
-                                                   spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
+                                                 wgtcat.spdf = frame.spdf,
+                                                 spdf.area.field = "AREA.HA.UNIT.SUM",
+                                                 spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
           pointsweights.current <- replace_na(pointsweights.current, replace = list(ADJWGT = 0))
         } else {
           ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame

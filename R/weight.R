@@ -356,8 +356,12 @@ weight <- function(dd.import, ## The output from read.dd()
       ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
       working.pts$YEAR[!is.na(working.pts$DT_VST)] <- working.pts$DT_VST[!is.na(working.pts$DT_VST)] %>% str_extract(string = ., pattern = "^\\d{4}") %>% as.numeric()
 
+      ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
+      working.pts <- working.pts[, (1:length(names(working.pts)))] %>% dplyr::select(-ends_with(match = ".1"))
+
+
       ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
-      panel.years <- working.pts %>% group_by(PANEL) %>%
+      panel.years <- working.pts %>% dplyr::group_by(PANEL) %>%
         dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
 
       ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
@@ -373,7 +377,7 @@ weight <- function(dd.import, ## The output from read.dd()
       working.pts$key[working.pts$FINAL_DESIG %in% unknown.values] <- "Unsampled.pts.unknown"
 
       ## Filter out points from THE FUTURE
-      working.pts <- working.pts %>% filter(!(YEAR > as.numeric(str_extract(string = date(), pattern = "\\d{4}"))))
+      working.pts <- working.pts %>% filter(!(YEAR > as.numeric(str_extract(string = base::date(), pattern = "\\d{4}"))))
 
       ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
       # "TERRA_PRJCT_AREA_ID",

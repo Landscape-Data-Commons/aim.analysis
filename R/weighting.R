@@ -101,9 +101,8 @@ weight <- function(dd.import, ## The output from read.dd()
       pts.spdf@data$REPORTING.UNIT <- "Unspecified"
     }
     ## Add in the coordinates
-    pts.spdf@data <- cbind(pts.spdf@data, pts.spdf@coords)
-    names(pts.spdf)[names(pts.spdf) == "coords.x1"] <- "LONGITUDE"
-    names(pts.spdf)[names(pts.spdf) == "coords.x2"] <- "LATITUDE"
+    pts.spdf <- add.coords(spdf = pts.spdf,
+                           xynames = c("LONGITUDE, LATITUDE"))
 
     ## Creating the weight identity field.
     ## This will let us analyze the points whether or not there are new points from other designs being added in that have inherited new identities

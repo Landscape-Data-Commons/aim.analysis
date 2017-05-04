@@ -333,12 +333,12 @@ add.coords <- function(spdf,
     spdf@data <- cbind(spdf@data, spdf@coords)
   }
   if (nad83) {
-    coords <- spdf@data %>% spTransform(projNAD83) %>% .@coords
+    coords <- spdf %>% spTransform(projNAD83) %>% .@coords
     names(coords) <- c("LONGITUDE.NAD83", "LATITUDE.NAD83")
     spdf@data <- cbind(spdf@data, coords)
   }
   if (albers) {
-    coords <- spdf@data %>% spTransform(projAL) %>% .@coords
+    coords <- spdf %>% spTransform(projAL) %>% .@coords
     names(coords) <- c("X.METERS.AL", "Y.METERS.AL")
     spdf@data <- cbind(spdf@data, coords)
   }

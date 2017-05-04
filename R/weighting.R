@@ -331,9 +331,9 @@ weight <- function(dd.import, ## The output from read.dd()
 
     ## Let the user know what the 'bad fates' are that need to be added
     if (sum != nrow(pts.spdf)) {
-      print("The following fate[s] need to be added to the appropriate fate argument[s] in your function call:")
+      message("The following fate[s] need to be added to the appropriate fate argument[s] in your function call:")
       ## Take the vector of all the unique values in pts.spdf$final_desig (or another fate field) that aren't found in the fate vectors and collapse it into a single string, separated by ", "
-      print(paste(unique(pts.spdf@data[, fatefieldname])[!(unique(pts.spdf@data[, fatefieldname]) %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))], collapse = ", "))
+      message(paste(unique(pts.spdf@data[, fatefieldname])[!(unique(pts.spdf@data[, fatefieldname]) %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))], collapse = ", "))
     }
 
     ## TODO: Needs to handle a polygon OR a raster df

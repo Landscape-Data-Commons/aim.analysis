@@ -2,15 +2,15 @@
 % Please edit documentation in R/attribute.shapefile.R
 \name{attribute.shapefile}
 \alias{attribute.shapefile}
-\title{Attributing a Spatial Data Frame using another Spatial Data Frame}
+\title{Attributing a spatial data frame using another spatial data frame}
 \usage{
 attribute.shapefile(spdf1, spdf2, attributefield = NULL, newfield = NULL,
   projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
 }
 \arguments{
-\item{spdf1}{A Spatial Points/Polygons Data Frame containing the geometry to add an attribute to}
+\item{spdf1}{A SpatialPoints/PolygonsDataFrame containing the geometry to add an attribute to}
 
-\item{spdf2}{A Spatial Points/Polygons Data Frame containing the geometry to add an attribute from}
+\item{spdf2}{A SpatialPoints/PolygonsDataFrame containing the geometry to add an attribute from}
 
 \item{attributefield}{The name of the field in \code{spdf2} as a string containing the values to add to \code{spdf1}}
 
@@ -22,7 +22,7 @@ attribute.shapefile(spdf1, spdf2, attributefield = NULL, newfield = NULL,
 The original SPDF spdf1 with the new field containing the values inherited from spdf2.
 }
 \description{
-This function will take a Spatial Points/Polygons Data Frame and add one attribute fields from a second Spatial Points/Polygons Data Frame
+This function will take a SpatialPoints/PolygonsDataFrame and add one attribute fields from a second SpatialPoints/PolygonsDataFrame
 }
 \examples{
 attribute.shapefile()

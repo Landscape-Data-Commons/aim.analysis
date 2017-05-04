@@ -12,6 +12,7 @@
 ## TODO: Add capitalization sanitization stuff
 read.benchmarks <- function(data.path = "",
                             benchmarks.filename = "",
+                            sheet.name = "Monitoring Objectives",
                             indicator.lut = NULL,
                             indicator.lut.benchmarkfield = "indicator.name",
                             convert.l2r = T
@@ -28,7 +29,7 @@ read.benchmarks <- function(data.path = "",
 
   ## Import the spreadsheet from the workbook. Should work regardless of presence/absence of other spreadsheets as long as the name is the same
   benchmarks.raw <- readxl::read_excel(path = paste0(data.path, "/", benchmarks.filename),
-                                       sheet = "Monitoring Objectives")
+                                       sheet = sheet.name)
 
   names(benchmarks.raw) <- names(benchmarks.raw) %>% stringr::str_replace_all(pattern = " ", replacement = "\\.")
 

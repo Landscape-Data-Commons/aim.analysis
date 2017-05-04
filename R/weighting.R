@@ -215,7 +215,7 @@ weight <- function(dd.import, ## The output from read.dd()
             print("Inside the !is.null(pts.spdf.temp.attribute) loop, so the next word had better damn well be TRUE")
             print(!is.null(pts.spdf.temp.attribute))
             ## Bind these points to the current DD's
-            if (paste(pts.spdf@proj4string) != paste(pts.spdf.temp.attribute@proj4string)) {
+            if (pts.spdf@proj4string@projargs != pts.spdf.temp.attribute@proj4string@projargs) {
               pts.spdf.temp.attribute <- pts.spdf.temp.attribute %>% spTransform(pts.spdf@proj4string)
             }
             pts.spdf <- rbind(pts.spdf, pts.spdf.temp.attribute)

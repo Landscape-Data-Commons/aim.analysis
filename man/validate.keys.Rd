@@ -6,6 +6,11 @@
 \usage{
 validate.keys(dd.raw, target.values = c("Target Sampled", "TS"))
 }
+\arguments{
+\item{dd.raw}{The output from \code{read.dd()}.}
+
+\item{target.values}{A character vector of the point fates considered sampled. Will always include \code{"Target Sampled"} and \code{"TS"}.}
+}
 \description{
-Confirming that design database points flagged as sampled have valid primary keys
+Returns a data frame of all the primary keys and plot IDs of plots in imported design databases that had a valid primary key but were not flagged as sampled or were flagged as sampled but didn't have a valid primary key.
 }

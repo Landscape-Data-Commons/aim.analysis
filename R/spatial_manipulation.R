@@ -1,3 +1,94 @@
+#' Attributing a spatial data frame using another spatial data frame
+#'
+#' This function will take a SpatialPoints/PolygonsDataFrame and add one attribute fields from a second SpatialPoints/PolygonsDataFrame
+#' @param spdf1 A SpatialPoints/PolygonsDataFrame containing the geometry to add an attribute to
+#' @param spdf2 A SpatialPoints/PolygonsDataFrame containing the geometry to add an attribute from
+#' @param attributefield The name of the field in \code{spdf2} as a string containing the values to add to \code{spdf1}
+#' @param newfield The name of the field in \code{spdf1} as a string to add the values from \code{spdf2$attributefield} to. If NULL, the field will use \code{attributefield}. Defaults to NULL.
+#' @param projection An \code{sp::CRS()} argument to apply in the event that \code{spdf1} and \code{spdf2} have different projections. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}
+#' @return The original SPDF spdf1 with the new field containing the values inherited from spdf2.
+#' @examples
+#' attribute.shapefile()
+#' @export
+
+attribute.shapefile <- function(spdf1,
+                                spdf2,
+                                attributefield = NULL,
+                                newfield = NULL,
+                                projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+){
+  if (is.null(attributefield) | !(attributefield %in% names(spdf2@data))) {
+    stop("attributefield must be a field name found in spdf2")
+  }
+
+  if (is.null(newfield)) {
+    newfield <- attributefield
+  }
+
+  remove.coords <- F
+  coord.names <- spdf1@coords %>% colnames()
+
+  if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
+    ## Make sure that the points also adhere to the same projection
+    spdf1 <- spdf1 %>% sp::spTransform(projection)
+    spdf2 <- spdf2 %>% sp::spTransform(projection)
+  } else {
+    projection <- spdf1@proj4string
+  }
+
+  ## Initialize list for attributed SPDFs
+  attributed.dfs <- list()
+
+  ## We'll check each attribute field value independently
+  for (n in unique(spdf2@data[, attributefield])) {
+    ## Create a copy of the points to work with on this loop
+    current.spdf <- spdf1
+    ## Get the data frame from over()
+    over.result <- sp::over(current.spdf,
+                            spdf2[spdf2@data[, attributefield] == n, ])
+    ## Add the values to the newfield column
+    current.spdf@data[, newfield] <- over.result[, attributefield]
+    if (!(coord.names[1] %in% names(current.spdf@data)) & !(coord.names[2] %in% names(current.spdf@data))){
+      current.spdf@data <- cbind(current.spdf@data, current.spdf@coords)
+      remove.coords <- T
+    }
+    ## Make sure that the polygons have unique IDs
+    if (class(current.spdf) == "SpatialPolygonsDataFrame") {
+      current.spdf <- sp::spChFIDs(current.spdf,
+                                   paste(runif(n = 1, min = 0, max = 666666666),
+                                         row.names(current.spdf),
+                                         sep = "."))
+    }
+    current.df <- current.spdf@data
+
+    ## Only if the number of coordinates is greater than 0!
+    print(nrow(current.df[!is.na(current.df[, newfield]), ]))
+    if (nrow(current.df[!is.na(current.df[, newfield]), ]) > 0) {
+      attributed.dfs[[paste(n)]] <- current.df[!is.na(current.df[, newfield]), ]
+    }
+  }
+
+  if (length(attributed.dfs) > 0) {
+    if (length(attributed.dfs) == 1) {
+      output <- attributed.dfs[[1]] %>%
+        sp::SpatialPointsDataFrame(data = .,
+                                   coords = .[, coord.names],
+                                   proj4string = projection)
+    } else {
+      output <- dplyr::bind_rows(attributed.dfs) %>%
+        sp::SpatialPointsDataFrame(data = .,
+                                   coords = .[, coord.names],
+                                   proj4string = projection)
+    }
+    if (remove.coords) {
+      output <- output[, names(output)[!(names(output) %in% coord.names)]]
+    }
+  } else {
+    output <- NULL
+  }
+  return(output)
+}
+
 #' Create a SpatialPolygonsDataFrame from the intersection of two SpatialPolygonsDataFrames
 #'
 #' Basically a wrapping of \code{rgeos::gIntersection()} and \code{raster::intersect()} with additional opportunity to call area.add() and automatically added unique identifiers for each resultant polygon
@@ -102,8 +193,8 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
   ## Create a single field to serve as a unique identifier to dissolve the polygons by.
   for (n in 1:nrow(intersect.spdf.attribute@data)) {
     intersect.spdf.attribute@data$UNIQUE.IDENTIFIER[n] <- digest::sha1(x = paste0(intersect.spdf.attribute@data[n, paste0(spdf1.attributefieldname, ".spdf1")],
-                                                                          intersect.spdf.attribute@data[n, paste0(spdf2.attributefieldname, ".spdf2")]),
-                                                               digits = 14)
+                                                                                  intersect.spdf.attribute@data[n, paste0(spdf2.attributefieldname, ".spdf2")]),
+                                                                       digits = 14)
   }
 
   ## Remove those two columns we made that were just duplicates of existing columns but with .spdf1 or .spdf2 appended
@@ -146,4 +237,74 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
 
   ## Return the final SPDF, making sure to project it into NAD83 (or whatever projection was provided to override the default)
   return(intersect.spdf.attribute %>% spTransform(projection))
+}
+
+
+#' Add areas to a Spatial Polygons Data Frame
+#'
+#' This function takes a Spatial Polygons Data Frame and calculates and adds area fields to the data frame. Areas can be calculated either treating the whole SPDF as a unit or for each polygon individually.
+#' @param spdf Spatial Polygons Data Frame to calculate areas for
+#' @param area.ha Logical. If \code{T}, areas will be calculated and added in hectares. Default is \code{T}.
+#' @param area.sqkm Logical. If \code{T}, areas will be calculated and added in square kilometers. Default is \code{T}.
+#' @param byid Logical. If \code{T}, areas will be calculated and added for each polygon by ID. If \code{F} the area of the whole SPDF will be calculated and added, so every value for that field will be the same, regardless of polygon ID. Default is \code{T}.
+#' @return The original Spatial Polygons Data Frame with an additional field for each area unit calculated.
+#' @keywords area
+#' @examples
+#' area.add()
+#' @export
+
+area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
+                     area.ha = T, ## Add area in hectares?
+                     area.sqkm = T, ## Add area in square kilometers?
+                     byid = T ## Do it for the whole SPDF or on a per-polygon basis? Generally don't want to toggle this
+){
+  original.proj <- spdf@proj4string
+  ## Make sure the SPDF is in Albers equal area projection
+  spdf <- sp::spTransform(x = spdf, CRSobj = CRS("+proj=aea"))
+
+  ## Add the area in hectares, stripping the IDs from gArea() output
+  spdf@data$AREA.HA <- rgeos::gArea(spdf, byid = byid) * 0.0001 %>% unname()
+  ## Add the area in square kilometers, converting from hectares
+  spdf@data$AREA.SQKM <- spdf@data$AREA.HA * 0.01
+
+  if (!(area.ha)) {
+    spdf@data$AREA.HA <- NULL
+  }
+  if (!(area.sqkm)) {
+    spdf@data$AREA.SQKM <- NULL
+  }
+  return(sp::spTransform(spdf, original.proj))
+}
+
+
+
+#' Restricting imported TerrADat data to the boundaries of the imported design databases
+#' @export
+restrict.tdat <- function(dd.raw, tdat.spdf){
+  ## NAD83 sp::CRS()
+  nad83.prj <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+  tdat.prj <- tdat.spdf@proj4string
+  for (design in names(dd.raw$sf)) {
+    assign(value = attribute.shapefile(spdf1 = tdat.spdf,
+                                       spdf2 = dd.raw$sf[[design]],
+                                       attributefield = "TERRA_SAMPLE_FRAME_ID",
+                                       newfield = "SampleFrame")  %>% spTransform(nad83.prj),
+           x = paste0("temp", ".", grep(x = names(dd.raw$sf), pattern = paste0("^", design, "$")))
+    )
+  }
+  if (length(ls()[grepl(x = ls(), pattern = "^temp.\\d{1,3}$")]) > 1) {
+    tdat.spdf.restricted <- subset(tdat.spdf %>% spTransform(nad83.prj), "SiteID" == "Nothing")
+    for (spdf in ls()[grepl(x = ls(), pattern = "^temp.\\d{1,3}$")]) {
+      tdat.spdf.restricted <- rbind(tdat.spdf.restricted, get(spdf))
+    }
+  } else {
+    tdat.spdf.restricted <- get(ls()[grepl(x = ls(), pattern = "^temp.\\d{1,3}$")]) %>% spTransform(nad83.prj)
+  }
+  tdat.spdf.restricted@data <- tdat.spdf.restricted@data[, names(tdat.spdf.restricted@data)[!(names(tdat.spdf.restricted@data) %in% "SampleFrame")]]
+  tdat.spdf.restricted <- tdat.spdf.restricted@data %>% dplyr::distinct() %>%
+    SpatialPointsDataFrame(data = .,
+                           coords = .[, c("coords.x1", "coords.x2")],
+                           proj4string = tdat.prj)
+  tdat.spdf.restricted <- tdat.spdf.restricted %>% spTransform(nad83.prj)
+  return(tdat.spdf.restricted)
 }

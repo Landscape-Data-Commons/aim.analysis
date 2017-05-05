@@ -343,3 +343,46 @@ add.coords <- function(spdf,
     spdf@data <- cbind(spdf@data, coords)
   }
 }
+
+#' Adding sampling years based on date of visit and panel
+#'
+#' @description For the given SPDF, this adds the year extracted from the values in PANEL, then overwrites that with the year extracted from DT_VST if possible, then for all remaining observations still missing a YEAR value it makes a best guess based on the YEAR values in the other observations with the same PANEL value.
+#' @param pts The SPDF to add YEAR to.
+add.dates <- function(pts){
+  if (!("PANEL" %in% names(pts))) {
+    stop("Variable 'PANEL' is missing from data frame.")
+  }
+  ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
+  pts$YEAR[grepl(x = pts$PANEL, pattern = "\\d{4}$")] <- pts$PANEL %>%
+    str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
+  pts$YEAR[grepl(x = pts$PANEL, pattern = "^\\d{4}")] <- pts$PANEL %>%
+    str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
+
+  ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
+  pts$YEAR[!is.na(pts$DT_VST)] <- pts$DT_VST[!is.na(pts$DT_VST)]%>% lubridate::as_date() %>% format("%Y") %>% as.numeric()
+
+  ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
+  if (length(grep(x = names(pts), pattern = ".1$")) > 0) {
+    pts <- pts[, (1:length(names(pts)))] %>% dplyr::select(-ends_with(match = ".1"))
+  }
+
+
+  ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
+  if (grepl(class(pts)[[1]], pattern = "^Spatial")) {
+    panel.years <- pts@data %>% dplyr::group_by(PANEL) %>%
+      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
+  } else {
+    panel.years <- pts %>% dplyr::group_by(PANEL) %>%
+      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
+  }
+
+
+  ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
+  for (p in panel.years$PANEL) {
+    pts$YEAR[is.na(pts$YEAR) & pts$PANEL == p] <- panel.years$YEAR[panel.years$PANEL == p]
+  }
+
+  pts$YEAR <- pts$YEAR %>% as.numeric()
+  return(pts)
+}
+

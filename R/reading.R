@@ -90,7 +90,7 @@ read.dd <- function(src = "", ## A filepath as a string
 ){
 
   ## readOGR() wrapped in safely() so that it will return NULL instead of an error
-  safe.readOGR <- safely(readOGR, otherwise = NULL)
+  safe.readOGR <- safely(rgdal::readOGR, otherwise = NULL)
 
   ## Sanitization
   func <- str_to_upper(func)
@@ -239,8 +239,8 @@ read.dd <- function(src = "", ## A filepath as a string
 #' @export
 read.tdat <- function(tdat.path, tdat.name){
   tdat.name <- sanitize(tdat.name, "gdb")
-  tdat.terrestrial.spdf <- readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_TERRESTRIALAIM", stringsAsFactors = F)
-  tdat.remote.spdf <- readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_REMOTESENSING", stringsAsFactors = F)
+  tdat.terrestrial.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_TERRESTRIALAIM", stringsAsFactors = F)
+  tdat.remote.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_REMOTESENSING", stringsAsFactors = F)
   tdat.spdf <- sp::merge(tdat.terrestrial.spdf, tdat.remote.spdf)
   return(tdat.spdf)
 }

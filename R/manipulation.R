@@ -342,6 +342,7 @@ add.coords <- function(spdf,
     names(coords) <- c("X.METERS.AL", "Y.METERS.AL")
     spdf@data <- cbind(spdf@data, coords)
   }
+  return(spdf)
 }
 
 #' Adding sampling years based on date of visit and panel

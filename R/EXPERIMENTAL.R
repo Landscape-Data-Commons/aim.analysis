@@ -162,7 +162,7 @@ apply.tracking <- function(filenames,
 
     ####################  If specified, delete overdraw pts that lack a final designation (i.e., not used).  This does not eliminate all NAs, just overdraw NAs..
     if(deleteoverdraw) {
-      pts <- pts %>% dplyr::filter(!grepl(x = PANEL, pattern = "over", ignore.case = T))
+      pts <- pts %>% drop.values(variable = "PANEL", dropvalue = "over", ignore.case = T)
     }
     ####################  Store final pts file
     dd.list$pts[[dd]] <- pts
@@ -173,3 +173,26 @@ apply.tracking <- function(filenames,
 
 } ## end of function
 
+#' Quickly drop observations from a data frame based on the values of a single variable
+#' @description This wrapper for \code{dplyr::filter()} will take a data frame (or Spatial Data Frame if the package \code{spdplyr} is installed) and remove all observations where the given variable meets the value of the argument \code{dropvalue}.
+#' @param df A data frame or, if \code{spdplyr} is installed, spatial data frame to manipulate.
+#' @param variable A character string specifying the name of the variable to base the filtering on.
+#' @param dropvalue The value to drop observations based on. Can be either a regular expression as a character string to be passed to \code{grepl()} or \code{NA}. All observations where the variable \code{variable} return \code{T} when checked against this will be dropped. Defaults to \code{NA}.
+#' @param ignore.case Logical. If \code{dropvalue} is a regular expression, then this argument is passed to \code{grepl()} to decide if the search is case sensitive or not. Defaults to \code{T}.
+#' @return The data frame \code{df} without the observations where \code{variable} matched \code{dropvalue}.
+#' @export
+drop.values <- function(df, variable = "", dropvalue = NA, ignore.case = T) {
+  if (!grepl(x = class(df), pattern = "(data.frame)|(DataFrame)$")) {
+    stop("Please provide a valid data frame.")
+  }
+  if (variable == "" | length(names(df)[grepl(x = names(df), pattern = "variable")] != 1)) {
+    stop("Please provide a valid variable name.")
+  }
+  if (is.na(dropvalue)) {
+    filtered <- eval(parse(text = paste0("df %>% dplyr::filter(!is.na(", variable, "))")))
+  } else {
+    filtered <- eval(parse(text = paste0("df %>% dplyr::filter(!grepl(x = ", variable, ", pattern = '", dropvalue, "', ignore.case = ", ignore.case(), "))")))
+  }
+
+  return(filtered)
+}

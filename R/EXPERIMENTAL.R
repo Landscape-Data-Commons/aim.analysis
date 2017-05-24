@@ -78,14 +78,14 @@ apply.tracking <- function(filenames,
                      "Target Sampled",
                      "TS") %>% str_to_upper() %>% unique()
 
-  ## Read in the plot tracking Excel files and combine them, renaming variables, and restricting to needed variables
+  ## Read in the plot tracking Excel files, renaming variables, and restricting to needed variables and combine them
   tracking <- lapply(filenames,
-                     FUN = function(X, filepath){
+                     FUN = function(X, path){
                        read.tracking(filename = X, path = path) %>%
                          dplyr::select(starts_with(match  = "Plot ID"), Panel, starts_with(match = "Plot Status")) %>%
                          setNames(c("PLOTID", "PANEL", "PLOTSTATUS"))
                      },
-                     filepath = path) %>% dplyr::bind_rows()
+                     path = path) %>% dplyr::bind_rows()
 
   if (nrow(tracking) != nrow(distinct(tracking))) {
     stop("Not all plot IDs are unique across the imported combined plot tracking Excel files. Plot IDs must be unique.")
@@ -118,7 +118,7 @@ apply.tracking <- function(filenames,
 
   ## Stop if these don't sum!
   if (nrow(tracking.tdat != nrow(tracking))) {
-    stop(paste0("The number of rows in the imported plot tracking information (", nrow(tracking), " )somehow doesn't match the number of rows after comparing that to TerrADat (", nrow(tracking.tdat), ")."))
+    stop(paste0("The number of rows in the imported plot tracking information (", nrow(tracking), ") somehow doesn't match the number of rows after comparing that to TerrADat (", nrow(tracking.tdat), ")."))
   }
 
   ## Warn if there are target sampled plots that have no match by plot ID
@@ -147,7 +147,10 @@ apply.tracking <- function(filenames,
     ## Restrict tracking.tdat to plots where the plot ID occurs in the current pts SPDF and reorder the result to match the order of pts using the row names
     tracking.tdat.current <- tracking.tdat[pts@data$PLOT_NM[pts@data$PLOT_NM %in% tracking.tdat$PLOTID],]
     if (nrow(tracking.tdat) != nrow(tracking.tdat.current)) {
-      message(paste0("The following plot IDs were found in the plot tracking information and TerrADat but not the Design Database (", dd, "):", paste(tracking.tdat$PLOTID[!(tracking.tdat$PLOTID %in% tracking.tdat.current$PLOTID)], collapse = ", ")))
+      message(paste0("The following plot IDs were found in the plot tracking information and TerrADat but not the Design Database (", dd, "):",
+                     paste(tracking.tdat$PLOTID[!(tracking.tdat$PLOTID %in% tracking.tdat.current$PLOTID)], collapse = ", ")
+                     )
+              )
     }
 
     ## Write in the plot keys from tracking.tdat.current where they exist

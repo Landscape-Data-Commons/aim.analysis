@@ -102,7 +102,7 @@ weight <- function(dd.import, ## The output from read.dd()
     }
     ## Add in the coordinates
     pts.spdf <- add.coords(spdf = pts.spdf,
-                           xynames = c("LONGITUDE, LATITUDE"))
+                           xynames = c("LONGITUDE", "LATITUDE"))
 
     ## Creating the weight identity field.
     ## This will let us analyze the points whether or not there are new points from other designs being added in that have inherited new identities
@@ -177,371 +177,314 @@ weight <- function(dd.import, ## The output from read.dd()
     if (is.null(frame.spdf)) {
       frame.spdf <- dd.import$sf[[s]]
     }
-    ## If this isn't the first pass through the loop, then the areas on the frame are incorrect because the SPDF has been subjected to erase()
-    ## We also need to make sure that there's something left to even run this on, hence the nrow()
-    if (!is.null(dd.completed) & !is.null(frame.spdf) > 0) {
-      if (nrow(frame.spdf) > 0) {
-        print("(Re)calculating areas for frame.spdf")
-        frame.spdf <- area.add(frame.spdf)
+    if (is.null(frame.spdf)) {
+      message("frame.spdf is NULL so no weight calculations will be done")
+    } else {
+      ## If this isn't the first pass through the loop, then the areas on the frame are incorrect because the SPDF has been subjected to erase()
+      ## We also need to make sure that there's something left to even run this on, hence the nrow()
+      if (!is.null(dd.completed) & !is.null(frame.spdf) > 0) {
+        if (nrow(frame.spdf) > 0) {
+          print("(Re)calculating areas for frame.spdf")
+          frame.spdf <- area.add(frame.spdf)
+        }
       }
-    }
 
-    ## Bring in this DD's points
-    pts.spdf <- dd.import$pts[[s]]
+      ## Bring in this DD's points
+      pts.spdf <- dd.import$pts[[s]]
 
-    ## Only do this if the user wants the DDs to be considered as one unit for analysis
-    if (combine & length(dd.order) > 1) {
-      ## For each DD that hasn't been considered yet:
-      ## Retrieve the points, see if they land in this current frame, keep the ones that do as part of the current points, and write it back into dd.import without those
-      for (r in dd.order[!(dd.order %in% c(dd.completed, s))]) {
-        print(paste("Currently r is", r))
-        ## First bring in the points
-        pts.spdf.temp <- dd.import$pts[[r]]
-        if (nrow(pts.spdf.temp@data) > 0) {
-          ## Get a version of the points clipped to the current frame
-          pts.spdf.temp.attribute <- attribute.shapefile(spdf1 = pts.spdf.temp,
-                                                         spdf2 = frame.spdf,
-                                                         ## This will pick the appropriate field for a sample frame or strata
-                                                         attributefield = c("TERRA_SAMPLE_FRAME_ID", designstratumfield)[(c("TERRA_SAMPLE_FRAME_ID", designstratumfield) %in% names(frame.spdf@data))],
-                                                         newfield = "WEIGHT.ID"
-          )
-
-          ## WEIGHT.ID might end up not containing strata after this, but that's fine because the part of the weighting code that looks in it for strata
-          ## only runs in the event that WEIGHT.ID inherited strata identities instead of shapefile identities.
-
-          ## If there was overlap then:
-          print(paste("!is.null(pts.spdf.temp.attribute) evaluates to", !is.null(pts.spdf.temp.attribute)))
-          if (!is.null(pts.spdf.temp.attribute)) {
-            print("Inside the !is.null(pts.spdf.temp.attribute) loop, so the next word had better damn well be TRUE")
-            print(!is.null(pts.spdf.temp.attribute))
-            ## Bind these points to the current DD's
-            if (pts.spdf@proj4string@projargs != pts.spdf.temp.attribute@proj4string@projargs) {
-              pts.spdf.temp.attribute <- pts.spdf.temp.attribute %>% spTransform(pts.spdf@proj4string)
-            }
-            pts.spdf <- rbind(pts.spdf, pts.spdf.temp.attribute)
-            ## Remove the points that fell in the current frame from the temporary points and write it back into dd.import
-            ## This should find all the rows
-            dd.import$pts[[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
-          }
-        }
-
-
-        ## Then bring in the frame
-        frame.spdf.temp <- dd.import$strata[[r]]
-        if (is.null(frame.spdf.temp)) {
-          print(paste("There aren't stratification polygons for", r))
-          frame.spdf.temp <- dd.import$sf[[r]]
-          if (is.null(frame.spdf.temp)) {
-            print(paste("There aren't sample frame polygons for", r))
-          }
-        }
-
-        ## So many checks to make sure that we aren't getting NULL SPDFs or SPDFS without values in @data to work with
-        if (!is.null(nrow(frame.spdf.temp@data)) & !is.null(nrow(frame.spdf@data))) {
-          print(paste("There were frame SPDFs for both", s, "and", r))
-          if (nrow(frame.spdf.temp@data) > 0 & nrow(frame.spdf@data) > 0) {
-            print(paste("Both frames had values in the @data slot"))
-            ## Remove the current frame from the temporary frame. This will let us build concentric frame areas as we work up to larger designs through dd.order
-            ## Note: I'm not sure what happens if these don't overlap or if x is completely encompassed by y
-            print(paste("Attempting to remove the", s, "frame from the", r, "frame with gDifference()"))
-
-            ## This lets rgeos deal with tiny fragments of polygons without crashing
-            ## This and the following tryCatch() may be unnecessary since the argument drop_lower_td = T was added, but it works so I'm leaving it
-            current.drop <- get_RGEOS_dropSlivers()
-            current.warn <- get_RGEOS_warnSlivers()
-            current.tol <- get_RGEOS_polyThreshold()
-
-            frame.spdf.temp <- tryCatch(
-              expr = {
-                set_RGEOS_dropSlivers(sliverdrop)
-                set_RGEOS_warnSlivers(sliverwarn)
-                set_RGEOS_polyThreshold(sliverthreshold)
-                print(paste0("Attempting using set_RGEOS_dropslivers(", sliverdrop, ") and set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
-                gDifference(spgeom1 = frame.spdf.temp,
-                            spgeom2 = frame.spdf,
-                            drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
-              },
-              error = function(e) {
-                print("Received the error:")
-                print(paste(e))
-                if (grepl(x = e, pattern = "cannot get a slot")) {
-                  print("This is extremely problematic (unless it means your whole frame was correctly erased), but there's no automated error handling for it.")
-                } else if (grepl(x = e, pattern = "few points in geometry")) {
-                  print(paste0("Attempting again with set_RGEOS_dropslivers(T), set_RGEOS_warnslivers(T), and set_RGEOS_polyThresholds(", sliverthreshold, ")"))
-                  set_RGEOS_dropSlivers(T)
-                  set_RGEOS_warnSlivers(T)
-                  set_RGEOS_polyThreshold(sliverthreshold)
-                  gDifference(spgeom1 = frame.spdf.temp,
-                              spgeom2 = frame.spdf,
-                              drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
-                } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
-                  print(paste0("Attempting again with set_RGEOS_dropslivers(F) and set_RGEOS_warnslivers(F)"))
-                  set_RGEOS_dropSlivers(F)
-                  set_RGEOS_warnSlivers(F)
-                  set_RGEOS_polyThreshold(0)
-                  gDifference(spgeom1 = frame.spdf.temp,
-                              spgeom2 = frame.spdf,
-                              drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
-                }
-              }
+      ## Only do this if the user wants the DDs to be considered as one unit for analysis
+      if (combine & length(dd.order) > 1) {
+        ## For each DD that hasn't been considered yet:
+        ## Retrieve the points, see if they land in this current frame, keep the ones that do as part of the current points, and write it back into dd.import without those
+        for (r in dd.order[!(dd.order %in% c(dd.completed, s))]) {
+          print(paste("Currently r is", r))
+          ## First bring in the points
+          pts.spdf.temp <- dd.import$pts[[r]]
+          if (nrow(pts.spdf.temp@data) > 0) {
+            ## Get a version of the points clipped to the current frame
+            pts.spdf.temp.attribute <- attribute.shapefile(spdf1 = pts.spdf.temp,
+                                                           spdf2 = frame.spdf,
+                                                           ## This will pick the appropriate field for a sample frame or strata
+                                                           attributefield = c("TERRA_SAMPLE_FRAME_ID", designstratumfield)[(c("TERRA_SAMPLE_FRAME_ID", designstratumfield) %in% names(frame.spdf@data))],
+                                                           newfield = "WEIGHT.ID"
             )
 
-            set_RGEOS_dropSlivers(current.drop)
-            set_RGEOS_warnSlivers(current.warn)
-            set_RGEOS_polyThreshold(current.tol)
+            ## WEIGHT.ID might end up not containing strata after this, but that's fine because the part of the weighting code that looks in it for strata
+            ## only runs in the event that WEIGHT.ID inherited strata identities instead of shapefile identities.
 
-            print("Erasure complete or at least attempted")
-
-            if (!is.null(frame.spdf.temp)) {
-              if (nrow(frame.spdf.temp@data) > 0) {
-                print(paste("!is.null(frame.spdf.temp) evaluates to", !is.null(frame.spdf.temp)))
-
-              } else {
-                print(paste("There were no rows, so writing NULL in instead"))
+            ## If there was overlap then:
+            print(paste("!is.null(pts.spdf.temp.attribute) evaluates to", !is.null(pts.spdf.temp.attribute)))
+            if (!is.null(pts.spdf.temp.attribute)) {
+              print("Inside the !is.null(pts.spdf.temp.attribute) loop, so the next word had better damn well be TRUE")
+              print(!is.null(pts.spdf.temp.attribute))
+              ## Bind these points to the current DD's
+              if (pts.spdf@proj4string@projargs != pts.spdf.temp.attribute@proj4string@projargs) {
+                pts.spdf.temp.attribute <- pts.spdf.temp.attribute %>% spTransform(pts.spdf@proj4string)
               }
+              pts.spdf <- rbind(pts.spdf, pts.spdf.temp.attribute)
+              ## Remove the points that fell in the current frame from the temporary points and write it back into dd.import
+              ## This should find all the rows
+              dd.import$pts[[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
             }
+          }
 
-            ## Write that into dd.import
-            if (!is.null(dd.import$strata[[r]])) {
-              print(paste("Writing the temp frame into the stratification slot for", r))
-              dd.import$strata[[r]] <- frame.spdf.temp
-            } else {
-              print(paste("Writing the temp frame into the sample frame slot for", r))
-              dd.import$sf[[r]] <- frame.spdf.temp
+
+          ## Then bring in the frame
+          frame.spdf.temp <- dd.import$strata[[r]]
+          if (is.null(frame.spdf.temp)) {
+            print(paste("There aren't stratification polygons for", r))
+            frame.spdf.temp <- dd.import$sf[[r]]
+            if (is.null(frame.spdf.temp)) {
+              print(paste("There aren't sample frame polygons for", r))
+            }
+          }
+
+          ## So many checks to make sure that we aren't getting NULL SPDFs or SPDFS without values in @data to work with
+          if (!is.null(nrow(frame.spdf.temp@data)) & !is.null(nrow(frame.spdf@data))) {
+            print(paste("There were frame SPDFs for both", s, "and", r))
+            if (nrow(frame.spdf.temp@data) > 0 & nrow(frame.spdf@data) > 0) {
+              print(paste("Both frames had values in the @data slot"))
+              ## Remove the current frame from the temporary frame. This will let us build concentric frame areas as we work up to larger designs through dd.order
+              ## Note: I'm not sure what happens if these don't overlap or if x is completely encompassed by y
+              print(paste("Attempting to remove the", s, "frame from the", r, "frame with gDifference()"))
+
+              ## This lets rgeos deal with tiny fragments of polygons without crashing
+              ## This and the following tryCatch() may be unnecessary since the argument drop_lower_td = T was added, but it works so I'm leaving it
+              current.drop <- get_RGEOS_dropSlivers()
+              current.warn <- get_RGEOS_warnSlivers()
+              current.tol <- get_RGEOS_polyThreshold()
+
+              frame.spdf.temp <- tryCatch(
+                expr = {
+                  set_RGEOS_dropSlivers(sliverdrop)
+                  set_RGEOS_warnSlivers(sliverwarn)
+                  set_RGEOS_polyThreshold(sliverthreshold)
+                  print(paste0("Attempting using set_RGEOS_dropslivers(", sliverdrop, ") and set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
+                  gDifference(spgeom1 = frame.spdf.temp,
+                              spgeom2 = frame.spdf,
+                              drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
+                },
+                error = function(e) {
+                  print("Received the error:")
+                  print(paste(e))
+                  if (grepl(x = e, pattern = "cannot get a slot")) {
+                    print("This is extremely problematic (unless it means your whole frame was correctly erased), but there's no automated error handling for it.")
+                  } else if (grepl(x = e, pattern = "few points in geometry")) {
+                    print(paste0("Attempting again with set_RGEOS_dropslivers(T), set_RGEOS_warnslivers(T), and set_RGEOS_polyThresholds(", sliverthreshold, ")"))
+                    set_RGEOS_dropSlivers(T)
+                    set_RGEOS_warnSlivers(T)
+                    set_RGEOS_polyThreshold(sliverthreshold)
+                    gDifference(spgeom1 = frame.spdf.temp,
+                                spgeom2 = frame.spdf,
+                                drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
+                  } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
+                    print(paste0("Attempting again with set_RGEOS_dropslivers(F) and set_RGEOS_warnslivers(F)"))
+                    set_RGEOS_dropSlivers(F)
+                    set_RGEOS_warnSlivers(F)
+                    set_RGEOS_polyThreshold(0)
+                    gDifference(spgeom1 = frame.spdf.temp,
+                                spgeom2 = frame.spdf,
+                                drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
+                  }
+                }
+              )
+
+              set_RGEOS_dropSlivers(current.drop)
+              set_RGEOS_warnSlivers(current.warn)
+              set_RGEOS_polyThreshold(current.tol)
+
+              print("Erasure complete or at least attempted")
+
+              if (!is.null(frame.spdf.temp)) {
+                if (nrow(frame.spdf.temp@data) > 0) {
+                  print(paste("!is.null(frame.spdf.temp) evaluates to", !is.null(frame.spdf.temp)))
+
+                } else {
+                  print(paste("There were no rows, so writing NULL in instead"))
+                }
+              }
+
+              ## Write that into dd.import
+              if (!is.null(dd.import$strata[[r]])) {
+                print(paste("Writing the temp frame into the stratification slot for", r))
+                dd.import$strata[[r]] <- frame.spdf.temp
+              } else {
+                print(paste("Writing the temp frame into the sample frame slot for", r))
+                dd.import$sf[[r]] <- frame.spdf.temp
+              }
             }
           }
         }
       }
-    }
 
-    print(paste("Calculating the weights for", s))
+      print(paste("Calculating the weights for", s))
 
-    ## Sanitize
-    pts.spdf@data[, fatefieldname] <- str_to_upper(pts.spdf@data[, fatefieldname])
+      ## Sanitize
+      pts.spdf@data[, fatefieldname] <- str_to_upper(pts.spdf@data[, fatefieldname])
 
-    ## Now that the clipping and reassigning is all completed, we can start calculating weights
-    ## The objects are used in the event that there are no strata in SPDFs that we can use and resort to using the sample frame
-    target.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% target.values,])
-    unknown.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% unknown.values,])
-    nontarget.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% nontarget.values,])
-    inaccessible.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% inaccessible.values,])
-    unneeded.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% unneeded.values,])
-    ## How many points had fate values that were found in fate vectors?
-    sum <- sum(target.count, unknown.count, nontarget.count, inaccessible.count, unneeded.count)
+      ## Now that the clipping and reassigning is all completed, we can start calculating weights
+      ## The objects are used in the event that there are no strata in SPDFs that we can use and resort to using the sample frame
+      target.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% target.values,])
+      unknown.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% unknown.values,])
+      nontarget.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% nontarget.values,])
+      inaccessible.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% inaccessible.values,])
+      unneeded.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% unneeded.values,])
+      ## How many points had fate values that were found in fate vectors?
+      sum <- sum(target.count, unknown.count, nontarget.count, inaccessible.count, unneeded.count)
 
-    ## Let the user know what the 'bad fates' are that need to be added
-    if (sum != nrow(pts.spdf)) {
-      message("The following fate[s] need to be added to the appropriate fate argument[s] in your function call:")
-      ## Take the vector of all the unique values in pts.spdf$final_desig (or another fate field) that aren't found in the fate vectors and collapse it into a single string, separated by ", "
-      message(paste(unique(pts.spdf@data[, fatefieldname])[!(unique(pts.spdf@data[, fatefieldname]) %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))], collapse = ", "))
-    }
-
-    ## TODO: Needs to handle a polygon OR a raster df
-    ## If the value for the current DD in the list strata is not NULL, then we have a strata SPDF
-    if (!is.null(dd.import$strata[[s]])) {
-      ## Because we have strata, use the design stratum attribute
-
-      ## Create a data frame to store the area values in hectares for strata. The as.data.frame() is because it was a tibble for some reason
-      area.df <- group_by_(frame.spdf@data, designstratumfield) %>% dplyr::summarize(AREA.HA.SUM = sum(AREA.HA)) %>% as.data.frame()
-
-      ## Working points. This is a holdover, but it saves refactoring later code
-      working.pts <- pts.spdf@data
-
-      ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
-      working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "\\d{4}$")] <- working.pts$PANEL %>%
-        str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
-      working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "^\\d{4}")] <- working.pts$PANEL %>%
-        str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
-
-      ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
-      working.pts$YEAR[!is.na(working.pts$DT_VST)] <- working.pts$DT_VST[!is.na(working.pts$DT_VST)] %>% str_extract(string = ., pattern = "^\\d{4}") %>% as.numeric()
-
-      ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
-      working.pts <- working.pts[, (1:length(names(working.pts)))] %>% dplyr::select(-ends_with(match = ".1"))
-
-
-      ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
-      panel.years <- working.pts %>% dplyr::group_by(PANEL) %>%
-        dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
-
-      ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
-      for (p in panel.years$PANEL) {
-        working.pts$YEAR[is.na(working.pts$YEAR) & working.pts$PANEL == p] <- panel.years$YEAR[panel.years$PANEL == p]
+      ## Let the user know what the 'bad fates' are that need to be added
+      if (sum != nrow(pts.spdf)) {
+        message("The following fate[s] need to be added to the appropriate fate argument[s] in your function call:")
+        ## Take the vector of all the unique values in pts.spdf$final_desig (or another fate field) that aren't found in the fate vectors and collapse it into a single string, separated by ", "
+        message(paste(unique(pts.spdf@data[, fatefieldname])[!(unique(pts.spdf@data[, fatefieldname]) %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))], collapse = ", "))
       }
 
-      ## Creating a table of the point counts by point type within each stratum by year by project area ID
-      working.pts$key[working.pts$FINAL_DESIG %in% target.values] <- "Observed.pts"
-      working.pts$key[working.pts$FINAL_DESIG %in% nontarget.values] <- "Unsampled.pts.nontarget"
-      working.pts$key[working.pts$FINAL_DESIG %in% inaccessible.values] <- "Unsampled.pts.inaccessible"
-      working.pts$key[working.pts$FINAL_DESIG %in% unneeded.values] <- "Unsampled.pts.unneeded"
-      working.pts$key[working.pts$FINAL_DESIG %in% unknown.values] <- "Unsampled.pts.unknown"
+      ## TODO: Needs to handle a polygon OR a raster df
+      ## If the value for the current DD in the list strata is not NULL, then we have a strata SPDF
+      if (!is.null(dd.import$strata[[s]])) {
+        ## Because we have strata, use the design stratum attribute
 
-      ## Filter out points from THE FUTURE
-      working.pts <- working.pts %>% filter(!(YEAR > as.numeric(str_extract(string = base::date(), pattern = "\\d{4}"))))
+        ## Create a data frame to store the area values in hectares for strata. The as.data.frame() is because it was a tibble for some reason
+        area.df <- group_by_(frame.spdf@data, designstratumfield) %>% dplyr::summarize(AREA.HA.SUM = sum(AREA.HA)) %>% as.data.frame()
 
-      ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
-      # "TERRA_PRJCT_AREA_ID",
-      pts.summary <- working.pts %>% ungroup() %>% group_by(key, WEIGHT.ID, YEAR) %>%
-        dplyr::summarize(count = n())
+        ## Working points. This is a holdover, but it saves refactoring later code
+        working.pts <- pts.spdf@data
 
-      pts.summary$DD <- s
+        ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
+        working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "\\d{4}$")] <- working.pts$PANEL %>%
+          str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
+        working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "^\\d{4}")] <- working.pts$PANEL %>%
+          str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
 
-      ## Spreading that
-      pts.summary.wide <- tidyr::spread(data = pts.summary,
-                                        key = key,
-                                        value = count,
-                                        fill = 0)
+        ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
+        working.pts$YEAR[!is.na(working.pts$DT_VST)] <- working.pts$DT_VST[!is.na(working.pts$DT_VST)] %>% str_extract(string = ., pattern = "^\\d{4}") %>% as.numeric()
 
-      ## We need to know which of the types of points (target, non-target, etc.) are represented
-      extant.counts <- names(pts.summary.wide)[grepl(x = names(pts.summary.wide), pattern = ".pts")]
+        ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
+        working.pts <- working.pts[, (1:length(names(working.pts)))] %>% dplyr::select(-ends_with(match = ".1"))
 
-      ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
-      # "TERRA_PRJCT_AREA_ID",
-      ## Only asking for summarize() to operate on those columns that exist because if, for example, there's no Unsampled.pts.unneeded column and we call it here, the function will crash and burn
-      stratum.summary <- eval(parse(text = paste0("pts.summary.wide %>% group_by(DD,", "WEIGHT.ID", ", YEAR) %>% dplyr::summarize(sum(", paste0(extant.counts, collapse = "), sum("), "))")))
-      ## Fix the naming becaue it's easier to do it after the fact than write paste() so that it builds names in in the line above
-      names(stratum.summary) <- str_replace_all(string = names(stratum.summary), pattern = "^sum\\(", replacement = "")
-      names(stratum.summary) <- str_replace_all(string = names(stratum.summary), pattern = "\\)$", replacement = "")
 
-      ## Add in the missing columns if some point categories weren't represented
-      for (name in c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown")[!(c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown") %in% names(stratum.summary))]) {
-        stratum.summary[, name] <- 0
-      }
+        ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
+        panel.years <- working.pts %>% dplyr::group_by(PANEL) %>%
+          dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
 
-      ## This is where this particular version of the data frame leaves the loop to be returned at the end of the function
-      stats.df <- rbind(stats.df, stratum.summary)
+        ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
+        for (p in panel.years$PANEL) {
+          working.pts$YEAR[is.na(working.pts$YEAR) & working.pts$PANEL == p] <- panel.years$YEAR[panel.years$PANEL == p]
+        }
 
-      ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
-      # "TERRA_PRJCT_AREA_ID",
-      stratum.summary <- stratum.summary %>% group_by_("DD", "WEIGHT.ID") %>%
-        dplyr::summarize(Observed.pts = sum(Observed.pts),
-                         Unsampled.pts.nontarget = sum(Unsampled.pts.nontarget),
-                         Unsampled.pts.inaccessible = sum(Unsampled.pts.inaccessible),
-                         Unsampled.pts.unneeded = sum(Unsampled.pts.unneeded),
-                         Unsampled.pts.unknown = sum(Unsampled.pts.unknown))
+        ## Creating a table of the point counts by point type within each stratum by year by project area ID
+        working.pts$key[working.pts$FINAL_DESIG %in% target.values] <- "Observed.pts"
+        working.pts$key[working.pts$FINAL_DESIG %in% nontarget.values] <- "Unsampled.pts.nontarget"
+        working.pts$key[working.pts$FINAL_DESIG %in% inaccessible.values] <- "Unsampled.pts.inaccessible"
+        working.pts$key[working.pts$FINAL_DESIG %in% unneeded.values] <- "Unsampled.pts.unneeded"
+        working.pts$key[working.pts$FINAL_DESIG %in% unknown.values] <- "Unsampled.pts.unknown"
 
-      ## Add in the areas of the strata
-      stratum.summary <- merge(x = stratum.summary,
-                               y = area.df,
-                               by.x = "WEIGHT.ID",
-                               by.y = designstratumfield)
+        ## Filter out points from THE FUTURE
+        working.pts <- working.pts %>% filter(!(YEAR > as.numeric(str_extract(string = base::date(), pattern = "\\d{4}"))))
 
-      ## Renaming is causing dplyr and tidyr to freak out, so we'll just copy the values into the fieldnames we want
-      stratum.summary$Stratum <- stratum.summary$WEIGHT.ID
-      stratum.summary$Area.HA <- stratum.summary$AREA.HA.SUM
+        ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
+        # "TERRA_PRJCT_AREA_ID",
+        pts.summary <- working.pts %>% ungroup() %>% group_by(key, WEIGHT.ID, YEAR) %>%
+          dplyr::summarize(count = n())
 
-      ## Calculate the rest of the values
-      stratum.summary <- stratum.summary %>% group_by(Stratum) %>%
-        ## The total points
-        mutate(Total.pts = sum(Observed.pts, Unsampled.pts.nontarget, Unsampled.pts.inaccessible, Unsampled.pts.unneeded, Unsampled.pts.unknown)) %>%
-        ## The proportion of the total points in the stratum that were "target"
-        mutate(Prop.dsgn.pts.obsrvd = Observed.pts/Total.pts) %>%
-        ## The effective "sampled area" based on the proportion of points that were surveyed
-        mutate(Sampled.area.HA = unlist(Area.HA * Prop.dsgn.pts.obsrvd)) %>%
-        ## The weight for each point in the stratum is the effective sampled area divided by the number of points surveyed in the stratum
-        mutate(Weight = Sampled.area.HA/Observed.pts) %>% as.data.frame()
+        pts.summary$DD <- s
 
-      ## I'm not sure who requested this feature, but it's here now
-      if (!is.null(reporting.units.spdf)) {
-        stratum.summary$Reporting.Unit.Restricted <- T
-      } else {
-        stratum.summary$Reporting.Unit.Restricted <- F
-      }
+        ## Spreading that
+        pts.summary.wide <- tidyr::spread(data = pts.summary,
+                                          key = key,
+                                          value = count,
+                                          fill = 0)
 
-      ## Getting just the columns we want in the order we want them
-      stratum.summary <- stratum.summary[, c("DD",
-                                             "Stratum",
-                                             "Total.pts",
-                                             "Observed.pts",
-                                             "Unsampled.pts.nontarget",
-                                             "Unsampled.pts.inaccessible",
-                                             "Unsampled.pts.unneeded",
-                                             "Unsampled.pts.unknown",
-                                             "Area.HA",
-                                             "Prop.dsgn.pts.obsrvd",
-                                             "Sampled.area.HA",
-                                             "Weight",
-                                             "Reporting.Unit.Restricted")]
+        ## We need to know which of the types of points (target, non-target, etc.) are represented
+        extant.counts <- names(pts.summary.wide)[grepl(x = names(pts.summary.wide), pattern = ".pts")]
 
-      ## When there are NaNs in the calculated fields, replace them with 0
-      stratum.summary <- replace_na(stratum.summary, replace = list(Prop.dsgn.pts.obsrvd = 0, Sampled.area.HA = 0, Weight = 0))
+        ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
+        # "TERRA_PRJCT_AREA_ID",
+        ## Only asking for summarize() to operate on those columns that exist because if, for example, there's no Unsampled.pts.unneeded column and we call it here, the function will crash and burn
+        stratum.summary <- eval(parse(text = paste0("pts.summary.wide %>% group_by(DD,", "WEIGHT.ID", ", YEAR) %>% dplyr::summarize(sum(", paste0(extant.counts, collapse = "), sum("), "))")))
+        ## Fix the naming becaue it's easier to do it after the fact than write paste() so that it builds names in in the line above
+        names(stratum.summary) <- str_replace_all(string = names(stratum.summary), pattern = "^sum\\(", replacement = "")
+        names(stratum.summary) <- str_replace_all(string = names(stratum.summary), pattern = "\\)$", replacement = "")
 
-      ## rbind() to the master.df so we can spring it out of the loop and return it from the function
-      master.df <- rbind(master.df, stratum.summary)
+        ## Add in the missing columns if some point categories weren't represented
+        for (name in c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown")[!(c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown") %in% names(stratum.summary))]) {
+          stratum.summary[, name] <- 0
+        }
 
-      ## Add the weights to the points
-      for (stratum in stratum.summary$Stratum) {
-        working.pts$WGT[(working.pts$FINAL_DESIG %in% target.values) & working.pts[, "WEIGHT.ID"] == stratum] <- stratum.summary$Weight[stratum.summary$Stratum == stratum]
-      }
+        ## This is where this particular version of the data frame leaves the loop to be returned at the end of the function
+        stats.df <- rbind(stats.df, stratum.summary)
 
-      ## All the unassigned weights get converted to 0
-      working.pts <- replace_na(working.pts, replace = list(WGT = 0))
+        ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
+        # "TERRA_PRJCT_AREA_ID",
+        stratum.summary <- stratum.summary %>% group_by_("DD", "WEIGHT.ID") %>%
+          dplyr::summarize(Observed.pts = sum(Observed.pts),
+                           Unsampled.pts.nontarget = sum(Unsampled.pts.nontarget),
+                           Unsampled.pts.inaccessible = sum(Unsampled.pts.inaccessible),
+                           Unsampled.pts.unneeded = sum(Unsampled.pts.unneeded),
+                           Unsampled.pts.unknown = sum(Unsampled.pts.unknown))
 
-      pointsweights.current <- working.pts[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE")]
+        ## Add in the areas of the strata
+        stratum.summary <- merge(x = stratum.summary,
+                                 y = area.df,
+                                 by.x = "WEIGHT.ID",
+                                 by.y = designstratumfield)
 
-      ## OKAY. So, when reporting units were used to restrict the design[s], we need to adjust the weights appropriately by weight categories.
-      ## Luckily, the frame.spdf that we made waaaaay back when the reporting units were applied already represents those and frame.spdf will have the field UNIQUE.IDENTIFIER only if it went through that process
-      ## If the field UNIQUE.IDENTIFIER is present, we know that we can use frame.spdf to adjust the weights on the points
-      if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
-        pointsweights.current <- weight.adjust(points = pointsweights.current,
-                                               wgtcat.spdf = frame.spdf,
-                                               spdf.area.field = "AREA.HA.UNIT.SUM",
-                                               spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
-        pointsweights.current <- replace_na(pointsweights.current, replace = list(ADJWGT = 0))
-      } else {
-        ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame
-        pointsweights.current$ADJWGT <- NA
-      }
-      ## Add the point SPDF now that it's gotten the extra fields to the list of point SPDFs so we can use it after the loop
-      pointweights.df <- rbind(pointweights.df, pointsweights.current[, names(pointsweights.current)[names(pointsweights.current) != "PLOTKEY"]])
-    } else if (!is.null(frame.spdf)) {
-      ## If there aren't strata available to us in a useful format in the DD, we'll just weight by the sample frame
-      ## since we lack stratification, use the sample frame to derive spatial extent in hectares
-      area <- sum(frame.spdf@data$AREA.HA)
+        ## Renaming is causing dplyr and tidyr to freak out, so we'll just copy the values into the fieldnames we want
+        stratum.summary$Stratum <- stratum.summary$WEIGHT.ID
+        stratum.summary$Area.HA <- stratum.summary$AREA.HA.SUM
 
-      ## derive weights
-      Pprop <- 1 ## initialize - proportion of 1.0 means there were no nonresponses
-      wgt <- 0 ## initialize wgt
-      Sarea <- 0 ## initialize actual sampled area
-      if (sum > 0) {
-        Pprop <- target.count/sum ## realized proportion of the stratum that was sampled (observed/total no. of points)
-      }
-      if (target.count > 0) {
-        wgt   <- (Pprop*area)/target.count  ## (The proportion of the total area that was sampled * total area [ha]) divided by the no. of observed points
-        Sarea <-  Pprop*area	      ## Record the actual area(ha) sampled - (proportional reduction * stratum area)
-      }
+        ## Calculate the rest of the values
+        stratum.summary <- stratum.summary %>% group_by(Stratum) %>%
+          ## The total points
+          mutate(Total.pts = sum(Observed.pts, Unsampled.pts.nontarget, Unsampled.pts.inaccessible, Unsampled.pts.unneeded, Unsampled.pts.unknown)) %>%
+          ## The proportion of the total points in the stratum that were "target"
+          mutate(Prop.dsgn.pts.obsrvd = Observed.pts/Total.pts) %>%
+          ## The effective "sampled area" based on the proportion of points that were surveyed
+          mutate(Sampled.area.HA = unlist(Area.HA * Prop.dsgn.pts.obsrvd)) %>%
+          ## The weight for each point in the stratum is the effective sampled area divided by the number of points surveyed in the stratum
+          mutate(Weight = Sampled.area.HA/Observed.pts) %>% as.data.frame()
 
-      ##Tabulate key information for this DD
-      temp.df <- data.frame(DD = s,
-                            Stratum = "Sample Frame",
-                            Total.pts = sum,
-                            Observed.pts = target.count,
-                            Unsampled.pts.nontarget = nontarget.count,
-                            Unsampled.pts.inaccessible = inaccessible.count,
-                            Unsampled.pts.unneeded = unneeded.count,
-                            Unsampled.pts.unknown = unknown.count,
-                            Area.HA = area,
-                            Prop.dsgn.pts.obsrvd = Pprop,
-                            Sampled.area.HA = Sarea,
-                            Weight = wgt,
-                            Reporting.Unit.Restricted = F,
-                            stringsAsFactors = F)
-      if (!is.null(reporting.units.spdf)) {
-        temp.df$Reporting.Unit.Restricted <- T
-      }
+        ## I'm not sure who requested this feature, but it's here now
+        if (!is.null(reporting.units.spdf)) {
+          stratum.summary$Reporting.Unit.Restricted <- T
+        } else {
+          stratum.summary$Reporting.Unit.Restricted <- F
+        }
 
-      ## Bind this stratum's information to the master.df initialized outside and before the loop started
-      master.df <- rbind(master.df, temp.df)
+        ## Getting just the columns we want in the order we want them
+        stratum.summary <- stratum.summary[, c("DD",
+                                               "Stratum",
+                                               "Total.pts",
+                                               "Observed.pts",
+                                               "Unsampled.pts.nontarget",
+                                               "Unsampled.pts.inaccessible",
+                                               "Unsampled.pts.unneeded",
+                                               "Unsampled.pts.unknown",
+                                               "Area.HA",
+                                               "Prop.dsgn.pts.obsrvd",
+                                               "Sampled.area.HA",
+                                               "Weight",
+                                               "Reporting.Unit.Restricted")]
 
-      pointsweights.current <- pts.spdf@data
+        ## When there are NaNs in the calculated fields, replace them with 0
+        stratum.summary <- replace_na(stratum.summary, replace = list(Prop.dsgn.pts.obsrvd = 0, Sampled.area.HA = 0, Weight = 0))
 
-      ## If there are points to work with, do this
-      if (nrow(pointsweights.current) > 0) {
-        ## If a point had a target fate, assign the calculates weight
-        pointsweights.current$WGT[pointsweights.current[, fatefieldname] %in% target.values] <- wgt
-        ## If a point had a non-target or unknown designation, assign 0 as the weight
-        pointsweights.current$WGT[pointsweights.current[, fatefieldname] %in% c(nontarget.values, unknown.values, inaccessible.values, unneeded.values)] <- 0
+        ## rbind() to the master.df so we can spring it out of the loop and return it from the function
+        master.df <- rbind(master.df, stratum.summary)
 
+        ## Add the weights to the points
+        for (stratum in stratum.summary$Stratum) {
+          working.pts$WGT[(working.pts$FINAL_DESIG %in% target.values) & working.pts[, "WEIGHT.ID"] == stratum] <- stratum.summary$Weight[stratum.summary$Stratum == stratum]
+        }
+
+        ## All the unassigned weights get converted to 0
+        working.pts <- replace_na(working.pts, replace = list(WGT = 0))
+
+        pointsweights.current <- working.pts[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE")]
+
+        ## OKAY. So, when reporting units were used to restrict the design[s], we need to adjust the weights appropriately by weight categories.
+        ## Luckily, the frame.spdf that we made waaaaay back when the reporting units were applied already represents those and frame.spdf will have the field UNIQUE.IDENTIFIER only if it went through that process
+        ## If the field UNIQUE.IDENTIFIER is present, we know that we can use frame.spdf to adjust the weights on the points
         if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
           pointsweights.current <- weight.adjust(points = pointsweights.current,
                                                  wgtcat.spdf = frame.spdf,
@@ -552,15 +495,74 @@ weight <- function(dd.import, ## The output from read.dd()
           ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame
           pointsweights.current$ADJWGT <- NA
         }
-
-
         ## Add the point SPDF now that it's gotten the extra fields to the list of point SPDFs so we can use it after the loop
-        pointweights.df <- rbind(pointweights.df, pointsweights.current[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE", "ADJWGT")])
+        pointweights.df <- rbind(pointweights.df, pointsweights.current[, names(pointsweights.current)[names(pointsweights.current) != "PLOTKEY"]])
+      } else if (!is.null(frame.spdf)) {
+        ## If there aren't strata available to us in a useful format in the DD, we'll just weight by the sample frame
+        ## since we lack stratification, use the sample frame to derive spatial extent in hectares
+        area <- sum(frame.spdf@data$AREA.HA)
+
+        ## derive weights
+        Pprop <- 1 ## initialize - proportion of 1.0 means there were no nonresponses
+        wgt <- 0 ## initialize wgt
+        Sarea <- 0 ## initialize actual sampled area
+        if (sum > 0) {
+          Pprop <- target.count/sum ## realized proportion of the stratum that was sampled (observed/total no. of points)
+        }
+        if (target.count > 0) {
+          wgt   <- (Pprop*area)/target.count  ## (The proportion of the total area that was sampled * total area [ha]) divided by the no. of observed points
+          Sarea <-  Pprop*area	      ## Record the actual area(ha) sampled - (proportional reduction * stratum area)
+        }
+
+        ##Tabulate key information for this DD
+        temp.df <- data.frame(DD = s,
+                              Stratum = "Sample Frame",
+                              Total.pts = sum,
+                              Observed.pts = target.count,
+                              Unsampled.pts.nontarget = nontarget.count,
+                              Unsampled.pts.inaccessible = inaccessible.count,
+                              Unsampled.pts.unneeded = unneeded.count,
+                              Unsampled.pts.unknown = unknown.count,
+                              Area.HA = area,
+                              Prop.dsgn.pts.obsrvd = Pprop,
+                              Sampled.area.HA = Sarea,
+                              Weight = wgt,
+                              Reporting.Unit.Restricted = F,
+                              stringsAsFactors = F)
+        if (!is.null(reporting.units.spdf)) {
+          temp.df$Reporting.Unit.Restricted <- T
+        }
+
+        ## Bind this stratum's information to the master.df initialized outside and before the loop started
+        master.df <- rbind(master.df, temp.df)
+
+        pointsweights.current <- pts.spdf@data
+
+        ## If there are points to work with, do this
+        if (nrow(pointsweights.current) > 0) {
+          ## If a point had a target fate, assign the calculates weight
+          pointsweights.current$WGT[pointsweights.current[, fatefieldname] %in% target.values] <- wgt
+          ## If a point had a non-target or unknown designation, assign 0 as the weight
+          pointsweights.current$WGT[pointsweights.current[, fatefieldname] %in% c(nontarget.values, unknown.values, inaccessible.values, unneeded.values)] <- 0
+
+          if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
+            pointsweights.current <- weight.adjust(points = pointsweights.current,
+                                                   wgtcat.spdf = frame.spdf,
+                                                   spdf.area.field = "AREA.HA.UNIT.SUM",
+                                                   spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
+            pointsweights.current <- replace_na(pointsweights.current, replace = list(ADJWGT = 0))
+          } else {
+            ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame
+            pointsweights.current$ADJWGT <- NA
+          }
+
+          names(pointsweights.current)[] <- c("LONGITUDE", "LATITUDE")
+          ## Add the point SPDF now that it's gotten the extra fields to the list of point SPDFs so we can use it after the loop
+          pointweights.df <- rbind(pointweights.df, pointsweights.current[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE", "ADJWGT")])
+        }
       }
     }
-
     ## Add this DD to the vector that we use to screen out points from consideration above
-    dd.completed <- c(dd.completed, s)
   }
 
   ## Diagnostics in case something goes pear-shaped

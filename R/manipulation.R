@@ -326,11 +326,11 @@ add.coords <- function(spdf,
   projNAD83 <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
   projAL <- CRS("+proj=aea")
   if (current.proj) {
-    coords <- spdf@coords
+    coords <- spdf@coords %>% as.data.frame()
     if(!is.null(xynames)) {
       names(coords) <- xynames
     }
-    spdf@data <- cbind(spdf@data, spdf@coords)
+    spdf@data <- cbind(spdf@data, coords)
   }
   if (nad83) {
     coords <- spdf %>% spTransform(projNAD83) %>% .@coords

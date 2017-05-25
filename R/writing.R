@@ -78,7 +78,37 @@ write.shapefile <- function(spdf,
 
   writeOGR(obj = output,
            dsn = out.path,
-           layer = filename(name, type),
+           layer = filename.aim(name, type),
            driver = "ESRI Shapefile",
            overwrite_layer = T)
+}
+
+write.benchmarkshp <- function(points.benchmarked, out.path, name){
+  points.benchmarked %>% dplyr::select(-VALUE) %>% split(.$MANAGEMENT.QUESTION) %>%
+    purrr::map(~ tidyr::spread(data = .x, key = INDICATOR, value = EVALUATION.CATEGORY) %>%
+                 merge(x = tdat.spdf %>%
+                         dplyr::select(starts_with(match = "plotid", ignore.case = T),
+                                       starts_with(match = "primarykey", ignore.case = T)) %>%
+                         setNames(object = .,
+                                  stringr::str_to_upper(names(.))),
+                       y = .,
+                       all.x = F,
+                       all.y = T
+                 ) %>%
+                 dplyr::select(-starts_with(match = "coords", ignore.case = T)) %>%
+                 rgdal::writeOGR(obj = .,
+                                 dsn = paste0(out.path),
+                                 layer = filename.aim(name, type = unique(.@data$MANAGEMENT.QUESTION)),
+                                 driver = "ESRI Shapefile",
+                                 overwrite_layer = T)
+    )
+  benchmark.indicators.lut <- data.frame("INDICATOR" = points.benchmarked[, "INDICATOR"], stringsAsFactors = F) %>%
+    dplyr::distinct() %>% dplyr::mutate(INDICATOR.ABBREVIATION = abbreviate(INDICATOR, minlength = 7))
+  write.csv(benchmark.indicators.lut,
+            paste0(out.path, "/",
+                   filename.aim(name,
+                                type = "benchmark_shapefile_lookup",
+                                extension = "csv")
+            )
+  )
 }

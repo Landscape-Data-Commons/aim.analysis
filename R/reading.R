@@ -244,3 +244,26 @@ read.tdat <- function(tdat.path, tdat.name){
   tdat.spdf <- sp::merge(tdat.terrestrial.spdf, tdat.remote.spdf)
   return(tdat.spdf)
 }
+
+#' Read in plot tracking Excel files
+#' @description Imports plot tracking Excel files.
+#' @param filename A character vector of the filename (including extension) of the project tracking Excel file to import. If not using the \code{path} argument, the filename should include the entire filepath.
+#' @param path Optional string specifying a the project tracking Excel file in \code{filename} to read in. This will be prepended to the value in \code{filename}. If the filepath is included in the string \code{filename}, do not provide this.
+#' @export
+read.tracking <- function(filename = "", path = "") {
+  if (path != "") {
+    path <- paste0(path, "/")
+  }
+  tracking <- readxl::read_excel(path = paste0(path, filename),
+                                 sheet = 1,
+                                 col_types = c("text"),
+                                 # col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "date", "text", "text", "date", "numeric", "numeric"),
+                                 skip = 1
+  )
+
+  for (field in names(tracking)[grepl(x = names(tracking), pattern = "date", ignore.case = T) & !grepl(x = names(tracking), pattern = " and ", ignore.case = T)]) {
+    tracking[, field] <- lubridate::as_date(as.character(tracking[[field]]))
+  }
+
+  return(tracking)
+}

@@ -16,8 +16,9 @@ apply.tracking(filenames, path = "", dd.list, dd.names = c(""), tdat,
 
 \item{dd.names}{An optional character string vector of Design Database names from \code{dd.list} to compare against the plot tracking Excel files. If not provided, all of the Design Databases represented in \code{dd.list} will be compared and updated.}
 
-\item{tdat}{Output from \code{read.tdat()}.
-#' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
+\item{tdat}{Output from \code{read.tdat()}.}
+
+\item{target.values}{Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
 
 \item{deleteoverdraw}{Logical. If \code{T} then unsampled overdraw points will be dropped. Defaults to \code{T}.}
 }

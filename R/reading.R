@@ -93,10 +93,10 @@ read.dd <- function(src = "", ## A filepath as a string
   safe.readOGR <- safely(rgdal::readOGR, otherwise = NULL)
 
   ## Sanitization
-  func <- str_to_upper(func)
+  func <- stringr::str_to_upper(func)
   target.values <- c(target.values,
                      "Target Sampled",
-                     "TS") %>% unique() %>% str_to_upper()
+                     "TS") %>% unique() %>% stringr::str_to_upper()
 
   ## Checking that func is a valid value
   if (!(func %in% c("ARCGISBINDING", "READOGR"))) {
@@ -124,7 +124,7 @@ read.dd <- function(src = "", ## A filepath as a string
                sf <- spTransform(sf, projection)
              }
              ## Sanitize the column names
-             names(sf@data) <- str_to_upper(names(sf@data))
+             names(sf@data) <- stringr::str_to_upper(names(sf@data))
              ## Stores the current sf SPDF with the name sf.[DD name]
              assign(x = paste("sf", s, sep = "."), value = sf)
 
@@ -134,7 +134,7 @@ read.dd <- function(src = "", ## A filepath as a string
                                     stringsAsFactors = F)[[1]]
              if (!is.null(strata)) {
                strata <- spTransform(strata, projection)
-               names(strata@data) <- str_to_upper(names(strata@data))
+               names(strata@data) <- stringr::str_to_upper(names(strata@data))
              }
              assign(x = paste("strata", s, sep = "."), value = strata)
 
@@ -145,7 +145,7 @@ read.dd <- function(src = "", ## A filepath as a string
              if (!is.null(points)) {
                points <- spTransform(points, projection)
              }
-             names(points@data) <- str_to_upper(names(points@data))
+             names(points@data) <- stringr::str_to_upper(names(points@data))
              ## Strip out points with an NA value in the FINAL_DESIG field if asked
              if (omitNAdesignations) {
                points <- points[!is.na(points@data$FINAL_DESIG)]
@@ -162,7 +162,7 @@ read.dd <- function(src = "", ## A filepath as a string
                     value = sf %>% arc.open() %>% arc.select %>%
                       SpatialPolygonsDataFrame(Sr = {arc.shape(.) %>% arc.shape2sp()}, data = .) %>% spTransform(projection)
              )
-             eval(parse(text = paste0("names(", paste("sf", s, sep = "."), ") <- str_to_upper(names(", paste("sf", s, sep = "."), "))")))
+             eval(parse(text = paste0("names(", paste("sf", s, sep = "."), ") <- stringr::str_to_upper(names(", paste("sf", s, sep = "."), "))")))
 
              #Read in the Strata
              #first check for strata
@@ -179,7 +179,7 @@ read.dd <- function(src = "", ## A filepath as a string
                       value = strata %>% arc.open() %>% arc.select %>%
                         SpatialPolygonsDataFrame(Sr = {arc.shape(.) %>% arc.shape2sp()},
                                                  data = .) %>% spTransform(projection))
-               eval(parse(text = paste0("names(", paste("strata", s, sep = "."), ") <- str_to_upper(names(", paste("strata", s, sep = "."), "))")))
+               eval(parse(text = paste0("names(", paste("strata", s, sep = "."), ") <- stringr::str_to_upper(names(", paste("strata", s, sep = "."), "))")))
 
              } else {
                ## If the stratification feature class is empty, we'll just save ourselves some pain and store NULL
@@ -195,7 +195,7 @@ read.dd <- function(src = "", ## A filepath as a string
                     value = pts %>% arc.open() %>% arc.select %>%
                       #read in the feature class, notice the difference between Polygons and points (different function with different arguments needs)
                       SpatialPointsDataFrame(coords = {arc.shape(.) %>% arc.shape2sp()}) %>% spTransform(projection))
-             eval(parse(text = paste0("names(", paste("pts", s, sep = "."), ") <- str_to_upper(names(", paste("pts", s, sep = "."), "))")))
+             eval(parse(text = paste0("names(", paste("pts", s, sep = "."), ") <- stringr::str_to_upper(names(", paste("pts", s, sep = "."), "))")))
              ## Strip out points with an NA value in the FINAL_DESIG field if asked
              if (omitNAdesignation) {
                eval(parse(text = paste0(paste("pts", s, sep = "."), " <- ", paste("pts", s, sep = "."), "[!is.na(", paste("pts", s, sep = "."), "@data$FINAL_DESIG)]")))
@@ -209,15 +209,15 @@ read.dd <- function(src = "", ## A filepath as a string
   ## then wraps that in "list()" and runs the whole string through parse() and eval() to execute it, creating a list from those SPDFs
   sf.list <- eval(parse(text = paste0("list(`", paste(ls()[grepl(x = ls(), pattern = "^sf\\.") & !grepl(x = ls(), pattern = "^sf.list$")], collapse = "`, `"), "`)")))
   ## Rename them with the correct DD name because they'll be in the same order that ls() returned them earlier. Also, we need to remove sf.list itself
-  names(sf.list) <- ls()[grepl(x = ls(), pattern = "^sf\\.") & !grepl(x = ls(), pattern = "^sf.list$")] %>% str_replace(pattern = "^sf\\.", replacement = "")
+  names(sf.list) <- ls()[grepl(x = ls(), pattern = "^sf\\.") & !grepl(x = ls(), pattern = "^sf.list$")] %>% stringr::str_replace(pattern = "^sf\\.", replacement = "")
 
   ## Creating the named list of all the pts SPDFs created by the loop
   pts.list <- eval(parse(text = paste0("list(`", paste(ls()[grepl(x = ls(), pattern = "^pts\\.") & !grepl(x = ls(), pattern = "^pts.list$")], collapse = "`, `"), "`)")))
-  names(pts.list) <- ls()[grepl(x = ls(), pattern = "^pts\\.") & !grepl(x = ls(), pattern = "^pts.list$")] %>% str_replace(pattern = "^pts\\.", replacement = "")
+  names(pts.list) <- ls()[grepl(x = ls(), pattern = "^pts\\.") & !grepl(x = ls(), pattern = "^pts.list$")] %>% stringr::str_replace(pattern = "^pts\\.", replacement = "")
 
   ## Creating the named list of all the strata SPDFs created by the loop
   strata.list <- eval(parse(text = paste0("list(`", paste(ls()[grepl(x = ls(), pattern = "^strata\\.") & !grepl(x = ls(), pattern = "^strata.list$")], collapse = "`, `"), "`)")))
-  names(strata.list) <- ls()[grepl(x = ls(), pattern = "^strata\\.") & !grepl(x = ls(), pattern = "^strata.list$")] %>% str_replace(pattern = "^strata\\.", replacement = "")
+  names(strata.list) <- ls()[grepl(x = ls(), pattern = "^strata\\.") & !grepl(x = ls(), pattern = "^strata.list$")] %>% stringr::str_replace(pattern = "^strata\\.", replacement = "")
 
   output <- list(sf = sf.list, pts = pts.list, strata = strata.list)
 

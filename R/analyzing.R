@@ -93,7 +93,7 @@ analyze <- function(evaluated.points,
     ## The data. A data frame with siteID and columns for each indicator (with the evaluation category strings as factors)
     aim.datacat <- data.wide.current %>% dplyr::select(siteID, matches("\\.ind$")) %>% distinct()
     ## Fix the names of the indicators so that the output doesn't include the ".ind" suffix which interferes with the automated report knitting
-    names(aim.datacat) <- names(aim.datacat) %>% str_replace_all("\\.ind$", "")
+    names(aim.datacat) <- names(aim.datacat) %>% stringr::str_replace_all("\\.ind$", "")
 
     ## TODO: Think abot how to get sum of wgt by stratum and set up a stratified aim.popsize list
     ## The areas should be the sum of the weights, right?

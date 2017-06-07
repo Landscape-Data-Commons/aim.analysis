@@ -42,7 +42,7 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   ## Making a tall version of the TerrADat data frame
   ## Indicators listed in order of appearance in TerrADat, line breaks inserted at thematic breaks
   tdat.tall <- eval(parse(text = paste0("gather(tdat, Indicator, Value, ",
-                                        paste(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)],collapse = ", ") %>% str_replace_all("'", ""),
+                                        paste(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)],collapse = ", ") %>% stringr::str_replace_all("'", ""),
                                         ")"
   )
   ))
@@ -82,6 +82,6 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   ## Also restricting this to the relevant columns that are required for the next step
   output <- tdat.tall.benched[tdat.tall.benched$MEETING, c("PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY")] %>%
     filter(!is.na(PRIMARYKEY))
-  names(output) <- str_to_upper(names(output))
+  names(output) <- stringr::str_to_upper(names(output))
   return(output)
 }

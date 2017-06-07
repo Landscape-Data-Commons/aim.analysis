@@ -11,14 +11,14 @@ validate.keys <- function(dd.raw, target.values = c("Target Sampled",
 
   target.values <- c(target.values,
                      "Target Sampled",
-                     "TS") %>% unique() %>% str_to_upper()
+                     "TS") %>% unique() %>% stringr::str_to_upper()
 
   ## Check each design database in turn
   for (dd in names(dd.raw$pts)) {
     ## Get the @data slot from the SPDF for the points for this design
     pts.df <- dd.raw$pts[[dd]] %>% .@data
     ## Sanitize the field names
-    names(pts.df) <- str_to_upper(names(pts.df))
+    names(pts.df) <-stringr::str_to_upper(names(pts.df))
 
     ## Grab all the lines where the point was sampled, but there's not a correct PrimaryKey value
     errors.missing.tdat <- pts.df %>%

@@ -355,9 +355,9 @@ add.dates <- function(pts){
   }
   ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
   pts$YEAR[grepl(x = pts$PANEL, pattern = "\\d{4}$")] <- pts$PANEL %>%
-    str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
+    stringr::str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
   pts$YEAR[grepl(x = pts$PANEL, pattern = "^\\d{4}")] <- pts$PANEL %>%
-    str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
+    stringr::str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
 
   ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
   pts$YEAR[!is.na(pts$DT_VST)] <- pts$DT_VST[!is.na(pts$DT_VST)]%>% lubridate::as_date() %>% format("%Y") %>% as.numeric()
@@ -427,7 +427,7 @@ apply.tracking <- function(filenames,
   ## Sanitize and add the target values
   target.values <- c(target.values,
                      "Target Sampled",
-                     "TS") %>% str_to_upper() %>% unique()
+                     "TS") %>% stringr::str_to_upper() %>% unique()
 
   ## Read in the plot tracking Excel files, renaming variables, and restricting to needed variables and combine them
   tracking <- lapply(filenames,

@@ -50,12 +50,12 @@ weight <- function(dd.import, ## The output from read.dd()
 ){
   ## Sanitization
   if (!is.null(reporting.units.spdf)) {
-    names(reporting.units.spdf@data) <- str_to_upper(names(reporting.units.spdf@data))
+    names(reporting.units.spdf@data) <- stringr::str_to_upper(names(reporting.units.spdf@data))
   }
-  fatefieldname <- str_to_upper(fatefieldname)
-  pointstratumfieldname <- str_to_upper(pointstratumfieldname)
-  designstratumfield <- str_to_upper(designstratumfield)
-  reportingunitfield <- str_to_upper(reportingunitfield)
+  fatefieldname <- stringr::str_to_upper(fatefieldname)
+  pointstratumfieldname <- stringr::str_to_upper(pointstratumfieldname)
+  designstratumfield <- stringr::str_to_upper(designstratumfield)
+  reportingunitfield <- stringr::str_to_upper(reportingunitfield)
 
   ## Initialize data frame for stratum info. The results from each loop end up bound to this
   master.df <- NULL
@@ -69,19 +69,19 @@ weight <- function(dd.import, ## The output from read.dd()
   ## Whatever values are provided in the function arguments get concatenated and then we keep only the unique values from that result
   target.values <- c(target.values,
                      "Target Sampled",
-                     "TS") %>% unique() %>% str_to_upper()
+                     "TS") %>% unique() %>% stringr::str_to_upper()
   unknown.values <- c(unknown.values,
                       "Unknown",
-                      "UNK") %>% unique() %>% str_to_upper()
+                      "UNK") %>% unique() %>% stringr::str_to_upper()
   nontarget.values <- c(nontarget.values,
                         "Non-Target",
                         "NT",
-                        NA) %>% unique() %>% str_to_upper()
+                        NA) %>% unique() %>% stringr::str_to_upper()
   inaccessible.values <- c(inaccessible.values,
                            "Inaccessible",
-                           "IA") %>% unique() %>% str_to_upper()
+                           "IA") %>% unique() %>% stringr::str_to_upper()
   unneeded.values <- c(unneeded.values,
-                       "Not Needed") %>% unique() %>% str_to_upper()
+                       "Not Needed") %>% unique() %>% stringr::str_to_upper()
 
 
 
@@ -93,7 +93,7 @@ weight <- function(dd.import, ## The output from read.dd()
     ## First, bring in the relevant SPDFs
     ## Get the pts file in dd.src that corresponds to s and call it pts.spdf, then create and init the WGT attribute
     pts.spdf <- dd.import$pts[[s]]
-    pts.spdf@data[, fatefieldname] <- str_to_upper(pts.spdf@data[, fatefieldname])
+    pts.spdf@data[, fatefieldname] <- stringr::str_to_upper(pts.spdf@data[, fatefieldname])
     pts.spdf@data$WGT <- 0
     ## Add in the REPORTING.UNITS field with the value "Unspecified" if it's not there already.
     ## The only way it'd already be there is if the points were restricted coming in, which is currently impossible
@@ -320,7 +320,7 @@ weight <- function(dd.import, ## The output from read.dd()
       print(paste("Calculating the weights for", s))
 
       ## Sanitize
-      pts.spdf@data[, fatefieldname] <- str_to_upper(pts.spdf@data[, fatefieldname])
+      pts.spdf@data[, fatefieldname] <- stringr::str_to_upper(pts.spdf@data[, fatefieldname])
 
       ## Now that the clipping and reassigning is all completed, we can start calculating weights
       ## The objects are used in the event that there are no strata in SPDFs that we can use and resort to using the sample frame
@@ -352,12 +352,12 @@ weight <- function(dd.import, ## The output from read.dd()
 
         ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
         working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "\\d{4}$")] <- working.pts$PANEL %>%
-          str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
+          stringr::str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
         working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "^\\d{4}")] <- working.pts$PANEL %>%
-          str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
+          stringr::str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
 
         ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
-        working.pts$YEAR[!is.na(working.pts$DT_VST)] <- working.pts$DT_VST[!is.na(working.pts$DT_VST)] %>% str_extract(string = ., pattern = "^\\d{4}") %>% as.numeric()
+        working.pts$YEAR[!is.na(working.pts$DT_VST)] <- working.pts$DT_VST[!is.na(working.pts$DT_VST)] %>% stringr::str_extract(string = ., pattern = "^\\d{4}") %>% as.numeric()
 
         ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
         working.pts <- working.pts[, (1:length(names(working.pts)))] %>% dplyr::select(-ends_with(match = ".1"))
@@ -403,8 +403,8 @@ weight <- function(dd.import, ## The output from read.dd()
         ## Only asking for summarize() to operate on those columns that exist because if, for example, there's no Unsampled.pts.unneeded column and we call it here, the function will crash and burn
         stratum.summary <- eval(parse(text = paste0("pts.summary.wide %>% group_by(DD,", "WEIGHT.ID", ", YEAR) %>% dplyr::summarize(sum(", paste0(extant.counts, collapse = "), sum("), "))")))
         ## Fix the naming becaue it's easier to do it after the fact than write paste() so that it builds names in in the line above
-        names(stratum.summary) <- str_replace_all(string = names(stratum.summary), pattern = "^sum\\(", replacement = "")
-        names(stratum.summary) <- str_replace_all(string = names(stratum.summary), pattern = "\\)$", replacement = "")
+        names(stratum.summary) <- stringr::str_replace_all(string = names(stratum.summary), pattern = "^sum\\(", replacement = "")
+        names(stratum.summary) <- stringr::str_replace_all(string = names(stratum.summary), pattern = "\\)$", replacement = "")
 
         ## Add in the missing columns if some point categories weren't represented
         for (name in c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown")[!(c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown") %in% names(stratum.summary))]) {

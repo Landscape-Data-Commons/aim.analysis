@@ -52,7 +52,7 @@ write.shapefile <- function(spdf,
 
   if (dd) {
     spdf.list <- spdf[[dd.list]][[1]]
-    if (length(names(spdf.list[[dd.list]])) > 1) {
+    if (length(names(spdf[[dd.list]])) > 1) {
       for (design in names(spdf[[dd.list]])[-1]) {
         spdf.list <- c(spdf.list, spdf[[dd.list]][[design]])
       }
@@ -61,11 +61,11 @@ write.shapefile <- function(spdf,
     spdf.list <- spdf
   }
 
-  if ((lapply(spdf.list, FUN = class) %>% unlist() %>% unname() %>% unique() %>% length()) != 1) {
-    stop("When providing multiple SPDFs, they must either all be SpatialPolygonsDataFrames or all SpatialPointsDataFrames.")
-  }
 
-  if (length(spdf.list) > 1) {
+  if (class(spdf.list) == "list" & length(spdf.list) > 1) {
+    if ((lapply(spdf.list, FUN = class) %>% unlist() %>% unname() %>% unique() %>% length()) != 1) {
+      stop("When providing multiple SPDFs, they must either all be SpatialPolygonsDataFrames or all SpatialPointsDataFrames.")
+    }
     if (union & class(spdf.list[[1]])[1] == "SpatialPolygonsDataFrame") {
       spdf.union <- spdf.list[[1]]
       for (n in 2:length(spdf.list)) {

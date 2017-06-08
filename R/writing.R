@@ -76,7 +76,7 @@ write.shapefile <- function(spdf,
     output <- spdf.bind
   }
 
-  writeOGR(obj = output,
+  rgdal::writeOGR(obj = output,
            dsn = out.path,
            layer = filename.aim(name, type),
            driver = "ESRI Shapefile",

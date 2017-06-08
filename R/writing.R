@@ -52,8 +52,10 @@ write.shapefile <- function(spdf,
 
   if (dd) {
     spdf.list <- spdf[[dd.list]][[1]]
-    for (design in names(spdf)[-1]) {
-      spdf.list <- c(spdf.list, spdf[[dd.list]][[design]])
+    if (length(names(spdf.list[[dd.list]])) > 1) {
+      for (design in names(spdf[[dd.list]])[-1]) {
+        spdf.list <- c(spdf.list, spdf[[dd.list]][[design]])
+      }
     }
   } else {
     spdf.list <- spdf

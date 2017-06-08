@@ -23,8 +23,8 @@ analyze <- function(evaluated.points,
   names(evaluated.points) <- stringr::str_to_upper(names(evaluated.points))
   names(point.weights) <- stringr::str_to_upper(names(point.weights))
   ## Limiting to points that have valid PrimaryKey values
-  point.weights <- point.weights %>% filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
-  evaluated.points <- evaluated.points %>% filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
+  point.weights <- point.weights %>% dplyr::filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
+  evaluated.points <- evaluated.points %>% dplyr::filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
   if (is.null(reportingunit.type)){
     reportingunit.type <- NA
   }
@@ -57,10 +57,10 @@ analyze <- function(evaluated.points,
 
     ## Make the data set wide because that's the format that makes our lives easier for cat.analysis()
     ## Need to remove the columns Value and so that each plot ends up existing on just one row per evaluation stratum it has membership in
-    data.wide.current <- spread(data = data.current %>% dplyr::select(-VALUE, -EVALUATION.STRATUM), ## Data frame to make wide
-                                key = INDICATOR, ## Column that contains the column names
-                                value = EVALUATION.CATEGORY, ## Column that contains the values
-                                fill = NA ## Where there's an NA, fill it with 0
+    data.wide.current <- tidyr::spread(data = data.current %>% dplyr::select(-VALUE, -EVALUATION.STRATUM), ## Data frame to make wide
+                                       key = INDICATOR, ## Column that contains the column names
+                                       value = EVALUATION.CATEGORY, ## Column that contains the values
+                                       fill = NA ## Where there's an NA, fill it with 0
     )
 
     ## Because it's easier to do this now while the data frame is still just one object and not four or five
@@ -97,7 +97,7 @@ analyze <- function(evaluated.points,
 
     ## TODO: Think abot how to get sum of wgt by stratum and set up a stratified aim.popsize list
     ## The areas should be the sum of the weights, right?
-    areas.df <- data.wide.current %>% group_by(Reporting.Unit) %>% dplyr::summarize(area = sum(wgt))
+    areas.df <- data.wide.current %>% dplyr::group_by(Reporting.Unit) %>% dplyr::summarize(area = sum(wgt))
 
     ## So we're converting them to a list
     area.list <- areas.df$area %>% as.list()
@@ -112,7 +112,11 @@ analyze <- function(evaluated.points,
     warn.df <- NULL
 
     ### Now run cat.analysis
-    aim.analysis <- cat.analysis(sites = aim.sites, subpop = aim.subpop, design = aim.design, data.cat = aim.datacat, popsize = aim.popsize)
+    aim.analysis <- spsurvey::cat.analysis(sites = aim.sites,
+                                           subpop = aim.subpop,
+                                           design = aim.design,
+                                           data.cat = aim.datacat,
+                                           popsize = aim.popsize)
 
     ## Add in the reporting unit type
     aim.analysis$Type <- as.character(aim.analysis$Type)

@@ -256,10 +256,10 @@ weight <- function(dd.import, ## The output from read.dd()
 
               frame.spdf.temp <- tryCatch(
                 expr = {
-                  set_RGEOS_dropSlivers(sliverdrop)
-                  set_RGEOS_warnSlivers(sliverwarn)
-                  set_RGEOS_polyThreshold(sliverthreshold)
-                  print(paste0("Attempting using set_RGEOS_dropslivers(", sliverdrop, ") and set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
+                  rgeos::set_RGEOS_dropSlivers(sliverdrop)
+                  rgeos::set_RGEOS_warnSlivers(sliverwarn)
+                  rgeos::set_RGEOS_polyThreshold(sliverthreshold)
+                  print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
                   gDifference(spgeom1 = frame.spdf.temp,
                               spgeom2 = frame.spdf,
                               drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
@@ -270,18 +270,18 @@ weight <- function(dd.import, ## The output from read.dd()
                   if (grepl(x = e, pattern = "cannot get a slot")) {
                     print("This is extremely problematic (unless it means your whole frame was correctly erased), but there's no automated error handling for it.")
                   } else if (grepl(x = e, pattern = "few points in geometry")) {
-                    print(paste0("Attempting again with set_RGEOS_dropslivers(T), set_RGEOS_warnslivers(T), and set_RGEOS_polyThresholds(", sliverthreshold, ")"))
-                    set_RGEOS_dropSlivers(T)
-                    set_RGEOS_warnSlivers(T)
-                    set_RGEOS_polyThreshold(sliverthreshold)
+                    print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(T), rgeos::set_RGEOS_warnslivers(T), and rgeos::set_RGEOS_polyThresholds(", sliverthreshold, ")"))
+                    rgeos::set_RGEOS_dropSlivers(T)
+                    rgeos::set_RGEOS_warnSlivers(T)
+                    rgeos::set_RGEOS_polyThreshold(sliverthreshold)
                     gDifference(spgeom1 = frame.spdf.temp,
                                 spgeom2 = frame.spdf,
                                 drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
                   } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
-                    print(paste0("Attempting again with set_RGEOS_dropslivers(F) and set_RGEOS_warnslivers(F)"))
-                    set_RGEOS_dropSlivers(F)
-                    set_RGEOS_warnSlivers(F)
-                    set_RGEOS_polyThreshold(0)
+                    print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(F) and rgeos::set_RGEOS_warnslivers(F)"))
+                    rgeos::set_RGEOS_dropSlivers(F)
+                    rgeos::set_RGEOS_warnSlivers(F)
+                    rgeos::set_RGEOS_polyThreshold(0)
                     gDifference(spgeom1 = frame.spdf.temp,
                                 spgeom2 = frame.spdf,
                                 drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
@@ -289,9 +289,9 @@ weight <- function(dd.import, ## The output from read.dd()
                 }
               )
 
-              set_RGEOS_dropSlivers(current.drop)
-              set_RGEOS_warnSlivers(current.warn)
-              set_RGEOS_polyThreshold(current.tol)
+              rgeos::set_RGEOS_dropSlivers(current.drop)
+              rgeos::set_RGEOS_warnSlivers(current.warn)
+              rgeos::set_RGEOS_polyThreshold(current.tol)
 
               print("Erasure complete or at least attempted")
 

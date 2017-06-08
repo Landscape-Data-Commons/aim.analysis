@@ -171,22 +171,22 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
              },
              error = function(e){
                if (grepl(x = e, pattern = "few points in geometry")) {
-                 set_RGEOS_dropSlivers(T)
-                 set_RGEOS_warnSlivers(T)
-                 set_RGEOS_polyThreshold(0.01)
+                 rgeos::set_RGEOS_dropSlivers(T)
+                 rgeos::set_RGEOS_warnSlivers(T)
+                 rgeos::set_RGEOS_polyThreshold(0.01)
                } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
-                 set_RGEOS_dropSlivers(F)
-                 set_RGEOS_warnSlivers(F)
-                 set_RGEOS_polyThreshold(0)
+                 rgeos::set_RGEOS_dropSlivers(F)
+                 rgeos::set_RGEOS_warnSlivers(F)
+                 rgeos::set_RGEOS_polyThreshold(0)
                }
 
                raster::intersect(x = spdf1, y = spdf2)
              }
            )
 
-           set_RGEOS_dropSlivers(current.drop)
-           set_RGEOS_warnSlivers(current.warn)
-           set_RGEOS_polyThreshold(current.tol)
+           rgeos::set_RGEOS_dropSlivers(current.drop)
+           rgeos::set_RGEOS_warnSlivers(current.warn)
+           rgeos::set_RGEOS_polyThreshold(current.tol)
          })
 
 

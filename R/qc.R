@@ -3,6 +3,7 @@
 #' @description Returns a data frame of all the primary keys and plot IDs of plots in imported design databases that had a valid primary key but were not flagged as sampled or were flagged as sampled but didn't have a valid primary key.
 #' @param dd.raw The output from \code{read.dd()}.
 #' @param target.values A character vector of the point fates considered sampled. Will always include \code{"Target Sampled"} and \code{"TS"}.
+#' @return
 #' @export
 validate.keys <- function(dd.raw, target.values = c("Target Sampled",
                                                     "TS")){
@@ -46,6 +47,7 @@ validate.keys <- function(dd.raw, target.values = c("Target Sampled",
 
   if (nrow(key.errors.df) < 1) {
     message("No points designated as 'target sampled' were missing valid TerrADat primary key values and no points with valid primary keys were designated as anything but 'target sampled. This is a good thing and your output should be empty.'")
+    return(NULL)
   }
   return(key.errors.df)
 }

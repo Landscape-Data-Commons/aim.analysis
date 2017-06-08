@@ -51,9 +51,9 @@ write.shapefile <- function(spdf,
                             out.path){
 
   if (dd) {
-    spdf.list <- spdf[[1]][[dd.list]]
+    spdf.list <- spdf[[dd.list]][[1]]
     for (design in names(spdf)[-1]) {
-      spdf.list <- c(spdf.list, spdf[[design]][[dd.list]])
+      spdf.list <- c(spdf.list, spdf[[dd.list]][[design]])
     }
   } else {
     spdf.list <- spdf
@@ -63,19 +63,24 @@ write.shapefile <- function(spdf,
     stop("When providing multiple SPDFs, they must either all be SpatialPolygonsDataFrames or all SpatialPointsDataFrames.")
   }
 
-  if (union & class(spdf.list[[1]])[1] == "SpatialPolygonsDataFrame") {
-    spdf.union <- spdf.list[[1]]
-    for (n in 2:length(spdf.list)) {
-      spdf.union <- raster::union(spdf.union, spdf.list[[n]])
+  if (length(spdf.list) > 1) {
+    if (union & class(spdf.list[[1]])[1] == "SpatialPolygonsDataFrame") {
+      spdf.union <- spdf.list[[1]]
+      for (n in 2:length(spdf.list)) {
+        spdf.union <- raster::union(spdf.union, spdf.list[[n]])
+      }
+      output <- spdf.union
+    } else {
+      spdf.bind <- spdf.list[[1]]
+      for (n in 2:length(spdf.list)) {
+        spdf.bind <- rbind(spdf.bind, spdf.list[[n]])
+      }
+      output <- spdf.bind
     }
-    output <- spdf.union
   } else {
-    spdf.bind <- spdf.list[[1]]
-    for (n in 2:length(spdf.list)) {
-      spdf.bind <- rbind(spdf.bind, spdf.list[[n]])
-    }
-    output <- spdf.bind
+    output <- spdf.list
   }
+
 
   rgdal::writeOGR(obj = output,
            dsn = out.path,

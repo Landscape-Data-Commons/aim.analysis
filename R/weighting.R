@@ -380,7 +380,7 @@ weight <- function(dd.import, ## The output from read.dd()
         working.pts$key[working.pts$FINAL_DESIG %in% unknown.values] <- "Unsampled.pts.unknown"
 
         ## Filter out points from THE FUTURE
-        working.pts <- working.pts %>% filter(!(YEAR > as.numeric(str_extract(string = base::date(), pattern = "\\d{4}"))))
+        working.pts <- working.pts %>% filter(!(YEAR > as.numeric(stringr::str_extract(string = base::date(), pattern = "\\d{4}"))))
 
         ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
         # "TERRA_PRJCT_AREA_ID",

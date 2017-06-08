@@ -46,7 +46,7 @@ validate.keys <- function(dd.raw, target.values = c("Target Sampled",
   }
 
   if (nrow(key.errors.df) < 1) {
-    message("No points designated as 'target sampled' were missing valid TerrADat primary key values and no points with valid primary keys were designated as anything but 'target sampled. This is a good thing and your output should be empty.'")
+    message("No points designated as 'target sampled' were missing valid TerrADat primary key values and no points with valid primary keys were designated as anything but 'target sampled.' This is a good thing and your output should be empty.")
     return(NULL)
   }
   return(key.errors.df)

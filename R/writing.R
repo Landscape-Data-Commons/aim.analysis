@@ -48,7 +48,7 @@ write.shapefile <- function(spdf,
                             union = T,
                             name,
                             type,
-                            outpath){
+                            out.path){
   if ((lapply(dd.raw$sf, FUN = class) %>% unlist() %>% unname() %>% unique() %>% length()) != 1) {
     stop("When providing multiple SPDFs, they must either all be SpatialPolygonsDataFrames or all SpatialPointsDataFrames.")
   }

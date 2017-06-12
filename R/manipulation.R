@@ -160,9 +160,9 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
                                                                     data = intersection.dataframe)
          },
          "INTERSECT" = {
-           current.drop <- get_RGEOS_dropSlivers()
-           current.warn <- get_RGEOS_warnSlivers()
-           current.tol <- get_RGEOS_polyThreshold()
+           current.drop <- rgeos::get_RGEOS_dropSlivers()
+           current.warn <- rgeos::get_RGEOS_warnSlivers()
+           current.tol <- rgeos::get_RGEOS_polyThreshold()
 
            ## Find the intersection of the two SPDFs
            intersect.spdf.attribute <- tryCatch(

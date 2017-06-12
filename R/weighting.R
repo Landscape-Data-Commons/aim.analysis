@@ -246,13 +246,13 @@ weight <- function(dd.import, ## The output from read.dd()
               print(paste("Both frames had values in the @data slot"))
               ## Remove the current frame from the temporary frame. This will let us build concentric frame areas as we work up to larger designs through dd.order
               ## Note: I'm not sure what happens if these don't overlap or if x is completely encompassed by y
-              print(paste("Attempting to remove the", s, "frame from the", r, "frame with gDifference()"))
+              print(paste("Attempting to remove the", s, "frame from the", r, "frame with rgeos::gDifference()"))
 
               ## This lets rgeos deal with tiny fragments of polygons without crashing
               ## This and the following tryCatch() may be unnecessary since the argument drop_lower_td = T was added, but it works so I'm leaving it
-              current.drop <- get_RGEOS_dropSlivers()
-              current.warn <- get_RGEOS_warnSlivers()
-              current.tol <- get_RGEOS_polyThreshold()
+              current.drop <- rgeos::get_RGEOS_dropSlivers()
+              current.warn <- rgeos::get_RGEOS_warnSlivers()
+              current.tol <- rgeos::get_RGEOS_polyThreshold()
 
               frame.spdf.temp <- tryCatch(
                 expr = {
@@ -260,7 +260,7 @@ weight <- function(dd.import, ## The output from read.dd()
                   rgeos::set_RGEOS_warnSlivers(sliverwarn)
                   rgeos::set_RGEOS_polyThreshold(sliverthreshold)
                   print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
-                  gDifference(spgeom1 = frame.spdf.temp,
+                  rgeos::gDifference(spgeom1 = frame.spdf.temp,
                               spgeom2 = frame.spdf,
                               drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
                 },
@@ -274,7 +274,7 @@ weight <- function(dd.import, ## The output from read.dd()
                     rgeos::set_RGEOS_dropSlivers(T)
                     rgeos::set_RGEOS_warnSlivers(T)
                     rgeos::set_RGEOS_polyThreshold(sliverthreshold)
-                    gDifference(spgeom1 = frame.spdf.temp,
+                    rgeos::gDifference(spgeom1 = frame.spdf.temp,
                                 spgeom2 = frame.spdf,
                                 drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
                   } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
@@ -282,7 +282,7 @@ weight <- function(dd.import, ## The output from read.dd()
                     rgeos::set_RGEOS_dropSlivers(F)
                     rgeos::set_RGEOS_warnSlivers(F)
                     rgeos::set_RGEOS_polyThreshold(0)
-                    gDifference(spgeom1 = frame.spdf.temp,
+                    rgeos::gDifference(spgeom1 = frame.spdf.temp,
                                 spgeom2 = frame.spdf,
                                 drop_lower_td = T) %>% SpatialPolygonsDataFrame(data = frame.spdf.temp@data)
                   }

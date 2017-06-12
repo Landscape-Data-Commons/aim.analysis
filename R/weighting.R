@@ -83,6 +83,14 @@ weight <- function(dd.import, ## The output from read.dd()
   unneeded.values <- c(unneeded.values,
                        "Not Needed") %>% unique() %>% stringr::str_to_upper()
 
+  ## In case the DDs are from different generations, we need to restrict them to only the shared fields
+  if (length(dd.import$pts) > 1) {
+    fieldnames.common <- lapply(dd.raw$pts, names) %>% unlist() %>%
+      data.frame(fields = ., stringsAsFactors = F) %>%
+      dplyr::group_by(fields) %>% dplyr::summarize(count = n()) %>%
+      dplyr::filter(count == length(dd.raw$pts)) %>% .$fields
+  }
+
 
 
   ## We need to work our way up from the smallest-framed DD to the largest, so we need to establish that order starting with this initialized list to work from
@@ -93,6 +101,10 @@ weight <- function(dd.import, ## The output from read.dd()
     ## First, bring in the relevant SPDFs
     ## Get the pts file in dd.src that corresponds to s and call it pts.spdf, then create and init the WGT attribute
     pts.spdf <- dd.import$pts[[s]]
+    ## Restrict only to the shared fields so there aren't rbind errors later
+    if (length(dd.import$pts) > 1) {
+      pts.spdf@data <- pts.spdf@data[, fieldnames.common]
+    }
     pts.spdf@data[, fatefieldname] <- stringr::str_to_upper(pts.spdf@data[, fatefieldname])
     pts.spdf@data$WGT <- 0
     ## Add in the REPORTING.UNITS field with the value "Unspecified" if it's not there already.

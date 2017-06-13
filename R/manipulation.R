@@ -272,7 +272,7 @@ area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
   if (!(area.sqkm)) {
     spdf@data$AREA.SQKM <- NULL
   }
-  return(spdf, original.proj)
+  return(spdf)
 }
 
 

@@ -258,12 +258,11 @@ area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
                      area.sqkm = T, ## Add area in square kilometers?
                      byid = T ## Do it for the whole SPDF or on a per-polygon basis? Generally don't want to toggle this
 ){
-  original.proj <- spdf@proj4string
-  ## Make sure the SPDF is in Albers equal area projection
-  spdf <- sp::spTransform(x = spdf, CRSobj = CRS("+proj=aea"))
+  ## Create a version in Albers Equal Area
+  spdf.albers <- sp::spTransform(x = spdf, CRSobj = CRS("+proj=aea"))
 
   ## Add the area in hectares, stripping the IDs from gArea() output
-  spdf@data$AREA.HA <- rgeos::gArea(spdf, byid = byid) * 0.0001 %>% unname()
+  spdf@data$AREA.HA <- rgeos::gArea(spdf.albers, byid = byid) * 0.0001 %>% unname()
   ## Add the area in square kilometers, converting from hectares
   spdf@data$AREA.SQKM <- spdf@data$AREA.HA * 0.01
 
@@ -273,7 +272,7 @@ area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
   if (!(area.sqkm)) {
     spdf@data$AREA.SQKM <- NULL
   }
-  return(sp::spTransform(spdf, original.proj))
+  return(spdf, original.proj)
 }
 
 

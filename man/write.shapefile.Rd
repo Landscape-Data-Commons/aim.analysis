@@ -5,7 +5,7 @@
 \title{Writing out SPDFs as shapefiles}
 \usage{
 write.shapefile(spdf, dd = F, dd.list = "sf", union = T, name, type,
-  outpath)
+  out.path)
 }
 \arguments{
 \item{spdf}{Either a single SPDF, a list of SPDFs, or the output from \code{read.dd()}. If multiple SPDFs are provided, they will be output as a single combined shapefile. All SPDFs must be of the same class. If not being combined with a \code{raster::union()} or if they are SpatialPointsDataFrames the \code{data} slots must have identical variables.}

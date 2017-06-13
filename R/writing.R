@@ -91,7 +91,14 @@ write.shapefile <- function(spdf,
            overwrite_layer = T)
 }
 
-write.benchmarkshp <- function(points.benchmarked, out.path, name){
+#' Writing out shapefiles of benchmarked points
+#' @description Writes out a point shapefile for each management question of points which were classified using the benchmarks for that question. Each
+#' @param points.benchmarked Data frame output from \code{benchmark()}.
+#' @param tdat A Spatial Points Data Frame containing the relevant geometry and fields called \code{PLOTID} and \code{PRIMARYKEY}.
+#' @param out.path A string specifying the output folder path.
+#' @param name A string of the project name for use in the filename, e.g. "Idaho_SageGrouse".
+#' @export
+write.benchmarkshp <- function(points.benchmarked, tdat, out.path, name){
   points.benchmarked %>% dplyr::select(-VALUE) %>% split(.$MANAGEMENT.QUESTION) %>%
     purrr::map(~ tidyr::spread(data = .x, key = INDICATOR, value = EVALUATION.CATEGORY) %>%
                  merge(x = tdat.spdf %>%

@@ -266,60 +266,76 @@ weight <- function(dd.import, ## The output from read.dd()
               current.warn <- rgeos::get_RGEOS_warnSlivers()
               current.tol <- rgeos::get_RGEOS_polyThreshold()
 
-              frame.spdf.temp <- tryCatch(
-                expr = {
-                  rgeos::set_RGEOS_dropSlivers(sliverdrop)
-                  rgeos::set_RGEOS_warnSlivers(sliverwarn)
-                  rgeos::set_RGEOS_polyThreshold(sliverthreshold)
-                  print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
-                  rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
-                                       ## Making this Albers for right now for gBuffer()
-                                       sp::spTransform(CRS("+proj=aea")) %>%
-                                       ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
-                                       rgeos::gBuffer(byid = TRUE, width = 0),
-                                     spgeom2 = frame.spdf %>%
-                                       sp::spTransform(CRS("+proj=aea")) %>%
-                                       rgeos::gBuffer(byid = TRUE, width = 0),
-                                     drop_lower_td = T) %>%
-                    sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
-                    sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
-                },
-                error = function(e) {
-                  print("Received the error:")
-                  print(paste(e))
-                  if (grepl(x = e, pattern = "cannot get a slot")) {
-                    print("This is extremely problematic (unless it means your whole frame was correctly erased), but there's no automated error handling for it.")
-                  } else if (grepl(x = e, pattern = "few points in geometry")) {
-                    print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(T), rgeos::set_RGEOS_warnslivers(T), and rgeos::set_RGEOS_polyThresholds(", sliverthreshold, ")"))
-                    rgeos::set_RGEOS_dropSlivers(T)
-                    rgeos::set_RGEOS_warnSlivers(T)
-                    rgeos::set_RGEOS_polyThreshold(sliverthreshold)
-                    rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
-                                         sp::spTransform(CRS("+proj=aea")) %>%
-                                         rgeos::gBuffer(byid = TRUE, width = 0),
-                                       spgeom2 = frame.spdf %>%
-                                         sp::spTransform(CRS("+proj=aea")) %>%
-                                         rgeos::gBuffer(byid = TRUE, width = 0),
-                                       drop_lower_td = T) %>%
-                      sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
-                      sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
-                  } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
-                    print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(F) and rgeos::set_RGEOS_warnslivers(F)"))
-                    rgeos::set_RGEOS_dropSlivers(F)
-                    rgeos::set_RGEOS_warnSlivers(F)
-                    rgeos::set_RGEOS_polyThreshold(0)
-                    rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
-                                         sp::spTransform(CRS("+proj=aea")) %>%
-                                         rgeos::gBuffer(byid = TRUE, width = 0),
-                                       spgeom2 = frame.spdf %>%
-                                         sp::spTransform(CRS("+proj=aea")) %>%
-                                         rgeos::gBuffer(byid = TRUE, width = 0),
-                                       drop_lower_td = T) %>%
-                      sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
-                      sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
-                  }
-                }
-              )
+              rgeos::set_RGEOS_dropSlivers(sliverdrop)
+              rgeos::set_RGEOS_warnSlivers(sliverwarn)
+              rgeos::set_RGEOS_polyThreshold(sliverthreshold)
+              print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
+              frame.spdf.temp <- rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
+                                                      ## Making this Albers for right now for gBuffer()
+                                                      sp::spTransform(CRS("+proj=aea")) %>%
+                                                      ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
+                                                      rgeos::gBuffer(byid = TRUE, width = 0),
+                                                    spgeom2 = frame.spdf %>%
+                                                      sp::spTransform(CRS("+proj=aea")) %>%
+                                                      rgeos::gBuffer(byid = TRUE, width = 0),
+                                                    drop_lower_td = T) %>%
+                sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data[1:length(.@polygons),]) %>%
+                sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
+
+              # frame.spdf.temp <- tryCatch(
+              #   expr = {
+              #     rgeos::set_RGEOS_dropSlivers(sliverdrop)
+              #     rgeos::set_RGEOS_warnSlivers(sliverwarn)
+              #     rgeos::set_RGEOS_polyThreshold(sliverthreshold)
+              #     print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
+              #     garbage <- rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
+              #                          ## Making this Albers for right now for gBuffer()
+              #                          sp::spTransform(CRS("+proj=aea")) %>%
+              #                          ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
+              #                          rgeos::gBuffer(byid = TRUE, width = 0),
+              #                        spgeom2 = frame.spdf %>%
+              #                          sp::spTransform(CRS("+proj=aea")) %>%
+              #                          rgeos::gBuffer(byid = TRUE, width = 0),
+              #                        drop_lower_td = T) %>%
+              #       sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data[1:length(.@polygons),]) %>%
+              #       sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
+              #   },
+              #   error = function(e) {
+              #     print("Received the error:")
+              #     print(paste(e))
+              #     if (grepl(x = e, pattern = "cannot get a slot")) {
+              #       print("This is extremely problematic (unless it means your whole frame was correctly erased), but there's no automated error handling for it.")
+              #     } else if (grepl(x = e, pattern = "few points in geometry")) {
+              #       print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(T), rgeos::set_RGEOS_warnslivers(T), and rgeos::set_RGEOS_polyThresholds(", sliverthreshold, ")"))
+              #       rgeos::set_RGEOS_dropSlivers(T)
+              #       rgeos::set_RGEOS_warnSlivers(T)
+              #       rgeos::set_RGEOS_polyThreshold(sliverthreshold)
+              #       rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
+              #                            sp::spTransform(CRS("+proj=aea")) %>%
+              #                            rgeos::gBuffer(byid = TRUE, width = 0),
+              #                          spgeom2 = frame.spdf %>%
+              #                            sp::spTransform(CRS("+proj=aea")) %>%
+              #                            rgeos::gBuffer(byid = TRUE, width = 0),
+              #                          drop_lower_td = T) %>%
+              #         sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
+              #         sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
+              #     } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
+              #       print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(F) and rgeos::set_RGEOS_warnslivers(F)"))
+              #       rgeos::set_RGEOS_dropSlivers(F)
+              #       rgeos::set_RGEOS_warnSlivers(F)
+              #       rgeos::set_RGEOS_polyThreshold(0)
+              #       rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
+              #                            sp::spTransform(CRS("+proj=aea")) %>%
+              #                            rgeos::gBuffer(byid = TRUE, width = 0),
+              #                          spgeom2 = frame.spdf %>%
+              #                            sp::spTransform(CRS("+proj=aea")) %>%
+              #                            rgeos::gBuffer(byid = TRUE, width = 0),
+              #                          drop_lower_td = T) %>%
+              #         sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
+              #         sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
+              #     }
+              #   }
+              # )
 
               rgeos::set_RGEOS_dropSlivers(current.drop)
               rgeos::set_RGEOS_warnSlivers(current.warn)

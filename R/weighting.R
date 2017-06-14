@@ -270,14 +270,15 @@ weight <- function(dd.import, ## The output from read.dd()
               rgeos::set_RGEOS_warnSlivers(sliverwarn)
               rgeos::set_RGEOS_polyThreshold(sliverthreshold)
               print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
-              frame.spdf.temp <- rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
-                                                      ## Making this Albers for right now for gBuffer()
-                                                      sp::spTransform(CRS("+proj=aea")) %>%
-                                                      ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
-                                                      rgeos::gBuffer(byid = TRUE, width = 0),
-                                                    spgeom2 = frame.spdf %>%
-                                                      sp::spTransform(CRS("+proj=aea")) %>%
-                                                      rgeos::gBuffer(byid = TRUE, width = 0),
+              ## Making this Albers for right now for gBuffer()
+              ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
+              frame.spdf.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(frame.spdf.temp, CRS("+proj=aea")),
+                                                                     byid = TRUE,
+                                                                     width = 0.01),
+                                                    spgeom2 = rgeos::gBuffer(sp::spTransform(frame.spdf,
+                                                                                     CRS("+proj=aea")),
+                                                                     byid = TRUE,
+                                                                     width = 0.01),
                                                     drop_lower_td = T) %>%
                 sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data[1:length(.@polygons),]) %>%
                 sp::spTransform(CRSobj = frame.spdf.temp@proj4string)

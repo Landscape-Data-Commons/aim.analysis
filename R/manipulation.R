@@ -431,7 +431,7 @@ apply.tracking <- function(filenames,
   if (class(tdat) == "SpatialPointsDataFrame") {
     tdat <- tdat@data
   }
-  names(tdat) <- names(tdat) %>% stringr::str_to_upper()
+  names(tdat) <- stringr::str_to_upper(names(tdat))
 
   ## Add the ending / to a filepath if provided
   if (path != "") {

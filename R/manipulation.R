@@ -393,11 +393,11 @@ add.dates <- function(pts){
   if (grepl(class(pts)[[1]], pattern = "^Spatial")) {
     panel.years <- dplyr::group_by(.data = pts@data,
                                    PANEL) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
-                                                      decreasing = TRUE)[1]))
+                                                                                 decreasing = TRUE)[1]))
   } else {
     panel.years <- dplyr::group_by(.data = pts,
                                    PANEL) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
-                                                      decreasing = TRUE)[1]))
+                                                                                 decreasing = TRUE)[1]))
   }
 
 

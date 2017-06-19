@@ -130,10 +130,12 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
   ## Sanitization
   if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
     ## Make sure that the points also adhere to the same projection
-    spdf1 <- spdf1 %>% spTransform(projection)
-    spdf2 <- spdf2 %>% spTransform(projection)
+    spdf2 <- spTransform(spdf2, CRSobj = spdf1@proj4string)
   }
-  method <- stringr::str_to_upper(method)
+  if (!(stringr::str_to_upper(method) %in% c("GINTERSECTION", "INTERSECT"))) {
+    stop(paste0("method must be either 'gintersection' or 'intersect' but is currently '", method, "'."))
+  }
+
   names(spdf1@data) <- stringr::str_to_upper(names(spdf1@data))
   names(spdf2@data) <- stringr::str_to_upper(names(spdf2@data))
   spdf1.attributefieldname <- stringr::str_to_upper(spdf1.attributefieldname)
@@ -142,7 +144,7 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
   spdf1@data[, paste0(spdf1.attributefieldname, ".spdf1")] <- spdf1@data[, spdf1.attributefieldname]
   spdf2@data[, paste0(spdf2.attributefieldname, ".spdf2")] <- spdf2@data[, spdf2.attributefieldname]
 
-  switch(method,
+  switch(stringr::str_to_upper(method),
          "GINTERSECTION" = {
            intersect.sp.attribute <- rgeos::gIntersection(spdf1,
                                                           spdf2,

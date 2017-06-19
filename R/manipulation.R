@@ -273,7 +273,7 @@ area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
   spdf.albers <- sp::spTransform(x = spdf, CRSobj = CRS("+proj=aea"))
 
   ## Add the area in hectares, stripping the IDs from gArea() output
-  spdf@data$AREA.HA <- rgeos::gArea(spdf.albers, byid = byid) * 0.0001 %>% unname()
+  spdf@data$AREA.HA <- unname(rgeos::gArea(spdf.albers, byid = byid) * 0.0001)
   ## Add the area in square kilometers, converting from hectares
   spdf@data$AREA.SQKM <- spdf@data$AREA.HA * 0.01
 

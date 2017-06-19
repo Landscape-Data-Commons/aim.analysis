@@ -17,6 +17,12 @@ attribute.shapefile <- function(spdf1,
                                 newfield = NULL,
                                 projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
 ){
+  if (!grepl(class(spdf1), pattern = "^Spatial((Points)|(Polygons))DataFrame$")) {
+    stop("spdf1 must be either a Spatial Points or Spatial Polygons Data Frame")
+  }
+  if (class(spdf2) != "SpatialPolygonsDataFrame") {
+    stop("spdf2 must be a Spatial Polygons Data Frame.")
+  }
   if (is.null(attributefield) | !(attributefield %in% names(spdf2@data))) {
     stop("attributefield must be a field name found in spdf2")
   }
@@ -25,13 +31,16 @@ attribute.shapefile <- function(spdf1,
     newfield <- attributefield
   }
 
+  if (newfield %in% names(spdf1@data)) {
+    message(paste0("The variable ", newfield, "is already in spdf1 and will be overwritten."))
+  }
+
   remove.coords <- FALSE
-  coord.names <- spdf1@coords %>% colnames()
+  coord.names <- colnames(spdf1@coords)
 
   if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
     ## Make sure that the points also adhere to the same projection
-    spdf1 <- spdf1 %>% sp::spTransform(projection)
-    spdf2 <- spdf2 %>% sp::spTransform(projection)
+    spdf2 <- sp::spTransform(spdf2, CRSobj = spdf1@proj4string)
   } else {
     projection <- spdf1@proj4string
   }

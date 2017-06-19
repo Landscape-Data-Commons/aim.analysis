@@ -345,19 +345,19 @@ add.coords <- function(spdf,
   projNAD83 <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
   projAL <- CRS("+proj=aea")
   if (current.proj) {
-    coords <- spdf@coords %>% as.data.frame()
+    coords <- as.data.frame(spdf@coords)
     if(!is.null(xynames)) {
       names(coords) <- xynames
     }
     spdf@data <- cbind(spdf@data, coords)
   }
   if (nad83) {
-    coords <- spdf %>% spTransform(projNAD83) %>% .@coords
+    coords <-  sp::spTransform(spdf, CRSobj = projNAD83)@coords
     names(coords) <- c("LONGITUDE.NAD83", "LATITUDE.NAD83")
     spdf@data <- cbind(spdf@data, coords)
   }
   if (albers) {
-    coords <- spdf %>% spTransform(projAL) %>% .@coords
+    coords <- sp::spTransform(spdf, CRSobj = projAL)@coords
     names(coords) <- c("X.METERS.AL", "Y.METERS.AL")
     spdf@data <- cbind(spdf@data, coords)
   }
@@ -368,18 +368,20 @@ add.coords <- function(spdf,
 #'
 #' @description For the given SPDF, this adds the year extracted from the values in PANEL, then overwrites that with the year extracted from DT_VST if possible, then for all remaining observations still missing a YEAR value it makes a best guess based on the YEAR values in the other observations with the same PANEL value.
 #' @param pts The SPDF to add YEAR to.
+#' @export
+
 add.dates <- function(pts){
   if (!("PANEL" %in% names(pts))) {
     stop("Variable 'PANEL' is missing from data frame.")
   }
   ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
-  pts$YEAR[grepl(x = pts$PANEL, pattern = "\\d{4}$")] <- pts$PANEL %>%
-    stringr::str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
-  pts$YEAR[grepl(x = pts$PANEL, pattern = "^\\d{4}")] <- pts$PANEL %>%
-    stringr::str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
+  pts$YEAR[grepl(x = pts$PANEL, pattern = "\\d{4}$")] <- stringr::str_extract(string = pts$PANEL,
+                                                                              pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
+  pts$YEAR[grepl(x = pts$PANEL, pattern = "^\\d{4}")] <- stringr::str_extract(string = pts$PANEL,
+                                                                              pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
 
   ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
-  pts$YEAR[!is.na(pts$DT_VST)] <- pts$DT_VST[!is.na(pts$DT_VST)]%>% lubridate::as_date() %>% format("%Y") %>% as.numeric()
+  pts$YEAR[!is.na(pts$DT_VST)] <- lubridate::as_date(pts$DT_VST[!is.na(pts$DT_VST)]) %>% format("%Y") %>% as.numeric()
 
   ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
   if (length(grep(x = names(pts), pattern = ".1$")) > 0) {
@@ -389,11 +391,13 @@ add.dates <- function(pts){
 
   ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
   if (grepl(class(pts)[[1]], pattern = "^Spatial")) {
-    panel.years <- pts@data %>% dplyr::group_by(PANEL) %>%
-      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = TRUE)[1]))
+    panel.years <- dplyr::group_by(.data = pts@data,
+                                   PANEL) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
+                                                      decreasing = TRUE)[1]))
   } else {
-    panel.years <- pts %>% dplyr::group_by(PANEL) %>%
-      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = TRUE)[1]))
+    panel.years <- dplyr::group_by(.data = pts,
+                                   PANEL) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
+                                                      decreasing = TRUE)[1]))
   }
 
 
@@ -402,7 +406,7 @@ add.dates <- function(pts){
     pts$YEAR[is.na(pts$YEAR) & pts$PANEL == p] <- panel.years$YEAR[panel.years$PANEL == p]
   }
 
-  pts$YEAR <- pts$YEAR %>% as.numeric()
+  pts$YEAR <- as.numeric(pts$YEAR)
   return(pts)
 }
 

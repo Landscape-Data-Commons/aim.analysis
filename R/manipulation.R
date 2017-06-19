@@ -221,20 +221,23 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
     ## The arguments to summarize() are specific to what columns exist and what columns are therefore being added, so there are three alternatives
     if (area.ha & area.sqkm) {
       ## When there are both units represented
-      ## group_by_() is used instead of group_by() so that we can provide strings as arguments to let us programmatically use the attributefieldname.output values
-      intersect.spdf.attribute@data <- group_by(intersect.spdf.attribute@data, UNIQUE.IDENTIFIER) %>%
-        summarize(AREA.HA.UNIT.SUM = sum(AREA.HA), AREA.SQKM.UNIT.SUM = sum(AREA.SQKM)) %>%
-        merge(x = intersect.spdf.attribute@data, y = .)
+      intersect.spdf.attribute@data <- merge(x = intersect.spdf.attribute@data,
+                                             y = dplyr::summarize(.data = dplyr::group_by(.data = intersect.spdf.attribute@data,
+                                                                                         UNIQUE.IDENTIFIER),
+                                                                 AREA.HA.UNIT.SUM = sum(AREA.HA),
+                                                                 AREA.SQKM.UNIT.SUM = sum(AREA.SQKM)))
     } else if (!(area.ha) & area.sqkm) {
       ## When there's no area.ha
-      intersect.spdf.attribute@data <- group_by_(intersect.spdf.attribute@data, UNIQUE.IDENTIFIER) %>%
-        summarize(AREA.SQKM.UNIT.SUM = sum(AREA.SQKM)) %>%
-        merge(x = intersect.spdf.attribute@data, y = .)
+      intersect.spdf.attribute@data <- merge(x = intersect.spdf.attribute@data,
+                                             y = dplyr::summarize(.data = dplyr::group_by(intersect.spdf.attribute@data,
+                                                                                          UNIQUE.IDENTIFIER),
+                                                                  AREA.SQKM.UNIT.SUM = sum(AREA.SQKM)))
     } else if (area.ha & !(area.sqkm)) {
       ## When there's no area.sqkm
-      intersect.spdf.attribute@data <- group_by_(intersect.spdf.attribute@data, UNIQUE.IDENTIFIER) %>%
-        summarize(AREA.HA.UNIT.SUM = sum(AREA.HA)) %>%
-        merge(x = intersect.spdf.attribute@data, y = .)
+      intersect.spdf.attribute@data <- merge(x = intersect.spdf.attribute@data,
+                                             y = dplyr::summarize(.data = dplyr::group_by(.data = intersect.spdf.attribute@data,
+                                                                                          UNIQUE.IDENTIFIER),
+                                                                  AREA.HA.UNIT.SUM = sum(AREA.HA)))
     }
   }
 

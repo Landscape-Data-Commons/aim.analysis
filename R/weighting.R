@@ -651,11 +651,11 @@ weight <- function(dd.import, ## The output from read.dd()
 #' weight.adjuster()
 #' @export
 
-weight.adjust <- function(points, ## The weighted output from weighter(), so weighter()["point.weights"] | weighter()[2] IF YOU RESTRICTED THE SDD INPUT BY THE REPORTING UNIT POLYGON
-                          wgtcat.spdf, ## The SPDF that's represents all the weird possible combinations of the reporting unit and strata
-                          spdf.area.field = "AREA.HA.UNIT.SUM", ## The name of the field in the SPDF that contains the areas of the weight categories
-                          spdf.wgtcat.field = "UNIQUE.IDENTIFIER", ## The name of the field in the SPDF that contains the identifiers for weight categories
-                          projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs") ## NAD83, standard issue as always
+weight.adjust <- function(points,
+                          wgtcat.spdf,
+                          spdf.area.field = "AREA.HA.UNIT.SUM",
+                          spdf.wgtcat.field = "UNIQUE.IDENTIFIER",
+                          projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
 ){
   ## Sanitization
   names(points) <- stringr::str_to_upper(names(points))

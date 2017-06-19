@@ -4,48 +4,48 @@
 \alias{weight}
 \title{Calculating Weights from AIM Sample Designs}
 \usage{
-weight(dd.import, combine = T, reorder = T, reporting.units.spdf = NULL,
-  reportingunitfield = "REPORTING.UNIT", target.values = c("Target Sampled",
-  "TS"), unknown.values = c("Unknown", "UNK"),
-  nontarget.values = c("Non-Target", "NT", NA),
+weight(dd.import, combine = TRUE, reorder = TRUE,
+  reporting.units.spdf = NULL, reportingunitfield = "REPORTING.UNIT",
+  target.values = c("Target Sampled", "TS"), unknown.values = c("Unknown",
+  "UNK"), nontarget.values = c("Non-Target", "NT", NA),
   inaccessible.values = c("Inaccessible", "IA"),
   unneeded.values = c("Not Needed"), fatefieldname = "final_desig",
   pointstratumfieldname = "dsgn_strtm_nm",
   designstratumfield = "dmnnt_strtm",
   projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"),
-  sliverdrop = T, sliverwarn = T, sliverthreshold = 0.01)
+  sliverdrop = TRUE, sliverwarn = TRUE, sliverthreshold = 0.01)
 }
 \arguments{
-\item{dd.import}{Output from read.dd(). This can be the result of running read.dd() on one or many sample design databases}
+\item{dd.import}{Output from \code{read.dd()}. This can be the result of running \code{read.dd()} on one or many sample design databases}
 
-\item{combine}{Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to TRUE.}
+\item{combine}{Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to \code{TRUE}.}
 
-\item{reorder}{Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If FALSE, the DDs are considered in the order they appear in dd.import. If combine is FALSE, then this only potentially affects the order of the output information. Defaults to T.}
+\item{reorder}{Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If \code{FALSE}, the DDs are considered in the order they appear in dd.import. If combine is \code{FALSE}, then this only potentially affects the order of the output information. Defaults to \code{TRUE}.}
 
-\item{reporting.units.spdf}{SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to NULL}
+\item{reporting.units.spdf}{SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to \code{NULL}.}
 
 \item{reportingunitfield}{Character string. If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?}
 
-\item{target.values}{Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
+\item{target.values}{Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{unknown.values}{Character string or character vector. This defines what values in the point fate field count as unknown points. The function always looks for "Unknown" and "Unk", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
+\item{unknown.values}{Character string or character vector. This defines what values in the point fate field count as unknown points. The function always looks for "Unknown" and "Unk", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{nontarget.values}{Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
+\item{nontarget.values}{Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{inaccessible.values}{Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
+\item{inaccessible.values}{Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{unneeded.values}{Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
+\item{unneeded.values}{Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{fatefieldname}{Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to "final_desig"}
+\item{fatefieldname}{Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to \code{"final_desig"}.}
 
-\item{pointstratumfieldname}{Character string defining the field name in the points SPDF[s] in dd.import that contains the design stratum. Defaults to "dsgn_strtm_nm}
+\item{pointstratumfieldname}{Character string defining the field name in the points SPDF[s] in dd.import that contains the design stratum. Defaults to \code{"dsgn_strtm_nm"}.}
 
-\item{designstratumfield}{Character string defining the field name in the strata SPDF[s] in dd.import that contains the design stratum. Defaults to "dmnt_strtm"}
+\item{designstratumfield}{Character string defining the field name in the strata SPDF[s] in dd.import that contains the design stratum. Defaults to \code{"dmnt_strtm"}.}
 
 \item{projection}{\code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations.}
 }
 \description{
-This function takes the output from the function read.dd() and optionally a SpatialPolygonsDataFrame defining the extent of reporting units. Returns a list of two data frames: strata.weights with the weighting information by stratum and point.weights with the weighting information by point.
+This function takes the output from the function \code{read.dd()} and optionally a SpatialPolygonsDataFrame defining the extent of reporting units. Returns a list of two data frames: strata.weights with the weighting information by stratum and point.weights with the weighting information by point.
 }
 \examples{
 weighter()

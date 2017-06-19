@@ -1,19 +1,19 @@
 #' Calculating Weights from AIM Sample Designs
 #'
-#' This function takes the output from the function read.dd() and optionally a SpatialPolygonsDataFrame defining the extent of reporting units. Returns a list of two data frames: strata.weights with the weighting information by stratum and point.weights with the weighting information by point.
-#' @param dd.import Output from read.dd(). This can be the result of running read.dd() on one or many sample design databases
-#' @param combine Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to TRUE.
-#' @param reorder Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If FALSE, the DDs are considered in the order they appear in dd.import. If combine is FALSE, then this only potentially affects the order of the output information. Defaults to T.
-#' @param reporting.units.spdf SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to NULL
+#' This function takes the output from the function \code{read.dd()} and optionally a SpatialPolygonsDataFrame defining the extent of reporting units. Returns a list of two data frames: strata.weights with the weighting information by stratum and point.weights with the weighting information by point.
+#' @param dd.import Output from \code{read.dd()}. This can be the result of running \code{read.dd()} on one or many sample design databases
+#' @param combine Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to \code{TRUE}.
+#' @param reorder Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If \code{FALSE}, the DDs are considered in the order they appear in dd.import. If combine is \code{FALSE}, then this only potentially affects the order of the output information. Defaults to \code{TRUE}.
+#' @param reporting.units.spdf SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to \code{NULL}.
 #' @param reportingunitfield Character string. If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
-#' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param unknown.values Character string or character vector. This defines what values in the point fate field count as unknown points. The function always looks for "Unknown" and "Unk", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param nontarget.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param inaccessible.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param unneeded.values Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param fatefieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to "final_desig"
-#' @param pointstratumfieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the design stratum. Defaults to "dsgn_strtm_nm
-#' @param designstratumfield Character string defining the field name in the strata SPDF[s] in dd.import that contains the design stratum. Defaults to "dmnt_strtm"
+#' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
+#' @param unknown.values Character string or character vector. This defines what values in the point fate field count as unknown points. The function always looks for "Unknown" and "Unk", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
+#' @param nontarget.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
+#' @param inaccessible.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
+#' @param unneeded.values Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
+#' @param fatefieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to \code{"final_desig"}.
+#' @param pointstratumfieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the design stratum. Defaults to \code{"dsgn_strtm_nm"}.
+#' @param designstratumfield Character string defining the field name in the strata SPDF[s] in dd.import that contains the design stratum. Defaults to \code{"dmnt_strtm"}.
 #' @param projection \code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations.
 #' @keywords weights
 #' @examples
@@ -24,8 +24,8 @@
 
 ## This function produces point weights by design stratum (when the DD contains them) or by sample frame (when it doesn't)
 weight <- function(dd.import, ## The output from read.dd()
-                   combine = T, ## If provided multiple DDs, should those be combined into a single analysis? Otherwise the weights will be calculated on a per-DD basis
-                   reorder = T, ## Should the DDs be reordered by size or ar they provided in the order that they should be considered? Depends on how they overlap and user discretion
+                   combine = TRUE, ## If provided multiple DDs, should those be combined into a single analysis? Otherwise the weights will be calculated on a per-DD basis
+                   reorder = TRUE, ## Should the DDs be reordered by size or ar they provided in the order that they should be considered? Depends on how they overlap and user discretion
                    reporting.units.spdf = NULL, ## An optional reporting unit SPDF that will be used to clip the DD import before calculating weights
                    reportingunitfield = "REPORTING.UNIT", ## If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
                    ## Keywords for point fate—the values in the vectors unknown and nontarget are considered nonresponses.
@@ -44,8 +44,8 @@ weight <- function(dd.import, ## The output from read.dd()
                    pointstratumfieldname = "dsgn_strtm_nm", ## The field name in the points SPDF to pull the design stratum
                    designstratumfield = "dmnnt_strtm", ## The field name in the strata SPDF to pull the stratum identity from
                    projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"), ## Standard NAD83
-                   sliverdrop = T,
-                   sliverwarn = T,
+                   sliverdrop = TRUE,
+                   sliverwarn = TRUE,
                    sliverthreshold = 0.01
 ){
   ## Sanitization
@@ -86,7 +86,7 @@ weight <- function(dd.import, ## The output from read.dd()
   ## In case the DDs are from different generations, we need to restrict them to only the shared fields
   if (length(dd.import$pts) > 1) {
     fieldnames.common <- lapply(dd.raw$pts, names) %>% unlist() %>%
-      data.frame(fields = ., stringsAsFactors = F) %>%
+      data.frame(fields = ., stringsAsFactors = FALSE) %>%
       dplyr::group_by(fields) %>% dplyr::summarize(count = n()) %>%
       dplyr::filter(count == length(dd.raw$pts)) %>% .$fields
   }
@@ -136,8 +136,8 @@ weight <- function(dd.import, ## The output from read.dd()
                                       spdf2 = reporting.units.spdf,
                                       newfield = "REPORTING.UNIT",
                                       attributefield = reportingunitfield)
-      ## Overwrite whatever value was brought in from the reporting.units.spdf with T because we only want to know if they were restricted or not
-      # pts.spdf@data$REPORTING.UNIT.RESTRICTED <- T
+      ## Overwrite whatever value was brought in from the reporting.units.spdf with TRUE because we only want to know if they were restricted or not
+      # pts.spdf@data$REPORTING.UNIT.RESTRICTED <- TRUE
       ## Deal with frame.spdf. This involves an intersection and therefore is slow
       frame.spdf.intersect <- intersect(spdf1 = frame.spdf,
                                         ## This will use the appropriate field for strata or sample frame
@@ -148,11 +148,11 @@ weight <- function(dd.import, ## The output from read.dd()
       # frame.spdf <-  frame.spdf.intersect[, c(names(frame.spdf.intersect@data)[!(names(frame.spdf.intersect@data) %in% names(reporting.units.spdf@data))])]
       frame.spdf <-  frame.spdf.intersect
       ## Add REPORTING.UNIT.RESTRICTED
-      frame.spdf@data$REPORTING.UNIT.RESTRICTED <- T
+      frame.spdf@data$REPORTING.UNIT.RESTRICTED <- TRUE
     }
 
     ## Add the area to frame.spdf
-    frame.spdf <- area.add(frame.spdf, byid = T)
+    frame.spdf <- area.add(frame.spdf, byid = TRUE)
 
     ## Add the size of this DD's frame to my list of them so I can use it
     ## We use sum() here because each polygon's area was calculated individually because that streamlines some future use of the area information
@@ -170,7 +170,7 @@ weight <- function(dd.import, ## The output from read.dd()
   ## Time to reorder that list of DDs, if the user wants that, otherwise keep the order that they were fed to dd.reader() (and therefore appear in dd.import)
   if (reorder) {
     ## Turn the lsit into a vector and then sort it in ascending order
-    dd.order <- unlist(dd.order)[dd.order %>% unlist() %>% sort.list(decreasing = F)]
+    dd.order <- unlist(dd.order)[dd.order %>% unlist() %>% sort.list(decreasing = FALSE)]
     ## Then take the names of the DDs assigned to those values because we want those, not the areas
     dd.order <- names(dd.order)
   } else {
@@ -261,7 +261,7 @@ weight <- function(dd.import, ## The output from read.dd()
               print(paste("Attempting to remove the", s, "frame from the", r, "frame with rgeos::gDifference()"))
 
               ## This lets rgeos deal with tiny fragments of polygons without crashing
-              ## This and the following tryCatch() may be unnecessary since the argument drop_lower_td = T was added, but it works so I'm leaving it
+              ## This and the following tryCatch() may be unnecessary since the argument drop_lower_td = TRUE was added, but it works so I'm leaving it
               current.drop <- rgeos::get_RGEOS_dropSlivers()
               current.warn <- rgeos::get_RGEOS_warnSlivers()
               current.tol <- rgeos::get_RGEOS_polyThreshold()
@@ -279,7 +279,7 @@ weight <- function(dd.import, ## The output from read.dd()
                                                                                            CRS("+proj=aea")),
                                                                            byid = TRUE,
                                                                            width = 0.1),
-                                                  drop_lower_td = T)
+                                                  drop_lower_td = TRUE)
               if (!is.null(frame.sp.temp)) {
                 frame.spdf.temp <- sp::spTransform(sp::SpatialPolygonsDataFrame(frame.sp.temp,
                                                                                 data = frame.spdf.temp@data[1:length(frame.sp.temp@polygons),]),
@@ -327,9 +327,9 @@ weight <- function(dd.import, ## The output from read.dd()
               #         sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
               #         sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
               #     } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
-              #       print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(F) and rgeos::set_RGEOS_warnslivers(F)"))
-              #       rgeos::set_RGEOS_dropSlivers(F)
-              #       rgeos::set_RGEOS_warnSlivers(F)
+              #       print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(FALSE) and rgeos::set_RGEOS_warnslivers(FALSE)"))
+              #       rgeos::set_RGEOS_dropSlivers(FALSE)
+              #       rgeos::set_RGEOS_warnSlivers(FALSE)
               #       rgeos::set_RGEOS_polyThreshold(0)
               #       rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
               #                            sp::spTransform(CRS("+proj=aea")) %>%
@@ -420,7 +420,7 @@ weight <- function(dd.import, ## The output from read.dd()
 
         ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
         panel.years <- working.pts %>% dplyr::group_by(PANEL) %>%
-          dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
+          dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = TRUE)[1]))
 
         ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
         for (p in panel.years$PANEL) {
@@ -501,9 +501,9 @@ weight <- function(dd.import, ## The output from read.dd()
 
         ## I'm not sure who requested this feature, but it's here now
         if (!is.null(reporting.units.spdf)) {
-          stratum.summary$Reporting.Unit.Restricted <- T
+          stratum.summary$Reporting.Unit.Restricted <- TRUE
         } else {
-          stratum.summary$Reporting.Unit.Restricted <- F
+          stratum.summary$Reporting.Unit.Restricted <- FALSE
         }
 
         ## Getting just the columns we want in the order we want them
@@ -582,10 +582,10 @@ weight <- function(dd.import, ## The output from read.dd()
                               Prop.dsgn.pts.obsrvd = Pprop,
                               Sampled.area.HA = Sarea,
                               Weight = wgt,
-                              Reporting.Unit.Restricted = F,
-                              stringsAsFactors = F)
+                              Reporting.Unit.Restricted = FALSE,
+                              stringsAsFactors = FALSE)
         if (!is.null(reporting.units.spdf)) {
-          temp.df$Reporting.Unit.Restricted <- T
+          temp.df$Reporting.Unit.Restricted <- TRUE
         }
 
         ## Bind this stratum's information to the master.df initialized outside and before the loop started
@@ -642,10 +642,10 @@ weight <- function(dd.import, ## The output from read.dd()
 #'
 #' This function takes the point weights data frame output from the function \code{weight()} and a SpatialPolygonsDataFrame defining the weight categories. Returns the data frame supplied as points with the new column \code{ADJWGT} containing the adjusted weights.
 #' @param points Data frame output from \code{weight()}, equivalent to \code{weight()[["point.weights"]]} or \code{weight()[[2]]}.
-#' @param wgtcat.spdf SpatialPolygonsDataFrame describing the weight categories for adjusting the weights. Use the output from \code{intersect()}
+#' @param wgtcat.spdf SpatialPolygonsDataFrame describing the weight categories for adjusting the weights. Use the output from \code{intersect()}.
 #' @param spdf.area.field Character string defining the field name in \code{wgtcat@data} that contains the areas for the weight categories. Defaults to \code{"AREA.HA.UNIT.SUM"}.
 #' @param spdf.wgtcat.field Character string defining the field name in \code{wgtcat@data} that contains the unique identification for the weight categories. Defaults to \code{"UNIQUE.IDENTIFIER"}.
-#' @param projection \code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations
+#' @param projection \code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations.
 #' @keywords weights
 #' @examples
 #' weight.adjuster()
@@ -683,7 +683,7 @@ weight.adjust <- function(points,
   # data.current <- data.attributed[!is.na(data.attributed[, points.wgtcat.field]),]
 
   ## We want to include all the points. So we make a logical vector of just T with a length equal to the number of plots
-  sites.current <- (rep(T, nrow(data.current)))
+  sites.current <- (rep(TRUE, nrow(data.current)))
 
   ## Grab the current weights from those points as its own vector
   wgt.current <- data.current$WGT

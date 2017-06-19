@@ -5,7 +5,7 @@
 #' @param point.weights Data frame output from \code{weight()}, equivalent to \code{weight()[["point.weights"]]} or \code{weight()[[2]]}.
 #' @param default.reportingunit A string to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}
 #' @param reportingunit.type A string to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.
-#' @param adjustedweights Logical. If \code{T}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{T}.
+#' @param adjustedweights Logical. If \code{TRUE}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{TRUE}.
 #' @return A data frame with the output from \code{spsurvey::cat.analysis()}
 #' @keywords analysis
 #' @examples
@@ -16,7 +16,7 @@ analyze <- function(evaluated.points,
                      point.weights,
                      default.reportingunit = "No reporting unit",
                      reportingunit.type = NA,
-                     adjustedweights = T
+                     adjustedweights = TRUE
                      ){
 
   ## Sanitization
@@ -79,7 +79,7 @@ analyze <- function(evaluated.points,
     names(data.wide.current)[names(data.wide.current) == "LONGITUDE"] <- "xcoord"
     names(data.wide.current)[names(data.wide.current) == "LATITUDE"] <- "ycoord"
     ## All the sites are active? Sure! Why not?
-    data.wide.current$Active <- T
+    data.wide.current$Active <- TRUE
 
     ## First, the sites. This is a data frame with the siteIDs and whether they're active or not
     aim.sites <- data.wide.current[, c("siteID", "Active")] %>% distinct()

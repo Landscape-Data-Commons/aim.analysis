@@ -25,7 +25,7 @@ attribute.shapefile <- function(spdf1,
     newfield <- attributefield
   }
 
-  remove.coords <- F
+  remove.coords <- FALSE
   coord.names <- spdf1@coords %>% colnames()
 
   if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
@@ -50,7 +50,7 @@ attribute.shapefile <- function(spdf1,
     current.spdf@data[, newfield] <- over.result[, attributefield]
     if (!(coord.names[1] %in% names(current.spdf@data)) & !(coord.names[2] %in% names(current.spdf@data))){
       current.spdf@data <- cbind(current.spdf@data, current.spdf@coords)
-      remove.coords <- T
+      remove.coords <- TRUE
     }
     ## Make sure that the polygons have unique IDs
     if (class(current.spdf) == "SpatialPolygonsDataFrame") {
@@ -99,8 +99,8 @@ attribute.shapefile <- function(spdf1,
 #' @param spdf2.attributefieldname Name of the field in \code{spdf2} unique to the unit groups or units to take values from.
 #' @param spdf2.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then \code{spdf2.attributefieldname} will be used. Defaults to \code{NULL}.
 #' @param method A string specifying which function to use for the interscting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.
-#' @param area.ha Logical. If \code{T}, areas will be calculated and added in hectares. Default is \code{T}.
-#' @param area.sqkm Logical. If \code{T}, areas will be calculated and added in square kilometers. Default is \code{T}.
+#' @param area.ha Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{TRUE}.
+#' @param area.sqkm Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{TRUE}.
 #' @param projection An \code{sp::CRS()} argument. The final output will be reprojected using this. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}
 #' @return A SpatialPolygonsDataFrame with the attributes inherited from \code{spdf1} and \code{spdf2}, areas as appropriate, and a unique identifier.
 #' @examples
@@ -114,8 +114,8 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
                       spdf2.attributefieldname, ## Name of the field in SPDF2 unique to the unit groups or units to take values from
                       spdf2.attributefieldname.output = NULL,  ## Optional name of the field in the output SPDF to duplicate values from spdf2.attributefieldname in
                       method = "gintersection", ## Which function to use, gIntersection() or intersect()
-                      area.ha = T, ## Add fields for area in hectares for individual polygons and the sum of those within unique combinations of the input attribute fields
-                      area.sqkm = T, ## Add fields for area in square kilometers for individual polygons and the sum of those within unique combinations of the input attribute fields
+                      area.ha = TRUE, ## Add fields for area in hectares for individual polygons and the sum of those within unique combinations of the input attribute fields
+                      area.sqkm = TRUE, ## Add fields for area in square kilometers for individual polygons and the sum of those within unique combinations of the input attribute fields
                       projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs") ## Standard NAD83
 ){
   ## Sanitization
@@ -137,8 +137,8 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
          "GINTERSECTION" = {
            intersect.sp.attribute <- rgeos::gIntersection(spdf1,
                                                           spdf2,
-                                                          byid = T,
-                                                          drop_lower_td = T)
+                                                          byid = TRUE,
+                                                          drop_lower_td = TRUE)
 
            ## Now we need to build the data frame that goes back into this. It's a pain
            ## Get the rownames from the polygons. This will consist of the two row names from spdf1 and spdf2 separated by a " "
@@ -171,12 +171,12 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
              },
              error = function(e){
                if (grepl(x = e, pattern = "few points in geometry")) {
-                 rgeos::set_RGEOS_dropSlivers(T)
-                 rgeos::set_RGEOS_warnSlivers(T)
+                 rgeos::set_RGEOS_dropSlivers(TRUE)
+                 rgeos::set_RGEOS_warnSlivers(TRUE)
                  rgeos::set_RGEOS_polyThreshold(0.01)
                } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
-                 rgeos::set_RGEOS_dropSlivers(F)
-                 rgeos::set_RGEOS_warnSlivers(F)
+                 rgeos::set_RGEOS_dropSlivers(FALSE)
+                 rgeos::set_RGEOS_warnSlivers(FALSE)
                  rgeos::set_RGEOS_polyThreshold(0)
                }
 
@@ -243,10 +243,10 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
 #' Add areas to a Spatial Polygons Data Frame
 #'
 #' This function takes a Spatial Polygons Data Frame and calculates and adds area fields to the data frame. Areas can be calculated either treating the whole SPDF as a unit or for each polygon individually.
-#' @param spdf Spatial Polygons Data Frame to calculate areas for
-#' @param area.ha Logical. If \code{T}, areas will be calculated and added in hectares. Default is \code{T}.
-#' @param area.sqkm Logical. If \code{T}, areas will be calculated and added in square kilometers. Default is \code{T}.
-#' @param byid Logical. If \code{T}, areas will be calculated and added for each polygon by ID. If \code{F} the area of the whole SPDF will be calculated and added, so every value for that field will be the same, regardless of polygon ID. Default is \code{T}.
+#' @param spdf Spatial Polygons Data Frame to calculate areas for.
+#' @param area.ha Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{TRUE}.
+#' @param area.sqkm Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{TRUE}.
+#' @param byid Logical. If \code{TRUE}, areas will be calculated and added for each polygon by ID. If \code{FALSE} the area of the whole SPDF will be calculated and added, so every value for that field will be the same, regardless of polygon ID. Default is \code{TRUE}.
 #' @return The original Spatial Polygons Data Frame with an additional field for each area unit calculated.
 #' @keywords area
 #' @examples
@@ -254,9 +254,9 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
 #' @export
 
 area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
-                     area.ha = T, ## Add area in hectares?
-                     area.sqkm = T, ## Add area in square kilometers?
-                     byid = T ## Do it for the whole SPDF or on a per-polygon basis? Generally don't want to toggle this
+                     area.ha = TRUE, ## Add area in hectares?
+                     area.sqkm = TRUE, ## Add area in square kilometers?
+                     byid = TRUE ## Do it for the whole SPDF or on a per-polygon basis? Generally don't want to toggle this
 ){
   ## Create a version in Albers Equal Area
   spdf.albers <- sp::spTransform(x = spdf, CRSobj = CRS("+proj=aea"))
@@ -312,16 +312,16 @@ restrict.tdat <- function(dd.raw, tdat.spdf){
 #'
 #' @description Adds one or more of the following: the coordinates from the current coordinate refrence system; coordinates in NAD83; and coordinates in Albers Equal Area. This does not change the projection of the SPDF.
 #' @param spdf A SpatialPointsDataFrame to add the coordinates to
-#' @param current.proj Logical. If \code{T} Then the columns \code{coords.x1} and \code{coords.x2} will be added using the current projection. Defaults to \code{T}.
+#' @param current.proj Logical. If \code{TRUE} Then the columns \code{coords.x1} and \code{coords.x2} will be added using the current projection. Defaults to \code{TRUE}.
 #' @param xynames Optional vector of two character strings to rename the coordinate variables from the current projection. Format is \code{c("replacement for coords.x1", "replacement for coords.x2")}.
-#' @param nad83 Logical. If \code{T} Then the columns \code{LONGITUDE.NAD83} and \code{LATITUDE.NAD83} will be added using NAD83. Defaults to \code{F}.
-#' @param albers Logical. If \code{T} Then the columns \code{X.METERS.AL} and \code{Y.METERS.AL} will be added using Albers Equal Area. Defaults to \code{F}.
+#' @param nad83 Logical. If \code{TRUE} Then the columns \code{LONGITUDE.NAD83} and \code{LATITUDE.NAD83} will be added using NAD83. Defaults to \code{FALSE}.
+#' @param albers Logical. If \code{TRUE} Then the columns \code{X.METERS.AL} and \code{Y.METERS.AL} will be added using Albers Equal Area. Defaults to \code{FALSE}.
 #' @export
 add.coords <- function(spdf,
-                       current.proj = T,
+                       current.proj = TRUE,
                        xynames = NULL,
-                       nad83 = F,
-                       albers = F){
+                       nad83 = FALSE,
+                       albers = FALSE){
   projNAD83 <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
   projAL <- CRS("+proj=aea")
   if (current.proj) {
@@ -370,10 +370,10 @@ add.dates <- function(pts){
   ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
   if (grepl(class(pts)[[1]], pattern = "^Spatial")) {
     panel.years <- pts@data %>% dplyr::group_by(PANEL) %>%
-      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
+      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = TRUE)[1]))
   } else {
     panel.years <- pts %>% dplyr::group_by(PANEL) %>%
-      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = T)[1]))
+      dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = TRUE)[1]))
   }
 
 
@@ -395,7 +395,7 @@ add.dates <- function(pts){
 #' @param dd.names An optional character string vector of Design Database names from \code{dd.list} to compare against the plot tracking Excel files. If not provided, all of the Design Databases represented in \code{dd.list} will be compared and updated.
 #' @param tdat Output from \code{read.tdat()}.
 #' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param deleteoverdraw Logical. If \code{T} then unsampled overdraw points will be dropped. Defaults to \code{T}.
+#' @param deleteoverdraw Logical. If \code{TRUE} then unsampled overdraw points will be dropped. Defaults to \code{TRUE}.
 #' @export
 apply.tracking <- function(filenames,
                            path = "",
@@ -464,7 +464,7 @@ apply.tracking <- function(filenames,
   rownames(tracking.tdat) <- tracking.tdat$PLOTID
 
   ## Update PLOTSTATUS for base points that are currently flagged as NA
-  tracking.tdat$PLOTSTATUS[is.na(tracking.tdat$PLOTSTATUS) & !grepl(x = tracking.tdat$PANEL, pattern = "over", ignore.case = T)] <- "Unknown"
+  tracking.tdat$PLOTSTATUS[is.na(tracking.tdat$PLOTSTATUS) & !grepl(x = tracking.tdat$PANEL, pattern = "over", ignore.case = TRUE)] <- "Unknown"
 
   ## Stop if these don't sum!
   if (nrow(tracking.tdat != nrow(tracking))) {
@@ -486,9 +486,9 @@ apply.tracking <- function(filenames,
 
     ####################### Compare plot tracking panel with dd point draw.
     mismatches <- merge(x = pts,
-                        y = tracking.tdat %>% dplyr::filter(grepl(x = PANEL, pattern="over", ignore.case = T)),
+                        y = tracking.tdat %>% dplyr::filter(grepl(x = PANEL, pattern="over", ignore.case = TRUE)),
                         by.x = "PLOT_NM",
-                        by.y = "PLOTID") %>% dplyr::filter(!grepl(x = PT_DRAW, pattern = "over", ignore.case = T))
+                        by.y = "PLOTID") %>% dplyr::filter(!grepl(x = PT_DRAW, pattern = "over", ignore.case = TRUE))
     if (nrow(mismatches) > 0) {
       message(paste0("There is a disagreement in the following plots between the Design Database (", dd, ") and plot tracking as to whether they were oversample points or not."))
       message(print(mismatches %>% dplyr::select(PLOTID, PANEL, PT_DRAW)))
@@ -515,7 +515,7 @@ apply.tracking <- function(filenames,
 
     ####################  If specified, delete overdraw pts that lack a final designation (i.e., not used).  This does not eliminate all NAs, just overdraw NAs..
     if(deleteoverdraw) {
-      pts <- pts %>% drop.values(variable = "PANEL", dropvalue = "over", ignore.case = T)
+      pts <- pts %>% drop.values(variable = "PANEL", dropvalue = "over", ignore.case = TRUE)
     }
     ####################  Store final pts file
     dd.list$pts[[dd]] <- pts
@@ -529,11 +529,11 @@ apply.tracking <- function(filenames,
 #' @description This wrapper for \code{dplyr::filter()} will take a data frame (or Spatial Data Frame if the package \code{spdplyr} is installed) and remove all observations where the given variable meets the value of the argument \code{dropvalue}.
 #' @param df A data frame or, if \code{spdplyr} is installed, spatial data frame to manipulate.
 #' @param variable A character string specifying the name of the variable to base the filtering on.
-#' @param dropvalue The value to drop observations based on. Can be either a regular expression as a character string to be passed to \code{grepl()} or \code{NA}. All observations where the variable \code{variable} return \code{T} when checked against this will be dropped. Defaults to \code{NA}.
-#' @param ignore.case Logical. If \code{dropvalue} is a regular expression, then this argument is passed to \code{grepl()} to decide if the search is case sensitive or not. Defaults to \code{T}.
+#' @param dropvalue The value to drop observations based on. Can be either a regular expression as a character string to be passed to \code{grepl()} or \code{NA}. All observations where the variable \code{variable} return \code{TRUE} when checked against this will be dropped. Defaults to \code{NA}.
+#' @param ignore.case Logical. If \code{dropvalue} is a regular expression, then this argument is passed to \code{grepl()} to decide if the search is case sensitive or not. Defaults to \code{TRUE}.
 #' @return The data frame \code{df} without the observations where \code{variable} matched \code{dropvalue}.
 #' @export
-drop.values <- function(df, variable = "", dropvalue = NA, ignore.case = T) {
+drop.values <- function(df, variable = "", dropvalue = NA, ignore.case = TRUE) {
   if (!grepl(x = class(df), pattern = "(data.frame)|(DataFrame)$")) {
     stop("Please provide a valid data frame.")
   }

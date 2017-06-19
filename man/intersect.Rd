@@ -7,7 +7,7 @@
 intersect(spdf1, spdf1.attributefieldname,
   spdf1.attributefieldname.output = NULL, spdf2, spdf2.attributefieldname,
   spdf2.attributefieldname.output = NULL, method = "gintersection",
-  area.ha = T, area.sqkm = T,
+  area.ha = TRUE, area.sqkm = TRUE,
   projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
 }
 \arguments{
@@ -25,9 +25,9 @@ intersect(spdf1, spdf1.attributefieldname,
 
 \item{method}{A string specifying which function to use for the interscting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.}
 
-\item{area.ha}{Logical. If \code{T}, areas will be calculated and added in hectares. Default is \code{T}.}
+\item{area.ha}{Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{TRUE}.}
 
-\item{area.sqkm}{Logical. If \code{T}, areas will be calculated and added in square kilometers. Default is \code{T}.}
+\item{area.sqkm}{Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{TRUE}.}
 
 \item{projection}{An \code{sp::CRS()} argument. The final output will be reprojected using this. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}}
 }

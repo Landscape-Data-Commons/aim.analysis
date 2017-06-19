@@ -35,17 +35,17 @@ write.analysis <- function(analysis.output,
 #'
 #' @description Write our an ESRI shapefile from one or more SPDFs. If multiple SPDFs are being written out, they will be combined, optionally with \code{raster::union()} in the case of SpatialPolygonsDataFrame.
 #' @param spdf Either a single SPDF, a list of SPDFs, or the output from \code{read.dd()}. If multiple SPDFs are provided, they will be output as a single combined shapefile. All SPDFs must be of the same class. If not being combined with a \code{raster::union()} or if they are SpatialPointsDataFrames the \code{data} slots must have identical variables.
-#' @param dd Logical. If the argument \code{spdf} is the output from \code{read.dd()}, provide \code{T}. Defaults to \code{F}.
-#' @param dd.list A string specifying which of the three lists in dd to pull SPDFs from. Only used if \code{dd = T}. Valid values are \code{"sf"}, \code{"strata"}, and \code{"pts"}. Defaults to \code{"sf"}.
-#' @param union Logical. If \code{T} and multiple SatialPolygonDataFrames are provided as \code{spdf} then \code{raster::union()} will be applied.
+#' @param dd Logical. If the argument \code{spdf} is the output from \code{read.dd()}, provide \code{TRUE}. Defaults to \code{FALSE}.
+#' @param dd.list A string specifying which of the three lists in dd to pull SPDFs from. Only used if \code{dd = TRUE}. Valid values are \code{"sf"}, \code{"strata"}, and \code{"pts"}. Defaults to \code{"sf"}.
+#' @param union Logical. If \code{TRUE} and multiple SatialPolygonDataFrames are provided as \code{spdf} then \code{raster::union()} will be applied.
 #' @param name A string of the project name for use in the filename, e.g. "Idaho_SageGrouse".
 #' @param type A string of the type of output for use in the filename, e.g. "reportingunits" or "sampleframes".
 #' @param out.path A string specifying the output folder path.
 #' @export
 write.shapefile <- function(spdf,
-                            dd = F,
+                            dd = FALSE,
                             dd.list = "sf",
-                            union = T,
+                            union = TRUE,
                             name,
                             type,
                             out.path){
@@ -88,7 +88,7 @@ write.shapefile <- function(spdf,
            dsn = out.path,
            layer = filename.aim(name, type),
            driver = "ESRI Shapefile",
-           overwrite_layer = T)
+           overwrite_layer = TRUE)
 }
 
 #' Writing out shapefiles of benchmarked points
@@ -102,22 +102,22 @@ write.benchmarkshp <- function(points.benchmarked, tdat, out.path, name){
   points.benchmarked %>% dplyr::select(-VALUE) %>% split(.$MANAGEMENT.QUESTION) %>%
     purrr::map(~ tidyr::spread(data = .x, key = INDICATOR, value = EVALUATION.CATEGORY) %>%
                  merge(x = tdat.spdf %>%
-                         dplyr::select(starts_with(match = "plotid", ignore.case = T),
-                                       starts_with(match = "primarykey", ignore.case = T)) %>%
+                         dplyr::select(starts_with(match = "plotid", ignore.case = TRUE),
+                                       starts_with(match = "primarykey", ignore.case = TRUE)) %>%
                          setNames(object = .,
                                   stringr::str_to_upper(names(.))),
                        y = .,
-                       all.x = F,
-                       all.y = T
+                       all.x = FALSE,
+                       all.y = TRUE
                  ) %>%
-                 dplyr::select(-starts_with(match = "coords", ignore.case = T)) %>%
+                 dplyr::select(-starts_with(match = "coords", ignore.case = TRUE)) %>%
                  rgdal::writeOGR(obj = .,
                                  dsn = paste0(out.path),
                                  layer = filename.aim(name, type = unique(.@data$MANAGEMENT.QUESTION)),
                                  driver = "ESRI Shapefile",
-                                 overwrite_layer = T)
+                                 overwrite_layer = TRUE)
     )
-  benchmark.indicators.lut <- data.frame("INDICATOR" = points.benchmarked[, "INDICATOR"], stringsAsFactors = F) %>%
+  benchmark.indicators.lut <- data.frame("INDICATOR" = points.benchmarked[, "INDICATOR"], stringsAsFactors = FALSE) %>%
     dplyr::distinct() %>% dplyr::mutate(INDICATOR.ABBREVIATION = abbreviate(INDICATOR, minlength = 7))
   write.csv(benchmark.indicators.lut,
             paste0(out.path, "/",

@@ -52,7 +52,7 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   tdat.tall$Value[tdat.tall$Value == "<Null>"] <- NA
 
   ## It's not clear what this column will be called, so we'll just get it now
-  eval.name.benchmarks <- names(benchmarks)[grep(x = names(benchmarks), pattern = "evaluation.group$|^evaluation.stratum", ignore.case = T)]
+  eval.name.benchmarks <- names(benchmarks)[grep(x = names(benchmarks), pattern = "evaluation.group$|^evaluation.stratum", ignore.case = TRUE)]
 
   ## Strip down benchmarks to just the distinct ones that matter because sometimes the same benchmark appears for multiple reasons?
   benchmarks.distinct <- distinct(benchmarks[, c("MANAGEMENT.QUESTION", eval.name.benchmarks, "INDICATOR.TDAT", "EVALUATION.CATEGORY", "EVAL.STRING.LOWER", "EVAL.STRING.UPPER")])
@@ -60,7 +60,7 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   ## Merge the tall TerrADat with the benchmark information
   tdat.tall.benched <- merge(x = tdat.tall,
                              y = benchmarks.distinct,
-                             by.x = c(names(tdat.tall)[grepl(x = names(tdat.tall), pattern = evalstratumfield, ignore.case = T)], "Indicator"),
+                             by.x = c(names(tdat.tall)[grepl(x = names(tdat.tall), pattern = evalstratumfield, ignore.case = TRUE)], "Indicator"),
                              by.y = c(eval.name.benchmarks, "INDICATOR.TDAT"))
 
   ## Create parseable evaluation strings

@@ -6,7 +6,7 @@
 \usage{
 read.benchmarks(data.path = "", benchmarks.filename = "",
   sheet.name = "Monitoring Objectives", indicator.lut = NULL,
-  indicator.lut.benchmarkfield = "indicator.name", convert.l2r = T)
+  indicator.lut.benchmarkfield = "indicator.name", convert.l2r = TRUE)
 }
 \arguments{
 \item{data.path}{A string specifying the path to the folder containing the .XLSX with the benchmarks}

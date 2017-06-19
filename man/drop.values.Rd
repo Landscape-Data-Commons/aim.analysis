@@ -4,16 +4,16 @@
 \alias{drop.values}
 \title{Quickly drop observations from a data frame based on the values of a single variable}
 \usage{
-drop.values(df, variable = "", dropvalue = NA, ignore.case = T)
+drop.values(df, variable = "", dropvalue = NA, ignore.case = TRUE)
 }
 \arguments{
 \item{df}{A data frame or, if \code{spdplyr} is installed, spatial data frame to manipulate.}
 
 \item{variable}{A character string specifying the name of the variable to base the filtering on.}
 
-\item{dropvalue}{The value to drop observations based on. Can be either a regular expression as a character string to be passed to \code{grepl()} or \code{NA}. All observations where the variable \code{variable} return \code{T} when checked against this will be dropped. Defaults to \code{NA}.}
+\item{dropvalue}{The value to drop observations based on. Can be either a regular expression as a character string to be passed to \code{grepl()} or \code{NA}. All observations where the variable \code{variable} return \code{TRUE} when checked against this will be dropped. Defaults to \code{NA}.}
 
-\item{ignore.case}{Logical. If \code{dropvalue} is a regular expression, then this argument is passed to \code{grepl()} to decide if the search is case sensitive or not. Defaults to \code{T}.}
+\item{ignore.case}{Logical. If \code{dropvalue} is a regular expression, then this argument is passed to \code{grepl()} to decide if the search is case sensitive or not. Defaults to \code{TRUE}.}
 }
 \value{
 The data frame \code{df} without the observations where \code{variable} matched \code{dropvalue}.

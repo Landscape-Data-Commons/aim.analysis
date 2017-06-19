@@ -20,7 +20,7 @@ apply.tracking(filenames, path = "", dd.list, dd.names = c(""), tdat,
 
 \item{target.values}{Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive}
 
-\item{deleteoverdraw}{Logical. If \code{T} then unsampled overdraw points will be dropped. Defaults to \code{T}.}
+\item{deleteoverdraw}{Logical. If \code{TRUE} then unsampled overdraw points will be dropped. Defaults to \code{TRUE}.}
 }
 \value{
 Returns \code{dd.list} with sampling dates and statuses added from the plot tracking Excel files.

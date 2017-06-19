@@ -5,7 +5,7 @@
 \title{Importing Sample Design Databases for AIM Sample Designs}
 \usage{
 read.dd(src = "", dd.src, func = "arcgisbinding",
-  target.values = c("Target Sampled", "TS"), omitNAdesignations = F,
+  target.values = c("Target Sampled", "TS"), omitNAdesignations = FALSE,
   projection = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"))
 }
 \arguments{

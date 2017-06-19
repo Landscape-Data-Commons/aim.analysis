@@ -4,17 +4,17 @@
 \alias{write.shapefile}
 \title{Writing out SPDFs as shapefiles}
 \usage{
-write.shapefile(spdf, dd = F, dd.list = "sf", union = T, name, type,
-  out.path)
+write.shapefile(spdf, dd = FALSE, dd.list = "sf", union = TRUE, name,
+  type, out.path)
 }
 \arguments{
 \item{spdf}{Either a single SPDF, a list of SPDFs, or the output from \code{read.dd()}. If multiple SPDFs are provided, they will be output as a single combined shapefile. All SPDFs must be of the same class. If not being combined with a \code{raster::union()} or if they are SpatialPointsDataFrames the \code{data} slots must have identical variables.}
 
-\item{dd}{Logical. If the argument \code{spdf} is the output from \code{read.dd()}, provide \code{T}. Defaults to \code{F}.}
+\item{dd}{Logical. If the argument \code{spdf} is the output from \code{read.dd()}, provide \code{TRUE}. Defaults to \code{FALSE}.}
 
-\item{dd.list}{A string specifying which of the three lists in dd to pull SPDFs from. Only used if \code{dd = T}. Valid values are \code{"sf"}, \code{"strata"}, and \code{"pts"}. Defaults to \code{"sf"}.}
+\item{dd.list}{A string specifying which of the three lists in dd to pull SPDFs from. Only used if \code{dd = TRUE}. Valid values are \code{"sf"}, \code{"strata"}, and \code{"pts"}. Defaults to \code{"sf"}.}
 
-\item{union}{Logical. If \code{T} and multiple SatialPolygonDataFrames are provided as \code{spdf} then \code{raster::union()} will be applied.}
+\item{union}{Logical. If \code{TRUE} and multiple SatialPolygonDataFrames are provided as \code{spdf} then \code{raster::union()} will be applied.}
 
 \item{name}{A string of the project name for use in the filename, e.g. "Idaho_SageGrouse".}
 

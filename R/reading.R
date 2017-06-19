@@ -15,7 +15,7 @@ read.benchmarks <- function(data.path = "",
                             sheet.name = "Monitoring Objectives",
                             indicator.lut = NULL,
                             indicator.lut.benchmarkfield = "indicator.name",
-                            convert.l2r = T
+                            convert.l2r = TRUE
 ){
   ## Sanitizing inputs because users can't be trusted
   benchmarks.filename <- sanitize(benchmarks.filename, "xlsx")
@@ -85,7 +85,7 @@ read.dd <- function(src = "", ## A filepath as a string
                     # validate.keys = T, ## Should the process also produce a data frame in the output of points in the design dtabases that have issues with final designations or TerrAdat primary keys?
                     target.values = c("Target Sampled",
                                       "TS"),
-                    omitNAdesignations = F, ## Strip out plots with a final designation value of NA
+                    omitNAdesignations = FALSE, ## Strip out plots with a final designation value of NA
                     projection = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0") ## Standard NAD83
 ){
 
@@ -118,7 +118,7 @@ read.dd <- function(src = "", ## A filepath as a string
              ## Read in the sample frame feature class inside the current DD.
              sf <- safe.readOGR(dsn = paste(src, s, sep = "/"),
                                 layer = "Terra_Sample_Frame",
-                                stringsAsFactors = F)[[1]] ## The [[]] is to get the SPDF (or NULL) out of the list returned by the safely()
+                                stringsAsFactors = FALSE)[[1]] ## The [[]] is to get the SPDF (or NULL) out of the list returned by the safely()
              # The spTransform() is just to be safe, but probably isn't necessary
              if (!is.null(sf)) {
                sf <- spTransform(sf, projection)
@@ -131,7 +131,7 @@ read.dd <- function(src = "", ## A filepath as a string
              #Read in the Strata
              strata <- safe.readOGR(dsn = paste(src, s, sep = "/"),
                                     layer = "Terra_Strtfctn",
-                                    stringsAsFactors = F)[[1]]
+                                    stringsAsFactors = FALSE)[[1]]
              if (!is.null(strata)) {
                strata <- spTransform(strata, projection)
                names(strata@data) <- stringr::str_to_upper(names(strata@data))
@@ -141,7 +141,7 @@ read.dd <- function(src = "", ## A filepath as a string
              #Read in the Points
              points <- safe.readOGR(dsn = paste(src, s, sep = "/"),
                                     layer = "Terra_Sample_Points",
-                                    stringsAsFactors = F)[[1]]
+                                    stringsAsFactors = FALSE)[[1]]
              if (!is.null(points)) {
                points <- spTransform(points, projection)
              }
@@ -239,8 +239,8 @@ read.dd <- function(src = "", ## A filepath as a string
 #' @export
 read.tdat <- function(tdat.path, tdat.name){
   tdat.name <- sanitize(tdat.name, "gdb")
-  tdat.terrestrial.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_TERRESTRIALAIM", stringsAsFactors = F)
-  tdat.remote.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_REMOTESENSING", stringsAsFactors = F)
+  tdat.terrestrial.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_TERRESTRIALAIM", stringsAsFactors = FALSE)
+  tdat.remote.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_REMOTESENSING", stringsAsFactors = FALSE)
   tdat.spdf <- sp::merge(tdat.terrestrial.spdf, tdat.remote.spdf)
   return(tdat.spdf)
 }
@@ -261,7 +261,7 @@ read.tracking <- function(filename = "", path = "") {
                                  skip = 1
   )
 
-  for (field in names(tracking)[grepl(x = names(tracking), pattern = "date", ignore.case = T) & !grepl(x = names(tracking), pattern = " and ", ignore.case = T)]) {
+  for (field in names(tracking)[grepl(x = names(tracking), pattern = "date", ignore.case = TRUE) & !grepl(x = names(tracking), pattern = " and ", ignore.case = TRUE)]) {
     tracking[, field] <- lubridate::as_date(as.character(tracking[[field]]))
   }
 

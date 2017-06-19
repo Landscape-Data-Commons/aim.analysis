@@ -293,29 +293,35 @@ area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
 restrict.tdat <- function(dd.raw, tdat.spdf){
   ## NAD83 sp::CRS()
   nad83.prj <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+  ## Save this for later
   tdat.prj <- tdat.spdf@proj4string
+  ## Create a list to dump restricted SPDFs into
+  restrictions <- list()
+  ## Restrict!
   for (design in names(dd.raw$sf)) {
-    assign(value = attribute.shapefile(spdf1 = tdat.spdf,
-                                       spdf2 = dd.raw$sf[[design]],
-                                       attributefield = "TERRA_SAMPLE_FRAME_ID",
-                                       newfield = "SampleFrame")  %>% spTransform(nad83.prj),
-           x = paste0("temp", ".", grep(x = names(dd.raw$sf), pattern = paste0("^", design, "$")))
-    )
+    restrictions[[design]] <- spTransform(attribute.shapefile(spdf1 = tdat.spdf,
+                                                              spdf2 = dd.raw$sf[[design]],
+                                                              attributefield = "TERRA_SAMPLE_FRAME_ID",
+                                                              newfield = "SampleFrame"),
+                                          CRSobj = nad83.prj)
   }
-  if (length(ls()[grepl(x = ls(), pattern = "^temp.\\d{1,3}$")]) > 1) {
-    tdat.spdf.restricted <- subset(tdat.spdf %>% spTransform(nad83.prj), "SiteID" == "Nothing")
-    for (spdf in ls()[grepl(x = ls(), pattern = "^temp.\\d{1,3}$")]) {
-      tdat.spdf.restricted <- rbind(tdat.spdf.restricted, get(spdf))
-    }
+  ## If there was more than one SPDF
+  if (length(restrictions) > 1) {
+    ## Prime this with an empty data frame made from an empty subset. Ridiculous but necessary
+    tdat.spdf.restricted <- subset(sp::spTransform(tdat.spdf, nad83.prj), "SiteID" == "Nothing")
+    ## Mash together all the SPDFs
+    tdat.spdf.restricted <- dplyr::bind_rows(restrictions)
   } else {
-    tdat.spdf.restricted <- get(ls()[grepl(x = ls(), pattern = "^temp.\\d{1,3}$")]) %>% spTransform(nad83.prj)
+    tdat.spdf.restricted <- spTransform(restrictions[[1]], nad83.prj)
   }
+
+  ## Drop that SampleFrame variable
   tdat.spdf.restricted@data <- tdat.spdf.restricted@data[, names(tdat.spdf.restricted@data)[!(names(tdat.spdf.restricted@data) %in% "SampleFrame")]]
-  tdat.spdf.restricted <- tdat.spdf.restricted@data %>% dplyr::distinct() %>%
-    SpatialPointsDataFrame(data = .,
-                           coords = .[, c("coords.x1", "coords.x2")],
-                           proj4string = tdat.prj)
-  tdat.spdf.restricted <- tdat.spdf.restricted %>% spTransform(nad83.prj)
+  ## Build a new SPDF? I must've done this for a reason?
+  tdat.spdf.restricted <- sp::SpatialPointsDataFrame(data = dplyr::distinct(tdat.spdf.restricted@data),
+                                                     coords = dplyr::distinct(tdat.spdf.restricted@data)[, c("coords.x1", "coords.x2")],
+                                                     proj4string = tdat.prj)
+  tdat.spdf.restricted <- sp::spTransform(tdat.spdf.restricted, CRSobj = nad83.prj)
   return(tdat.spdf.restricted)
 }
 

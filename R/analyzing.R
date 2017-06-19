@@ -95,7 +95,7 @@ analyze <- function(evaluated.points,
     ## Fix the names of the indicators so that the output doesn't include the ".ind" suffix which interferes with the automated report knitting
     names(aim.datacat) <- names(aim.datacat) %>% stringr::str_replace_all("\\.ind$", "")
 
-    ## TODO: Think abot how to get sum of wgt by stratum and set up a stratified aim.popsize list
+    ## TODO: Think about how to get sum of wgt by stratum and set up a stratified aim.popsize list
     ## The areas should be the sum of the weights, right?
     areas.df <- data.wide.current %>% dplyr::group_by(Reporting.Unit) %>% dplyr::summarize(area = sum(wgt))
 

@@ -4,10 +4,11 @@
 \alias{weight}
 \title{Calculating Weights from AIM Sample Designs}
 \usage{
-weight(dd.import, combine = TRUE, reorder = TRUE,
-  reporting.units.spdf = NULL, reportingunitfield = "REPORTING.UNIT",
-  target.values = c("Target Sampled", "TS"), unknown.values = c("Unknown",
-  "UNK"), nontarget.values = c("Non-Target", "NT", NA),
+weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
+  temp.path = NULL, reporting.units.spdf = NULL,
+  reportingunitfield = "REPORTING.UNIT", target.values = c("Target Sampled",
+  "TS"), unknown.values = c("Unknown", "UNK"),
+  nontarget.values = c("Non-Target", "NT", NA),
   inaccessible.values = c("Inaccessible", "IA"),
   unneeded.values = c("Not Needed"), fatefieldname = "final_desig",
   pointstratumfieldname = "dsgn_strtm_nm",
@@ -21,6 +22,10 @@ weight(dd.import, combine = TRUE, reorder = TRUE,
 \item{combine}{Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to \code{TRUE}.}
 
 \item{reorder}{Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If \code{FALSE}, the DDs are considered in the order they appear in dd.import. If combine is \code{FALSE}, then this only potentially affects the order of the output information. Defaults to \code{TRUE}.}
+
+\item{erase}{Character string. This must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Defaults to \code{"arcpy"}.}
+
+\item{temp.path}{Optional character string. If \code{erase} is \code{"arcpy"}, this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.}
 
 \item{reporting.units.spdf}{SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to \code{NULL}.}
 

@@ -4,6 +4,8 @@
 #' @param dd.import Output from \code{read.dd()}. This can be the result of running \code{read.dd()} on one or many sample design databases
 #' @param combine Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to \code{TRUE}.
 #' @param reorder Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If \code{FALSE}, the DDs are considered in the order they appear in dd.import. If combine is \code{FALSE}, then this only potentially affects the order of the output information. Defaults to \code{TRUE}.
+#' @param erase Optional character string. If \code{combine} is \code{TRUE} this must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Defaults to \code{"arcpy"}.
+#' @param temp.path Optional character string. If \code{combine} is \code{TRUE} and \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.
 #' @param reporting.units.spdf SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to \code{NULL}.
 #' @param reportingunitfield Character string. If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
 #' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
@@ -21,13 +23,13 @@
 #' @export
 
 ## TODO: Figure out what to do about DDs that have future points
-
-## This function produces point weights by design stratum (when the DD contains them) or by sample frame (when it doesn't)
-weight <- function(dd.import, ## The output from read.dd()
-                   combine = TRUE, ## If provided multiple DDs, should those be combined into a single analysis? Otherwise the weights will be calculated on a per-DD basis
-                   reorder = TRUE, ## Should the DDs be reordered by size or ar they provided in the order that they should be considered? Depends on how they overlap and user discretion
-                   reporting.units.spdf = NULL, ## An optional reporting unit SPDF that will be used to clip the DD import before calculating weights
-                   reportingunitfield = "REPORTING.UNIT", ## If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
+weight <- function(dd.import,
+                   combine = TRUE,
+                   reorder = TRUE,
+                   erase = "arcpy",
+                   temp.path = NULL,
+                   reporting.units.spdf = NULL,
+                   reportingunitfield = "REPORTING.UNIT",
                    ## Keywords for point fate—the values in the vectors unknown and nontarget are considered nonresponses.
                    target.values = c("Target Sampled",
                                      "TS"),
@@ -40,14 +42,20 @@ weight <- function(dd.import, ## The output from read.dd()
                                            "IA"),
                    unneeded.values = c("Not Needed"),
                    ## These shouldn't need to be changed from these defaults, but better to add that functionality now than regret not having it later
-                   fatefieldname = "final_desig", ## The field name in the points SPDF to pull the point fate from
-                   pointstratumfieldname = "dsgn_strtm_nm", ## The field name in the points SPDF to pull the design stratum
-                   designstratumfield = "dmnnt_strtm", ## The field name in the strata SPDF to pull the stratum identity from
-                   projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"), ## Standard NAD83
+                   fatefieldname = "final_desig",
+                   pointstratumfieldname = "dsgn_strtm_nm",
+                   designstratumfield = "dmnnt_strtm",
+                   projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"),
                    sliverdrop = TRUE,
                    sliverwarn = TRUE,
                    sliverthreshold = 0.01
 ){
+  if (!(stringr::str_to_upper(erase) %in% c("ARCPY", "RGEOS"))) {
+    stop("erase must be either 'arcpy' or 'rgeos'.")
+  }
+  if (erase == "arcpy" & (is.null(temp.path) | is.character(temp.path))) {
+    stop("If erase is 'arcpy' a valid filpath must be provided as temp.path.")
+  }
   ## Sanitization
   if (!is.null(reporting.units.spdf)) {
     names(reporting.units.spdf@data) <- stringr::str_to_upper(names(reporting.units.spdf@data))
@@ -260,93 +268,82 @@ weight <- function(dd.import, ## The output from read.dd()
               ## Note: I'm not sure what happens if these don't overlap or if x is completely encompassed by y
               print(paste("Attempting to remove the", s, "frame from the", r, "frame with rgeos::gDifference()"))
 
-              ## This lets rgeos deal with tiny fragments of polygons without crashing
-              ## This and the following tryCatch() may be unnecessary since the argument drop_lower_td = TRUE was added, but it works so I'm leaving it
-              current.drop <- rgeos::get_RGEOS_dropSlivers()
-              current.warn <- rgeos::get_RGEOS_warnSlivers()
-              current.tol <- rgeos::get_RGEOS_polyThreshold()
+              switch(erase,
+                     "ARCPY" = {
+                       ## Create a temp directory
+                       temp.directory <- paste0(temp.path, "/arcpy_temp")
+                       dir.create(temp.directory, showWarnings = FALSE)
 
-              rgeos::set_RGEOS_dropSlivers(sliverdrop)
-              rgeos::set_RGEOS_warnSlivers(sliverwarn)
-              rgeos::set_RGEOS_polyThreshold(sliverthreshold)
-              print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
-              ## Making this Albers for right now for gBuffer()
-              ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
-              frame.sp.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(frame.spdf.temp, CRS("+proj=aea")),
-                                                                           byid = TRUE,
-                                                                           width = 0.1),
-                                                  spgeom2 = rgeos::gBuffer(sp::spTransform(frame.spdf,
-                                                                                           CRS("+proj=aea")),
-                                                                           byid = TRUE,
-                                                                           width = 0.1),
-                                                  drop_lower_td = TRUE)
-              if (!is.null(frame.sp.temp)) {
-                frame.spdf.temp <- sp::spTransform(sp::SpatialPolygonsDataFrame(frame.sp.temp,
-                                                                                data = frame.spdf.temp@data[1:length(frame.sp.temp@polygons),]),
-                                                   CRSobj = frame.spdf.temp@proj4string)
-              } else {
-                frame.spdf.temp <- NULL
-              }
+                       ## Write out the two current frames
+                       rgdal::writeOGR(obj = frame.spdf.temp, dsn = temp.directory, layer = "inshape", driver = "ESRI Shapefile")
+                       rgdal::writeOGR(obj = frame.spdf, dsn = temp.directory, layer = "eraseshape", driver = "ESRI Shapefile")
 
+                       ## Construct a quick python script to erase frame.spdf from frame.spdf.temp
+                       arcpy.script <- c("import arcpy",
+                                         "from arcpy import env",
+                                         paste0("env.workspace = '", temp.directory, "'"),
+                                         "in_features = 'inshape.shp'",
+                                         "erase_features = 'eraseshape.shp'",
+                                         "out_feature_class = 'eraseresults.shp'",
+                                         "xy_tolerance = ''",
+                                         "arcpy.Erase_analysis(in_features, erase_features, out_feature_class)"
+                       )
+                       ## Write the constructed script out
+                       cat(arcpy.script, file = paste0(temp.directory, "/erase.py"), sep = "\n", append = F)
 
-              # frame.spdf.temp <- tryCatch(
-              #   expr = {
-              #     rgeos::set_RGEOS_dropSlivers(sliverdrop)
-              #     rgeos::set_RGEOS_warnSlivers(sliverwarn)
-              #     rgeos::set_RGEOS_polyThreshold(sliverthreshold)
-              #     print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
-              #     garbage <- rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
-              #                          ## Making this Albers for right now for gBuffer()
-              #                          sp::spTransform(CRS("+proj=aea")) %>%
-              #                          ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
-              #                          rgeos::gBuffer(byid = TRUE, width = 0),
-              #                        spgeom2 = frame.spdf %>%
-              #                          sp::spTransform(CRS("+proj=aea")) %>%
-              #                          rgeos::gBuffer(byid = TRUE, width = 0),
-              #                        drop_lower_td = T) %>%
-              #       sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data[1:length(.@polygons),]) %>%
-              #       sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
-              #   },
-              #   error = function(e) {
-              #     print("Received the error:")
-              #     print(paste(e))
-              #     if (grepl(x = e, pattern = "cannot get a slot")) {
-              #       print("This is extremely problematic (unless it means your whole frame was correctly erased), but there's no automated error handling for it.")
-              #     } else if (grepl(x = e, pattern = "few points in geometry")) {
-              #       print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(T), rgeos::set_RGEOS_warnslivers(T), and rgeos::set_RGEOS_polyThresholds(", sliverthreshold, ")"))
-              #       rgeos::set_RGEOS_dropSlivers(T)
-              #       rgeos::set_RGEOS_warnSlivers(T)
-              #       rgeos::set_RGEOS_polyThreshold(sliverthreshold)
-              #       rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
-              #                            sp::spTransform(CRS("+proj=aea")) %>%
-              #                            rgeos::gBuffer(byid = TRUE, width = 0),
-              #                          spgeom2 = frame.spdf %>%
-              #                            sp::spTransform(CRS("+proj=aea")) %>%
-              #                            rgeos::gBuffer(byid = TRUE, width = 0),
-              #                          drop_lower_td = T) %>%
-              #         sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
-              #         sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
-              #     } else if (grepl(x = e, pattern = "SET_VECTOR_ELT")) {
-              #       print(paste0("Attempting again with rgeos::set_RGEOS_dropslivers(FALSE) and rgeos::set_RGEOS_warnslivers(FALSE)"))
-              #       rgeos::set_RGEOS_dropSlivers(FALSE)
-              #       rgeos::set_RGEOS_warnSlivers(FALSE)
-              #       rgeos::set_RGEOS_polyThreshold(0)
-              #       rgeos::gDifference(spgeom1 = frame.spdf.temp %>%
-              #                            sp::spTransform(CRS("+proj=aea")) %>%
-              #                            rgeos::gBuffer(byid = TRUE, width = 0),
-              #                          spgeom2 = frame.spdf %>%
-              #                            sp::spTransform(CRS("+proj=aea")) %>%
-              #                            rgeos::gBuffer(byid = TRUE, width = 0),
-              #                          drop_lower_td = T) %>%
-              #         sp::SpatialPolygonsDataFrame(data = frame.spdf.temp@data) %>%
-              #         sp::spTransform(CRSobj = frame.spdf.temp@proj4string)
-              #     }
-              #   }
-              # )
+                       ## Find the local machine's copy of pythonw.exe in C:/Python27. There are no failsafes for if this isn't where to find it
+                       python.path <- paste0("C:/Python27/", list.files(path = "C:/Python27/", pattern = "pythonw.exe", recursive = TRUE)[1])
 
-              rgeos::set_RGEOS_dropSlivers(current.drop)
-              rgeos::set_RGEOS_warnSlivers(current.warn)
-              rgeos::set_RGEOS_polyThreshold(current.tol)
+                       ## Execute the Python script
+                       system(paste(python.path, stringr::str_replace_all(paste0(temp.directory, "/erase.py"), pattern = "/", replacement = "\\\\")))
+
+                       ## Read in the results and rename the attributes because rgdal::writeOGR() truncated them
+                       erase.results <- rgdal::readOGR(dsn = temp.directory, layer = "eraseresults", stringsAsFactors = FALSE)
+                       names(erase.results@data) <- names(frame.spdf.temp@data)
+
+                       if (erase.results@proj4string != frame.spdf.temp@proj4string) {
+                         frame.spdf.temp <- spTransform(erase.results, CRSobj = frame.spdf.temp@proj4string)
+                       } else {
+                         frame.spdf.temp <- erase.results
+                       }
+
+                       ## Remove the temp folder and files
+                       system(paste("rmdir", stringr::str_replace_all(temp.directory, pattern = "/", replacement = "\\\\"), "/s /q"))
+                     }, "RGEOS" = {
+                       ## This lets rgeos deal with tiny fragments of polygons without crashing
+                       ## This and the following tryCatch() may be unnecessary since the argument drop_lower_td = TRUE was added, but it works so I'm leaving it
+                       current.drop <- rgeos::get_RGEOS_dropSlivers()
+                       current.warn <- rgeos::get_RGEOS_warnSlivers()
+                       current.tol <- rgeos::get_RGEOS_polyThreshold()
+
+                       rgeos::set_RGEOS_dropSlivers(sliverdrop)
+                       rgeos::set_RGEOS_warnSlivers(sliverwarn)
+                       rgeos::set_RGEOS_polyThreshold(sliverthreshold)
+                       print(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
+                       ## Making this Albers for right now for gBuffer()
+                       ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
+                       frame.sp.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(frame.spdf.temp, CRS("+proj=aea")),
+                                                                                    byid = TRUE,
+                                                                                    width = 0.1),
+                                                           spgeom2 = rgeos::gBuffer(sp::spTransform(frame.spdf,
+                                                                                                    CRS("+proj=aea")),
+                                                                                    byid = TRUE,
+                                                                                    width = 0.1),
+                                                           drop_lower_td = TRUE)
+                       if (!is.null(frame.sp.temp)) {
+                         frame.spdf.temp <- sp::spTransform(sp::SpatialPolygonsDataFrame(frame.sp.temp,
+                                                                                         data = frame.spdf.temp@data[1:length(frame.sp.temp@polygons),]),
+                                                            CRSobj = frame.spdf.temp@proj4string)
+                       } else {
+                         frame.spdf.temp <- NULL
+                       }
+
+                       rgeos::set_RGEOS_dropSlivers(current.drop)
+                       rgeos::set_RGEOS_warnSlivers(current.warn)
+                       rgeos::set_RGEOS_polyThreshold(current.tol)
+
+                     }
+              )
 
               print("Erasure complete or at least attempted")
 

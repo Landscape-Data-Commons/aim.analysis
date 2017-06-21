@@ -23,9 +23,9 @@ weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
 
 \item{reorder}{Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If \code{FALSE}, the DDs are considered in the order they appear in dd.import. If combine is \code{FALSE}, then this only potentially affects the order of the output information. Defaults to \code{TRUE}.}
 
-\item{erase}{Character string. This must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Defaults to \code{"arcpy"}.}
+\item{erase}{Optional character string. If \code{combine} is \code{TRUE} this must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Defaults to \code{"arcpy"}.}
 
-\item{temp.path}{Optional character string. If \code{erase} is \code{"arcpy"}, this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.}
+\item{temp.path}{Optional character string. If \code{combine} is \code{TRUE} and \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.}
 
 \item{reporting.units.spdf}{SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to \code{NULL}.}
 
@@ -47,7 +47,7 @@ weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
 
 \item{designstratumfield}{Character string defining the field name in the strata SPDF[s] in dd.import that contains the design stratum. Defaults to \code{"dmnt_strtm"}.}
 
-\item{projection}{\code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations.}
+\item{projection}{Character string \code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations.}
 }
 \description{
 This function takes the output from the function \code{read.dd()} and optionally a SpatialPolygonsDataFrame defining the extent of reporting units. Returns a list of two data frames: strata.weights with the weighting information by stratum and point.weights with the weighting information by point.

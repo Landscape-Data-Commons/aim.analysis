@@ -10,8 +10,8 @@
 #' @export
 
 benchmark <- function(benchmarks, ## The data frame imported with read.benchmarks()
-                        tdat, ## The data frame from TerrADat. It needs to already be attributed with evaluation strata
-                        evalstratumfield = "Evaluation.Stratum" ## The field in tdat that contains the evaluation strata
+                      tdat, ## The data frame from TerrADat. It needs to already be attributed with evaluation strata
+                      evalstratumfield = "Evaluation.Stratum" ## The field in tdat that contains the evaluation strata
 ){
   ## Sanitization as always
   names(benchmarks) <- stringr::str_to_upper(names(benchmarks))

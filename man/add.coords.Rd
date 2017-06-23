@@ -18,6 +18,9 @@ add.coords(spdf, current.proj = TRUE, xynames = NULL, nad83 = FALSE,
 
 \item{albers}{Logical. If \code{TRUE} Then the columns \code{X.METERS.AL} and \code{Y.METERS.AL} will be added using Albers Equal Area. Defaults to \code{FALSE}.}
 }
+\value{
+\code{spdf} with fields added to the data frame as requested.
+}
 \description{
 Adds one or more of the following: the coordinates from the current coordinate refrence system; coordinates in NAD83; and coordinates in Albers Equal Area. This does not change the projection of the SPDF.
 }

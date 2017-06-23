@@ -5,29 +5,25 @@
 #' @param pts.groupfield Optional character string. This must exactly match the name of the field in \code{pts} that contains values matching those found in \code{frame.spdf$frame.groupfield}. This will most often be the field containing strata identities.
 #' @param frame.spdf Spatial polygons data frame. This must be the design's sample frame or strata restricted to the sample frame extent. If providing \code{frame.groupfield} it must also have a field matching that containing values matching values found in \code{pts$pts.groupfield}.
 #' @param frame.groupfield  Optional character string. This must exactly match the name of the field in \code{frame.spdf} that contains values matching those found in \code{pts$pts.groupfield}. This will most often be the field containing strata identities.
-#' @param year.field Optional character string. This must exactly match the name of the field in \code{pts} that EITHER already contains the only the year associated with the point as a four-digit numeric value OR if at least one of \code{date.field} and \code{year.source.field} is provided will have the output year from \code{add.year()} written into it.
-#' @param date.field Optional character string. This must exactly match the name of the field in \code{pts} that contains the date associated with the points to be passed to \code{year.add()} for interpretation by \code{lubridate::as_date()}.
-#' @param year.source.field Optional character string. This must exactly match the name of the field in \code{pts} that contains a string either ending or beginning with the four-digit year associated with the points to be passed to \code{year.add()}. This is often the panel that the points belong to.
 #' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. When using AIM design databases, this should be at minimum \code{c("Target Sampled", "TS")}. This is case insensitive.
 #' @param unknown.values Character string or character vector. This defines what values in the point fate field count as unknown points. When using AIM design databases, this should be at minimum \code{c("Unknown", "Unk")}. This is case insensitive.
 #' @param nontarget.values Character string or character vector. This defines what values in the point fate field count as non-target points. When using AIM design databases, this should be at minimum \code{c("Non-Target", "NT", NA)}. This is case insensitive.
 #' @param inaccessible.values Character string or character vector. This defines what values in the point fate field count as non-target points. When using AIM design databases, this should be at minimum \code{c("Inaccessible")}. This is case insensitive.
 #' @param unneeded.values Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. When using AIM design databases, this should be at minimum \code{c("Not needed")}. This is case insensitive.
-#' @return A list containing the named data frames \code{frame.stats}, \code{frame.summary} (if groupfield strings were provided), and \code{point.weights}.
+#' @param ... Optional character strings. These must exactly match the names of the field in \code{pts} and will be used to group the points beyond the identity/identities they share with the frame. When calculating \code{frame.stats} these will be passed to \code{dplyr::group_by_()}. They will have no impact on \code{frame.summary} or \code{point.weights}.
+#' @return A list containing the named data frames \code{frame.stats}, \code{frame.summary} (if groupfield strings were provided), and \code{point.weights}. \code{"YEAR"} would be a common string to pass here.
 #' @export
 weight.gen <- function(pts,
                        pts.fatefield = NULL, #pts.fatefield
                        pts.groupfield = NULL, #"WEIGHT.ID"
                        frame.spdf,
                        frame.groupfield = NULL, #designstratumfield
-                       year.field = NULL, #"YEAR"
-                       date.field = NULL, #"DT_VST"
-                       year.source.field = NULL, #"PANEL"
                        target.values,
                        unknown.values,
                        nontarget.values,
                        inaccessible.values,
-                       unneeded.values){
+                       unneeded.values,
+                       ...){
   ## Sanitize
   if (class(pts) == "SpatialPointsDataFrame") {
     working.pts <- pts.spdf@data
@@ -45,24 +41,15 @@ weight.gen <- function(pts,
     stop(paste(unique(working.pts[[pts.fatefield]][!(working.pts[[pts.fatefield]] %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))]), collapse = ", "))
   }
 
+  additional.point.groups <- list(...)
+  if (!any(additional.point.groups %in% names(working.pts))) {
+    message("The following additional grouping fields were not found in pts:")
+    stop(paste(additional.point.groups[!(additional.point.groups %in% names(working.pts))], collapse = ", "))
+  }
+
   ## Add areas in hectares to the frame if they're not there already
   if (!("AREA.HA" %in% names(frame.spdf@data))) {
     frame.spdf <- frame.spdf %>% area.add()
-  }
-
-  ## Make sure there are valid dates if they're asked for
-  if (!is.null(date.field) | !is.null(year.source.field)) {
-    working.pts <- year.add(working.pts, date.field = date.field, source.field = year.source.field)
-    if (!is.null(year.field)) {
-      names(working.pts)[names(working.pts == "YEAR")] <- year.field
-    } else {
-      message("No year.field provided; using default 'YEAR' to store year values")
-      year.field <- "YEAR"
-    }
-  }
-  ## Filter out points from THE FUTURE if possible
-  if (year.field %in% names(working.pts)) {
-    working.pts <- working.pts[!(working.pts[[year.field]] > as.numeric(format(Sys.Date(), "%Y"))), ]
   }
 
   ## Creating a table of the point counts by point type
@@ -75,7 +62,7 @@ weight.gen <- function(pts,
 
 
   ## Here's the summary by key and pts.groupfield and year.field as appropriate
-  pts.summary.fields <- c(pts.groupfield, year.field)[c(!is.null(pts.groupfield), year.field %in% names(working.pts))]
+  pts.summary.fields <- c(pts.groupfield[!is.null(pts.groupfield)], additional.point.groups)
   pts.summary <- eval(parse(text = paste0("working.pts %>% ungroup() %>% group_by(key,", paste(pts.summary.fields, collapse = ","), ") %>%
                                           dplyr::summarize(count = n())")))
 
@@ -157,8 +144,6 @@ weight.gen <- function(pts,
     point.weights <- working.pts
 
   } else if (is.null(frame.groupfield)) {
-    ## There's no stratum summary to make
-    frame.summary <- NULL
 
     ## Treat it as a single unit for lack of stratification
     area <- sum(frame.spdf@data$AREA.HA)
@@ -525,8 +510,14 @@ weight <- function(dd.import,
 
       print(paste("Calculating the weights for", s))
 
+      #########################################
+      ## RIPE FOR REPLACEMENT WITH A GENERALIZED WEIGHTING FUNCTION
       ## Sanitize
-      pts.spdf@data[, fatefieldname] <- stringr::str_to_upper(pts.spdf@data[, fatefieldname])
+      pts.spdf@data$YEAR <- year.add(pts = pts.spdf@data, date.field = "DT_VST", source.field = "PANEL")
+      #### MAKE SURE TO FILTER OUT POINTS FROM THE FUTURE
+
+      #working.pts <- pts.spdf@data[!(pts.spdf@data$YEAR > as.numeric(format(Sys.Date(), "%Y"))), ]
+
 
       ## Now that the clipping and reassigning is all completed, we can start calculating weights
       ## The objects are used in the event that there are no strata in SPDFs that we can use and resort to using the sample frame
@@ -767,6 +758,7 @@ weight <- function(dd.import,
           pointweights.df <- rbind(pointweights.df, pointsweights.current[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE", "ADJWGT")])
         }
       }
+      #########################################
     }
     ## Add this DD to the vector that we use to screen out points from consideration above
   }

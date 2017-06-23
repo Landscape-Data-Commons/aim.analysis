@@ -336,6 +336,7 @@ restrict.tdat <- function(dd.raw, tdat.spdf){
 #' @param xynames Optional vector of two character strings to rename the coordinate variables from the current projection. Format is \code{c("replacement for coords.x1", "replacement for coords.x2")}.
 #' @param nad83 Logical. If \code{TRUE} Then the columns \code{LONGITUDE.NAD83} and \code{LATITUDE.NAD83} will be added using NAD83. Defaults to \code{FALSE}.
 #' @param albers Logical. If \code{TRUE} Then the columns \code{X.METERS.AL} and \code{Y.METERS.AL} will be added using Albers Equal Area. Defaults to \code{FALSE}.
+#' @return \code{spdf} with fields added to the data frame as requested.
 #' @export
 add.coords <- function(spdf,
                        current.proj = TRUE,

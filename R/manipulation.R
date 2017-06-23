@@ -367,47 +367,71 @@ add.coords <- function(spdf,
 
 #' Adding sampling years based on date of visit and panel
 #'
-#' @description For the given SPDF, this adds the year extracted from the values in PANEL, then overwrites that with the year extracted from DT_VST if possible, then for all remaining observations still missing a YEAR value it makes a best guess based on the YEAR values in the other observations with the same PANEL value.
-#' @param pts The SPDF to add YEAR to.
+#' @description For the given SPDF, this adds the year extracted from the values in \code{source.field}, then overwrites that with the year extracted from \code{date.field} if possible, then for all remaining observations still missing a YEAR value it makes a best guess based on the YEAR values in the other observations with the same \code{source.field} value. Note that strings in \code{source.field} must begin or end with a four-digit year in order for this to work.
+#' @param pts The SPDF or data frame to add the field \code{YEAR} to.
+#' @param date.field Character string. The name of the field in \code{pts} that contains the dates to reference.
+#' @param source.field Character string. The name of the field in \code{pts} that contains the strings starting or ending with the year.
 #' @export
 
-add.dates <- function(pts){
-  if (!("PANEL" %in% names(pts))) {
-    stop("Variable 'PANEL' is missing from data frame.")
+year.add <- function(pts,
+                     date.field = NULL,
+                     source.field = NULL){
+  if (!(class(pts) != "data.frame") & grepl(class(pts),  pattern = "^Spatial.{4,15}DataFrame$")) {
+    stop("pts must either be a data frame or a spatial points data frame.")
   }
-  ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
-  pts$YEAR[grepl(x = pts$PANEL, pattern = "\\d{4}$")] <- stringr::str_extract(string = pts$PANEL,
-                                                                              pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
-  pts$YEAR[grepl(x = pts$PANEL, pattern = "^\\d{4}")] <- stringr::str_extract(string = pts$PANEL,
-                                                                              pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
+  if (grepl(class(pts), pattern = "^Spatial.{4,15}DataFrame$")){
+    pts.df <- pts@data
+  } else {
+    pts.df <- pts
+  }
+  if (is.null(date.field) & is.null(source.field)) {
+    stop("At least one of either date.field and source.field must be a string corresponding to a variable name in pts.")
+  }
+  if (!is.null(date.field)) {
+    if (!(date.field %in% names(pts.df))) {
+      stop(paste0("Variable ", date.field, " is missing from pts"))
+    }
+  }
+  if (!is.null(source.field)) {
+    if (!(source.field %in% names(pts.df))) {
+      stop(paste0("Variable ", source.field, " is missing from pts"))
+    }
+  }
+
+  ## Check to see if the values in source.field contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
+  if (!is.null(source.field)) {
+    if (any(grepl(x = pts.df[[source.field]], pattern = "\\d{4}$"))) {
+      pts.df$YEAR[grepl(x = pts.df[[source.field]], pattern = "\\d{4}$")] <- stringr::str_extract(string = pts.df[[source.field]],
+                                                                                                  pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
+    }
+    if (any(grepl(x = pts.df[[source.field]], pattern = "^\\d{4}"))) {
+      pts.df$YEAR[grepl(x = pts.df[[source.field]], pattern = "^\\d{4}")] <- stringr::str_extract(string = pts.df[[source.field]],
+                                                                                                  pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
+    }
+  }
 
   ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
-  pts$YEAR[!is.na(pts$DT_VST)] <- lubridate::as_date(pts$DT_VST[!is.na(pts$DT_VST)]) %>% format("%Y") %>% as.numeric()
+  if (!is.null(date.field)) {
+    pts.df$YEAR[!is.na(pts.df[[date.field]])] <- lubridate::as_date(pts.df[[date.field]][!is.na(pts.df[[date.field]])]) %>% format("%Y") %>% as.numeric()
+  }
 
   ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
-  if (length(grep(x = names(pts), pattern = ".1$")) > 0) {
-    pts <- pts[, (1:length(names(pts)))] %>% dplyr::select(-ends_with(match = ".1"))
+  if (length(grep(x = names(pts.df), pattern = ".1$")) > 0) {
+    pts.df <- pts.df[, (1:length(names(pts.df)))] %>% dplyr::select(-ends_with(match = ".1"))
   }
 
 
   ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
-  if (grepl(class(pts)[[1]], pattern = "^Spatial")) {
-    panel.years <- dplyr::group_by(.data = pts@data,
-                                   PANEL) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
-                                                                                 decreasing = TRUE)[1]))
-  } else {
-    panel.years <- dplyr::group_by(.data = pts,
-                                   PANEL) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
-                                                                                 decreasing = TRUE)[1]))
-  }
-
+  panel.years <- dplyr::group_by_(.data = pts.df,
+                                  source.field) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
+                                                                                       decreasing = TRUE)[1]))
 
   ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
-  for (p in panel.years$PANEL) {
-    pts$YEAR[is.na(pts$YEAR) & pts$PANEL == p] <- panel.years$YEAR[panel.years$PANEL == p]
+  for (p in panel.years[[source.field]]) {
+    pts.df$YEAR[is.na(pts.df$YEAR) & pts.df$PANEL == p] <- panel.years$YEAR[panel.years[[source.field]] == p]
   }
 
-  pts$YEAR <- as.numeric(pts$YEAR)
+  pts$YEAR <- as.numeric(pts.df$YEAR)
   return(pts)
 }
 
@@ -699,4 +723,3 @@ flex.erase <- function(spdf,
   )
   return(output)
 }
-

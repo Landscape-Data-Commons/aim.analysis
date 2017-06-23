@@ -121,7 +121,7 @@ read.dd <- function(src = "", ## A filepath as a string
                                 stringsAsFactors = FALSE)[[1]] ## The [[]] is to get the SPDF (or NULL) out of the list returned by the safely()
              # The spTransform() is just to be safe, but probably isn't necessary
              if (!is.null(sf)) {
-               sf <- spTransform(sf, projection)
+               sf <- sp::spTransform(sf, projection)
              }
              ## Sanitize the column names
              names(sf@data) <- stringr::str_to_upper(names(sf@data))

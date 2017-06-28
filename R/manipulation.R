@@ -401,14 +401,8 @@ year.add <- function(pts,
 
   ## Check to see if the values in source.field contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
   if (!is.null(source.field)) {
-    if (any(grepl(x = pts.df[[source.field]], pattern = "\\d{4}$"))) {
-      pts.df$YEAR[grepl(x = pts.df[[source.field]], pattern = "\\d{4}$")] <- stringr::str_extract(string = pts.df[[source.field]],
-                                                                                                  pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
-    }
-    if (any(grepl(x = pts.df[[source.field]], pattern = "^\\d{4}"))) {
-      pts.df$YEAR[grepl(x = pts.df[[source.field]], pattern = "^\\d{4}")] <- stringr::str_extract(string = pts.df[[source.field]],
-                                                                                                  pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
-    }
+    pts.df$YEAR[grepl(x = pts.df[[source.field]], pattern = "(^\\d{4})|(\\d{4}$)")] <- pts.df[[source.field]] %>%
+      stringr::str_extract(string = ., pattern = "(^\\d{4})|(\\d{4}$)") %>% na.omit() %>% as.numeric()
   }
 
   ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists

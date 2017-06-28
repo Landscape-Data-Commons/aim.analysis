@@ -513,7 +513,7 @@ weight <- function(dd.import,
       #########################################
       ## RIPE FOR REPLACEMENT WITH A GENERALIZED WEIGHTING FUNCTION
       ## Sanitize
-      pts.spdf@data$YEAR <- year.add(pts = pts.spdf@data, date.field = "DT_VST", source.field = "PANEL")
+      pts.spdf@data$YEAR <- year.add(pts = pts.spdf@data, date.field = "DT_VST", source.field = "PANEL")[["YEAR"]]
       #### MAKE SURE TO FILTER OUT POINTS FROM THE FUTURE
 
       #working.pts <- pts.spdf@data[!(pts.spdf@data$YEAR > as.numeric(format(Sys.Date(), "%Y"))), ]

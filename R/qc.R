@@ -9,21 +9,23 @@ validate.keys <- function(dd.raw, target.values = c("Target Sampled",
   ## Initialize the output data frame
   key.errors.df <- data.frame()
 
-  target.values <- c(target.values,
-                     "Target Sampled",
-                     "TS") %>% unique() %>% stringr::str_to_upper()
+  target.values <- unique(stringr::str_to_upper(c(target.values,
+                                                  "Target Sampled",
+                                                  "TS")))
 
   ## Check each design database in turn
   for (dd in names(dd.raw$pts)) {
     ## Get the @data slot from the SPDF for the points for this design
-    pts.df <- dd.raw$pts[[dd]] %>% .@data
+    pts.df <- dd.raw$pts[[dd]]@data
     ## Sanitize the field names
     names(pts.df) <-stringr::str_to_upper(names(pts.df))
 
     ## Grab all the lines where the point was sampled, but there's not a correct PrimaryKey value
-    errors.missing.tdat <- pts.df %>%
-      filter(FINAL_DESIG %in% target.values,
-             !grepl(x = TERRA_TERRADAT_ID, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$")) %>% .[, c("TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")]
+    errors.missing.tdat <- filter(pts.df,
+                                  stringr::str_to_upper(FINAL_DESIG) %in% target.values,
+                                  !grepl(x = TERRA_TERRADAT_ID,
+                                         pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$")
+                                  )[, c("TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")]
     ## If that turned up anything, then alert the user and add the information about all the points with that error to the output data frame
     if (nrow(errors.missing.tdat) > 0) {
       message(paste0("In ", dd, ", ", nrow(errors.missing.tdat), " points were designated as 'target sampled' but missing a valid PrimaryKey value. See the data frame 'errors' in the output for details."))
@@ -33,9 +35,11 @@ validate.keys <- function(dd.raw, target.values = c("Target Sampled",
     }
 
     ## Grab all the lines where there's a proper PrimaryKey value but there's not a target designation
-    errors.missing.desig <- pts.df %>%
-      filter(!(FINAL_DESIG %in% target.values),
-             grepl(x = TERRA_TERRADAT_ID, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$")) %>% .[, c("TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")]
+    errors.missing.desig <- filter(pts.df,
+             !(stringr::str_to_upper(FINAL_DESIG) %in% target.values),
+             grepl(x = TERRA_TERRADAT_ID,
+                   pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$")
+             )[, c("TERRA_SAMPLE_FRAME_ID", "PLOT_NM", "TERRA_TERRADAT_ID")]
     if (nrow(errors.missing.desig) > 0) {
       message(paste0("In ", dd, ", ", nrow(errors.missing.desig), " points have a valid PrimaryKey value but are not designated as 'target sampled.' See the data frame 'errors' in the output for details."))
       errors.missing.desig$DD <- dd

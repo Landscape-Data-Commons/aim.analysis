@@ -5,7 +5,7 @@
 \title{Calculating Weights from AIM Sample Designs}
 \usage{
 weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
-  temp.path = NULL, reporting.units.spdf = NULL,
+  temp.path = getwd(), reporting.units.spdf = NULL,
   reportingunitfield = "REPORTING.UNIT", target.values = c("Target Sampled",
   "TS"), unknown.values = c("Unknown", "UNK"),
   nontarget.values = c("Non-Target", "NT", NA),
@@ -25,7 +25,7 @@ weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
 
 \item{erase}{Optional character string. If \code{combine} is \code{TRUE} this must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Defaults to \code{"arcpy"}.}
 
-\item{temp.path}{Optional character string. If \code{combine} is \code{TRUE} and \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.}
+\item{temp.path}{Optional character string. If \code{combine} is \code{TRUE} and \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps. Defulats to the current working directory.}
 
 \item{reporting.units.spdf}{SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to \code{NULL}.}
 

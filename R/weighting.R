@@ -215,7 +215,7 @@ weight.gen <- function(pts,
 #' @param combine Logical. If provided multiple DDs, should those be combined as part of the weighting calculations? Otherwise the weights will be calculated on a per-DD basis. Defaults to \code{TRUE}.
 #' @param reorder Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If \code{FALSE}, the DDs are considered in the order they appear in dd.import. If combine is \code{FALSE}, then this only potentially affects the order of the output information. Defaults to \code{TRUE}.
 #' @param erase Optional character string. If \code{combine} is \code{TRUE} this must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Defaults to \code{"arcpy"}.
-#' @param temp.path Optional character string. If \code{combine} is \code{TRUE} and \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.
+#' @param temp.path Optional character string. If \code{combine} is \code{TRUE} and \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps. Defulats to the current working directory.
 #' @param reporting.units.spdf SpatialPolygonsDataFrame. Optional reporting units polygons to restrict the sample designs to. If provided, weights will be calculated appropriately based on the intersection of this SPDF and the design[s] Defaults to \code{NULL}.
 #' @param reportingunitfield Character string. If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?
 #' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
@@ -237,7 +237,7 @@ weight <- function(dd.import,
                    combine = TRUE,
                    reorder = TRUE,
                    erase = "arcpy",
-                   temp.path = NULL,
+                   temp.path = getwd(),
                    reporting.units.spdf = NULL,
                    reportingunitfield = "REPORTING.UNIT",
                    ## Keywords for point fate—the values in the vectors unknown and nontarget are considered nonresponses.

@@ -731,7 +731,6 @@ weight <- function(dd.import,
             pointsweights.current$ADJWGT <- NA
           }
 
-          names(pointsweights.current)[] <- c("LONGITUDE", "LATITUDE")
           ## Add the point SPDF now that it's gotten the extra fields to the list of point SPDFs so we can use it after the loop
           pointweights.df <- rbind(pointweights.df, pointsweights.current[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE", "ADJWGT")])
         }

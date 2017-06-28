@@ -263,7 +263,7 @@ weight <- function(dd.import,
   if (!(stringr::str_to_upper(erase) %in% c("ARCPY", "RGEOS"))) {
     stop("erase must be either 'arcpy' or 'rgeos'.")
   }
-  if (erase == "arcpy" & (is.null(temp.path) | is.character(temp.path))) {
+  if (erase == "arcpy" & (is.null(temp.path) | !is.character(temp.path))) {
     stop("If erase is 'arcpy' a valid filpath must be provided as temp.path.")
   }
   ## Sanitization

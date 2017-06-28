@@ -49,7 +49,7 @@ weight.gen <- function(pts,
 
   ## Add areas in hectares to the frame if they're not there already
   if (!("AREA.HA" %in% names(frame.spdf@data))) {
-    frame.spdf <- frame.spdf %>% area.add()
+    frame.spdf <- area.add(frame.spdf)
   }
 
   ## Creating a table of the point counts by point type

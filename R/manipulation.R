@@ -371,12 +371,13 @@ add.coords <- function(spdf,
 #' @param pts The SPDF or data frame to add the field \code{YEAR} to.
 #' @param date.field Character string. The name of the field in \code{pts} that contains the dates to reference.
 #' @param source.field Character string. The name of the field in \code{pts} that contains the strings starting or ending with the year.
+#' @return \code{pts} with the additional column \code{YEAR}.
 #' @export
 
 year.add <- function(pts,
                      date.field = NULL,
                      source.field = NULL){
-  if (!(class(pts) != "data.frame") & grepl(class(pts),  pattern = "^Spatial.{4,15}DataFrame$")) {
+  if (class(pts) != "data.frame" & !grepl(class(pts),  pattern = "^Spatial.{4,15}DataFrame$")) {
     stop("pts must either be a data frame or a spatial points data frame.")
   }
   if (grepl(class(pts), pattern = "^Spatial.{4,15}DataFrame$")){

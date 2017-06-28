@@ -32,7 +32,7 @@ attribute.shapefile <- function(spdf1,
   }
 
   if (newfield %in% names(spdf1@data)) {
-    message(paste0("The variable ", newfield, "is already in spdf1 and will be overwritten."))
+    message(paste0("The variable ", newfield, " is already in spdf1 and will be overwritten."))
   }
 
   remove.coords <- FALSE

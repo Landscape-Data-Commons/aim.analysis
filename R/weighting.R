@@ -547,28 +547,6 @@ weight <- function(dd.import,
         ## Working points. This is a holdover, but it saves refactoring later code
         working.pts <- pts.spdf@data
 
-        ## Check to see if the panel names contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
-        working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "\\d{4}$")] <- working.pts$PANEL %>%
-          stringr::str_extract(string = ., pattern = "\\d{4}$") %>% na.omit() %>% as.numeric()
-        working.pts$YEAR[grepl(x = working.pts$PANEL, pattern = "^\\d{4}")] <- working.pts$PANEL %>%
-          stringr::str_extract(string = ., pattern = "^\\d{4}") %>% na.omit() %>% as.numeric()
-
-        ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
-        working.pts$YEAR[!is.na(working.pts$DT_VST)] <- working.pts$DT_VST[!is.na(working.pts$DT_VST)] %>% stringr::str_extract(string = ., pattern = "^\\d{4}") %>% as.numeric()
-
-        ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
-        working.pts <- working.pts[, (1:length(names(working.pts)))] %>% dplyr::select(-ends_with(match = ".1"))
-
-
-        ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
-        panel.years <- working.pts %>% dplyr::group_by(PANEL) %>%
-          dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)), decreasing = TRUE)[1]))
-
-        ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
-        for (p in panel.years$PANEL) {
-          working.pts$YEAR[is.na(working.pts$YEAR) & working.pts$PANEL == p] <- panel.years$YEAR[panel.years$PANEL == p]
-        }
-
         ## Creating a table of the point counts by point type within each stratum by year by project area ID
         working.pts$key[working.pts$FINAL_DESIG %in% target.values] <- "Observed.pts"
         working.pts$key[working.pts$FINAL_DESIG %in% nontarget.values] <- "Unsampled.pts.nontarget"

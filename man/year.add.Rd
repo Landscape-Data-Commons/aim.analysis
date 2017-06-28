@@ -13,6 +13,9 @@ year.add(pts, date.field = NULL, source.field = NULL)
 
 \item{source.field}{Character string. The name of the field in \code{pts} that contains the strings starting or ending with the year.}
 }
+\value{
+\code{pts} with the additional column \code{YEAR}.
+}
 \description{
 For the given SPDF, this adds the year extracted from the values in \code{source.field}, then overwrites that with the year extracted from \code{date.field} if possible, then for all remaining observations still missing a YEAR value it makes a best guess based on the YEAR values in the other observations with the same \code{source.field} value. Note that strings in \code{source.field} must begin or end with a four-digit year in order for this to work.
 }

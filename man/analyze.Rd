@@ -6,7 +6,7 @@
 \usage{
 analyze(evaluated.points, point.weights,
   default.reportingunit = "No reporting unit", reportingunit.type = NA,
-  adjustedweights = TRUE)
+  adjustedweights = FALSE)
 }
 \arguments{
 \item{evaluated.points}{Data frame output from \code{benchmark()}.}
@@ -17,7 +17,7 @@ analyze(evaluated.points, point.weights,
 
 \item{reportingunit.type}{A string to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.}
 
-\item{adjustedweights}{Logical. If \code{TRUE}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{TRUE}.}
+\item{adjustedweights}{Logical. If \code{TRUE}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{FALSE}.}
 }
 \value{
 A data frame with the output from \code{spsurvey::cat.analysis()}

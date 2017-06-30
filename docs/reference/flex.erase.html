@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Adding coordinate variables to the data frame of a SpatialPointsDataFrame — add.coords â€¢ aim.analysis</title>
+<title>Erase a Spatial Polygons Data Frame from another, either with rgeos or ArcPy — flex.erase â€¢ aim.analysis</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -72,44 +72,57 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Adding coordinate variables to the data frame of a SpatialPointsDataFrame</h1>
+    <h1>Erase a Spatial Polygons Data Frame from another, either with rgeos or ArcPy</h1>
     </div>
 
     
-    <p>Adds one or more of the following: the coordinates from the current coordinate refrence system; coordinates in NAD83; and coordinates in Albers Equal Area. This does not change the projection of the SPDF.</p>
+    <p>Spatial manipulations in R can get, for lack of a better term, squirrelly. Even with multiple failsafes in place to try to compensate for sliver geometry, <code>rgeos::gDifference()</code> still isn't as robust as one might hope. This wrapper removes the geometry of one SPDF from another via a system call to <code>Python</code> using the library <code>ArcPy</code> or via <code>rgeos::gDifference()</code>.</p>
     
 
-    <pre class="usage"><span class='fu'>add.coords</span>(<span class='no'>spdf</span>, <span class='kw'>current.proj</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>xynames</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>nad83</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>albers</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>flex.erase</span>(<span class='no'>spdf</span>, <span class='no'>spdf.erase</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"arcpy"</span>, <span class='kw'>temp.path</span> <span class='kw'>=</span> <span class='st'>""</span>,
+  <span class='kw'>python.search.path</span> <span class='kw'>=</span> <span class='st'>"C:/Python27"</span>, <span class='kw'>sliverdrop</span> <span class='kw'>=</span> <span class='no'>T</span>, <span class='kw'>sliverwarn</span> <span class='kw'>=</span> <span class='no'>T</span>,
+  <span class='kw'>sliverthreshold</span> <span class='kw'>=</span> <span class='fl'>0.01</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>spdf</th>
-      <td><p>A SpatialPointsDataFrame to add the coordinates to</p></td>
+      <td><p>A Spatial Polygons Data Frame to remove FROM.</p></td>
     </tr>
     <tr>
-      <th>current.proj</th>
-      <td><p>Logical. If <code>TRUE</code> Then the columns <code>coords.x1</code> and <code>coords.x2</code> will be added using the current projection. Defaults to <code>TRUE</code>.</p></td>
+      <th>spdf.erase</th>
+      <td><p>A Spatial Polygons Data Frame to remove geometry from <code>spdf</code> WITH.</p></td>
     </tr>
     <tr>
-      <th>xynames</th>
-      <td><p>Optional vector of two character strings to rename the coordinate variables from the current projection. Format is <code>c("replacement for coords.x1", "replacement for coords.x2")</code>.</p></td>
+      <th>method</th>
+      <td><p>Character string. This must either be <code>"arcpy"</code> or <code>"rgeos"</code> and determines which approach will be used to frames from one another if <code>combine</code> is <code>TRUE</code>. If <code>"arcpy"</code> is used, then R must have write permissions to the folder <code>temp.path</code> and a valid install of ArcPy. This is preferable to <code>"rgeos"</code> because the functions involved tend to crash at random when handling very small remainder geometries. Case insensitive. Defaults to <code>"arcpy"</code>.</p></td>
     </tr>
     <tr>
-      <th>nad83</th>
-      <td><p>Logical. If <code>TRUE</code> Then the columns <code>LONGITUDE.NAD83</code> and <code>LATITUDE.NAD83</code> will be added using NAD83. Defaults to <code>FALSE</code>.</p></td>
+      <th>temp.path</th>
+      <td><p>Optional character string. If <code>erase</code> is <code>"arcpy"</code> this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.</p></td>
     </tr>
     <tr>
-      <th>albers</th>
-      <td><p>Logical. If <code>TRUE</code> Then the columns <code>X.METERS.AL</code> and <code>Y.METERS.AL</code> will be added using Albers Equal Area. Defaults to <code>FALSE</code>.</p></td>
+      <th>python.search.path</th>
+      <td><p>Character string. The filepath for the folder containing <code>pythonw.exe</code>. Defaults to <code>"C:/Python27"</code>.</p></td>
+    </tr>
+    <tr>
+      <th>sliverdrop</th>
+      <td><p>Optional logical value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code>rgeos::set_RGEOS_dropSlivers()</code> to temporarily set the environment during the erasure attempt. Defaults to <code>TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>sliverwarn</th>
+      <td><p>Optional logical value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code>rgeos::set_RGEOS_warnSlivers()</code> to temporarily set the environment during the erasure attempt. Defaults to <code>TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>sliverdrop</th>
+      <td><p>Optional numeric value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code>rgeos::set_RGEOS_polyThreshold()</code> to temporarily set the environment during the erasure attempt. Defaults to <code>0.01</code>.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>spdf</code> with fields added to the data frame as requested.</p>
+    <p>The remaining geometry and data in <code>spdf</code> after <code>spdf.erase</code> has been removed from it.</p>
     
 
   </div>

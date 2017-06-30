@@ -54,6 +54,9 @@
         <li>
   <a href="../reference/index.html">Reference</a>
 </li>
+<li>
+  <a href="../articles/index.html">Articles</a>
+</li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
@@ -76,10 +79,11 @@
     <p>This function takes the output from the function <code>read.dd()</code> and optionally a SpatialPolygonsDataFrame defining the extent of reporting units. Returns a list of two data frames: strata.weights with the weighting information by stratum and point.weights with the weighting information by point.</p>
     
 
-    <pre class="usage"><span class='fu'>weight</span>(<span class='no'>dd.import</span>, <span class='kw'>combine</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>reorder</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>reporting.units.spdf</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>reportingunitfield</span> <span class='kw'>=</span> <span class='st'>"REPORTING.UNIT"</span>,
-  <span class='kw'>target.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Target Sampled"</span>, <span class='st'>"TS"</span>), <span class='kw'>unknown.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Unknown"</span>,
-  <span class='st'>"UNK"</span>), <span class='kw'>nontarget.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Non-Target"</span>, <span class='st'>"NT"</span>, <span class='fl'>NA</span>),
+    <pre class="usage"><span class='fu'>weight</span>(<span class='no'>dd.import</span>, <span class='kw'>combine</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>reorder</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>erase</span> <span class='kw'>=</span> <span class='st'>"arcpy"</span>,
+  <span class='kw'>temp.path</span> <span class='kw'>=</span> <span class='fu'>getwd</span>(), <span class='kw'>reporting.units.spdf</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>reportingunitfield</span> <span class='kw'>=</span> <span class='st'>"REPORTING.UNIT"</span>, <span class='kw'>target.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Target Sampled"</span>,
+  <span class='st'>"TS"</span>), <span class='kw'>unknown.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Unknown"</span>, <span class='st'>"UNK"</span>),
+  <span class='kw'>nontarget.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Non-Target"</span>, <span class='st'>"NT"</span>, <span class='fl'>NA</span>),
   <span class='kw'>inaccessible.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Inaccessible"</span>, <span class='st'>"IA"</span>),
   <span class='kw'>unneeded.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Not Needed"</span>), <span class='kw'>fatefieldname</span> <span class='kw'>=</span> <span class='st'>"final_desig"</span>,
   <span class='kw'>pointstratumfieldname</span> <span class='kw'>=</span> <span class='st'>"dsgn_strtm_nm"</span>,
@@ -101,6 +105,14 @@
     <tr>
       <th>reorder</th>
       <td><p>Logical. If provided multiple DDs, should those be reordered to reflect ascending area? If <code>FALSE</code>, the DDs are considered in the order they appear in dd.import. If combine is <code>FALSE</code>, then this only potentially affects the order of the output information. Defaults to <code>TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>erase</th>
+      <td><p>Optional character string. If <code>combine</code> is <code>TRUE</code> this must either be <code>"arcpy"</code> or <code>"rgeos"</code> and determines which approach will be used to frames from one another if <code>combine</code> is <code>TRUE</code>. If <code>"arcpy"</code> is used, then R must have write permissions to the folder <code>temp.path</code> and a valid install of ArcPy. This is preferable to <code>"rgeos"</code> because the functions involved tend to crash at random when handling very small remainder geometries. Defaults to <code>"arcpy"</code>.</p></td>
+    </tr>
+    <tr>
+      <th>temp.path</th>
+      <td><p>Optional character string. If <code>combine</code> is <code>TRUE</code> and <code>erase</code> is <code>"arcpy"</code> this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps. Defulats to the current working directory.</p></td>
     </tr>
     <tr>
       <th>reporting.units.spdf</th>
@@ -144,7 +156,7 @@
     </tr>
     <tr>
       <th>projection</th>
-      <td><p><code>sp::CRS()</code> argument. Defaults to NAD83 with <code>sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")</code>. Is used to reproject all SPDFs in order to perform spatial manipulations.</p></td>
+      <td><p>Character string <code>sp::CRS()</code> argument. Defaults to NAD83 with <code>sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")</code>. Is used to reproject all SPDFs in order to perform spatial manipulations.</p></td>
     </tr>
     </table>
     

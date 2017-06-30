@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Adding coordinate variables to the data frame of a SpatialPointsDataFrame — add.coords â€¢ aim.analysis</title>
+<title>Adding sampling years based on date of visit and panel — year.add â€¢ aim.analysis</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -72,44 +72,35 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Adding coordinate variables to the data frame of a SpatialPointsDataFrame</h1>
+    <h1>Adding sampling years based on date of visit and panel</h1>
     </div>
 
     
-    <p>Adds one or more of the following: the coordinates from the current coordinate refrence system; coordinates in NAD83; and coordinates in Albers Equal Area. This does not change the projection of the SPDF.</p>
+    <p>For the given SPDF, this adds the year extracted from the values in <code>source.field</code>, then overwrites that with the year extracted from <code>date.field</code> if possible, then for all remaining observations still missing a YEAR value it makes a best guess based on the YEAR values in the other observations with the same <code>source.field</code> value. Note that strings in <code>source.field</code> must begin or end with a four-digit year in order for this to work.</p>
     
 
-    <pre class="usage"><span class='fu'>add.coords</span>(<span class='no'>spdf</span>, <span class='kw'>current.proj</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>xynames</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>nad83</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>albers</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>year.add</span>(<span class='no'>pts</span>, <span class='kw'>date.field</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>source.field</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>spdf</th>
-      <td><p>A SpatialPointsDataFrame to add the coordinates to</p></td>
+      <th>pts</th>
+      <td><p>The SPDF or data frame to add the field <code>YEAR</code> to.</p></td>
     </tr>
     <tr>
-      <th>current.proj</th>
-      <td><p>Logical. If <code>TRUE</code> Then the columns <code>coords.x1</code> and <code>coords.x2</code> will be added using the current projection. Defaults to <code>TRUE</code>.</p></td>
+      <th>date.field</th>
+      <td><p>Character string. The name of the field in <code>pts</code> that contains the dates to reference.</p></td>
     </tr>
     <tr>
-      <th>xynames</th>
-      <td><p>Optional vector of two character strings to rename the coordinate variables from the current projection. Format is <code>c("replacement for coords.x1", "replacement for coords.x2")</code>.</p></td>
-    </tr>
-    <tr>
-      <th>nad83</th>
-      <td><p>Logical. If <code>TRUE</code> Then the columns <code>LONGITUDE.NAD83</code> and <code>LATITUDE.NAD83</code> will be added using NAD83. Defaults to <code>FALSE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>albers</th>
-      <td><p>Logical. If <code>TRUE</code> Then the columns <code>X.METERS.AL</code> and <code>Y.METERS.AL</code> will be added using Albers Equal Area. Defaults to <code>FALSE</code>.</p></td>
+      <th>source.field</th>
+      <td><p>Character string. The name of the field in <code>pts</code> that contains the strings starting or ending with the year.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>spdf</code> with fields added to the data frame as requested.</p>
+    <p><code>pts</code> with the additional column <code>YEAR</code>.</p>
     
 
   </div>

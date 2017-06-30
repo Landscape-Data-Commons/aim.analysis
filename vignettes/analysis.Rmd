@@ -1,0 +1,254 @@
+---
+title: "A Basic Analysis Workflow For AIM"
+author: "Nelson Stauffer"
+date: "`r Sys.Date()`"
+output:
+  html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{A Basic Analysis Workflow For AIM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+# Introduction
+
+Raw data and even indicators derived from them are relatively useless without some kind of analysis to guide interpretation. Likewise, it is difficult to responsibly use data without knowing the "how" of gathering them, computing derived indicators from them, and weighting and combining them. In the interest of reproducibility, full documentation or even the code executed for each step should be produced, stored, and served out as appropriate.
+
+This is a sketch of a simple workflow for a basic analysis for AIM data from TerrADat. For more complicated analyses, there may be additional steps needed. There are also a number of assumed geospatial manipulation steps omitted here which could either be done in R or in the GIS software of your choice, *e.g.* combining all evaluation groups into a single shapefile.
+
+The general steps this will cover are:
+
+1. Initialization
+2. Importing data
+3. Setting up relationships between data
+4. Calculating weights
+5. Running a weighted analysis
+6. Exporting results
+
+## Minimum Data Requirements
+
+- The terrestrial and/or remote sensing feature classes from TerrADat (`SV_IND_TERRESTRIALAIM`, `SV_IND_REMOTESENSING`). Which feature class depends on what indicators are being included in the analysis. It's easiest if this is a file geodatabase (`.gdb`).
+- The relevant sample design databases describing the designs included in the analysis. These are maintained and stored by the Bureau of Land Management National Operations Center.
+- A DataExplorer^[INSERT LINK HERE FOR DATA EXPLORER STUFF] `xlsx` workbook with the Management Objectives sheet populated.
+- Evaluation groups/strata as a polygon shapefile. This is used to connect the values from TerrADat to specific benchmarks in the DataExplorer workbook. The polygons can be multipart and overlapping.
+
+## Optional Additional Data
+
+- Reporting units as a polygon shapefile. A single analysis pass can include multiple reporting units, but they must be spatially discrete.
+
+
+# Procedure
+## Initialization
+
+Many of the `aim.analysis::` functions are written to take a filepath argument separate from a filename argument because a number of different source files may be stored in the same folder and you may want to recycle the body of an analysis script without having to find and replace every instance of a filepath. A typical script starts with establishing the sources for the data that will be used, including TerrADat, the design database[s], the benchmarks, and evaluation groups.
+
+For example:
+
+```
+###############################################################
+## Setting initial values
+###############################################################
+project.name <- "Jornada_example"
+output.path <- "C:/Projects/AIM/results/Jornada"
+
+terradat.path <- "C:/Projects/AIM/data"
+terradat.filename <- "TerrADat_current.gdb"
+
+data.source <- "C:/Projects/AIM/data/Jornada"
+
+benchmarks.file <- "DataExplorer_Jornada.xlsx"
+
+evaluation.groups.filename <- "ecosites_eval_groups"
+evaluation.groups.field <- "EVAL_STRAT"
+
+designdatabases <- c("Jornada_2014.gdb",
+                     "Jornada_2015-2017.gdb",
+                     "Jornada_south_well_project.gdb")
+```
+
+## Importing Your Data
+
+Importing data is straightforward, so long as the data are correctly formatted. `aim.analysis::` has a family of functions written to import AIM-specific datasets: `read.tdat()`, `read.dd()`, and `read.benchmarks`.
+
+`read.tdat()` will read in whichever of the feature classes `SV_IND_TERRESTRIALAIM` and `SV_IND_REMOTESENSING` it finds in the `.gdb` it's directed to. These are combined into a single, wide-format spatial points data frame.
+`read.benchmarks()` will read in the benchmark information from a DataExplorer workbook as stored in the sheet "Management Objectives" into a data frame. This process is actually why the requirements for populating that particular sheet are so stringent.
+`read.dd()` will read in one or more sample design database and produce a list of lists of their contents as spatial points/polygons data frames. The sub-lists are `'sf'` containing whatever sample frame feature classes were found, `'pts'` containing whatever point feature classes were found, an `'strata'` containing any stratification polygon feeature classes that were found. If a design database was missing any feature class, a `NULL` value is inserted into the relevant list as a placeholder.
+
+There is not an AIM-specific function for importing shapefiles containing evaluation groups or reporting units, so those need to be imported using something like `rgdal::readOGR()`. The shapefile you use should not have polygons included that don't have values in the attribute field containing the evaluation group identities. If they do, then another step to filter the resulting spatial polygons data frame to remove the unattributed polygons is necessary.
+
+For example:
+```
+###############################################################
+## Reading in data
+###############################################################
+tdat.spdf <- read.tdat(terradat.path,
+                       terradat.filename)
+
+# In this case the DataExplorer workbook, evaluation group polygons, and sample design databases are all found in the filepath stored as data.source
+
+benchmarks.df <- read.benchmarks(data.path = data.source,
+                                 benchmarks.filename = benchmarks.file)
+
+# This reads in the evaluation group polygons
+eval.groups.spdf <- rgdal::readOGR(dsn = data.source,
+                                   layer = eval.groups.filename,
+                                   stringsAsFactors = F)
+
+dd.data <- read.dd(src = data.source,
+                   dd.src = designdatabases,
+                   func = "readogr")
+```
+
+This is also an excellent place to check to make sure that the imported data are complete and correct before using them. Currently, `aim.analysis::` has only one quality control check function, `validate.keys()` which will take the output from `read.dd()` and report on issues with sampling status and keys in the `pts` list. Running that check is as simple as `validate.keys(dd.data)`.
+
+## Setting Up Relationships and Prepping Data
+
+The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using `aim.analysis::attribute.shapefile()` to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).
+```
+###############################################################
+## Manipulating and prepping data
+###############################################################
+# Internally, "evaluation stratum" and "evaluation group" are used interchangeably. Use whichever terminology you'd prefer.
+tdat.spdf.attribute <- attribute.shapefile(spdf1 = tdat.spdf,
+                                           spdf2 = eval.groups.spdf,
+                                           newfield = "Evaluation.Stratum",
+                                           attributefield = eval.group.field)
+```
+Note that you could populate an attribute field called `"Evaluation.Stratum"` by non-spatial means as well if there are other relationships you need to use. This is merely the most common kind of evaluation group assignment.
+
+Because the analysis will be done based on classifications from benchmarks, the new relationship between the version of the TerrADat points and benchmarks needs to be used to apply the benchmarks to the indicator values. The function for this is `aim.analysis::benchmark()`.
+```
+points.benchmarked <- benchmark(benchmarks = benchmarks.df,
+                                tdat = tdat.spdf.attribute,
+                                evalstratumfield = "Evaluation.Stratum")
+```
+
+## Calculating Weights
+
+Weight calculations are mostly automated by `aim.analysis::weight()` which produces a list of three data frames, the one directly relevant being `weight()$point.weights`. The default values for all of `weight()`'s arguments are already set up for a standard AIM analysis run, and include combining the designs that are provided, starting from the smallest design provided, using an external `ArcPy` call to do some spatial manipulations that are unstable in **R**, and all the field names as they appear in the standard sample design database schema.
+So, for a standard analysis run where the full extent of all the designs that have been imported should be considered and the designs should be combined, the call is as simple as:
+```
+###############################################################
+## Weight
+###############################################################
+weights.design <- weight(dd.import = dd.data)
+```
+
+## Running The Weighted Analysis
+
+Once point weights are calculated and the TerrADat indicators have been benchmarked to sort them into evaluation categories, that information can be provided to `spsurvey::cat.analysis()`. The function `aim.analysis::analyze()` will take the outputs already created and format them correctly for `cat.analysis()` for you. `analyze()` assumes that there is some sort of reporting unit applied to the points being analyzed, so in the case that they were not, the reporting unit is assumed to be the study area and the weights of the points will be used without adjustment. The argument `default.reportingunit` is for those times when the data weren't clipped by reporting units in `weight()` but `reportingunit.type` should always be provided.
+```
+###############################################################
+## Analyze
+###############################################################
+analysis.design <- analyze(evaluated.points = points.benchmarked,
+                           point.weights = weights.design$point.weights,
+                           default.reportingunit = "Study Area",
+                           reportingunit.type = "Study Area")
+```
+## Exporting Results
+
+In most cases, you'll want to export the results from these steps for use elsewhere like producing maps. `aim.analysis::` has a family of functions dedicated to writing out these datasets in standard format with a consistent naming convention. Writing out the analysis output itself is simple:
+```
+###############################################################
+## Write
+###############################################################
+write.analysis(analysis.output = analysis.design$analyses,
+               name = project.name,
+               out.path = output.path)
+```
+Writing out the benchmark table as a `.csv` can take advantage of the naming function in `aim.analysis::`.
+```
+benchmarks.filename <- paste0(output.path, "/", filename.aim(name = project.name,
+                                                             type = "benchmark_table",
+                                                             extension = "csv"))
+write.csv(benchmarks, benchmarks.filename)
+```
+Writing out ESRI shapefiles of several varieties is done with the same function. `write.shapefile` can take a single spatial points/polygons data frame or it can write out a set of them from the imported sample design databases.
+```
+# This combines all of the spatial polygons data frames in dd.data$sf. Because union = TRUE they'll be combined into one polygon in the shapefile
+write.shapefile(spdf = dd.data,
+                dd = TRUE,
+                dd.list = "sf",
+                union = TRUE,
+                name = project.name,
+                type = "complete_boundary",
+                out.path = output.path)
+
+# This combines all of the spatial polygons data frames in dd.data$strata. Because union = FALSE there'll be many polygons in the shapefile
+write.shapefile(spdf = dd.data,
+                dd = TRUE,
+                dd.list = "strata",
+                union = FALSE,
+                name = project.name,
+                type = "all_strata",
+                out.path = output.path)
+
+# This writes out the spatial polygons data frame eval.groups.spdf. None of the dd* arguments are used because spdf != an output from read.dd()
+write.shapefile(spdf = eval.groups.spdf,
+                name = project.name,
+                type = "evaluation_groups",
+                out.path = output.path)
+```
+One of the most frequently asked for outputs from TerrADat is a map of the data points attributed with their evaluation category ("Meeting", "Not Meeting", "Marginal", *etc.*). The formatting of attribute tables for those kinds of point shapefiles rapidly becomes complicated due to how many evaluation groups a point can belong to across multiple managment questions and therefore how many indicators are evaluated for a given point, *e.g.* a single point might have three different benchmarks for "percent foliar cover" to answer three different management questions. The solution is to write out one point shapefile for each management question so that there isn't duplicate geometry within a shapefile. This is automated with `write.benchmarkshp()` which joins the data frame of points with their evaluation categories to the TerrADat geometry and writes ESRI shapefiles.
+```
+write.benchmarkshp(points.benchmarked = points.benchmarked,
+                   tdat = tdat.spdf,
+                   out.path = output.path,
+                   name = project.name)
+```
+If you are running a standard AIM report using the `RMarkdown` template, then the minimum set of files required are the results of `analyze()`, the boundary polygon shapefile for the data, and the benchmark table as a `.csv`.
+
+# Addenda
+### Using Reporting Units
+If you have a spatial polygons data frame defining the reporting units extents, `weight()` takes two additional arguments: one for the spatial polygons data frame and one for the name of the attribute in it that contains the identities of the reporting units. The points and the sample frames and/or strata polygons will be clipped using that spatial polygons data frame and an additional step of adjusting weights to reflect the new extents using `weight.adjust()` which is a wrapper for `spsurvey::adjwgt`.
+So, to include reporting units, the code might look like:
+```
+reportingunits.spdf <- rgdal::readOGR(dsn = data.source,
+                                      layer = "priority_watersheds",
+                                      stringsAsFactors = F)
+                                      
+# Note that reportingunitfield should be the name of the actual field in reporting.units.spdf that contains the reporting unit identities
+weights.reportingunits <- weight(dd.import = dd.data,
+                                 reporting.units.spdf = reportingunits.spdf,
+                                 reportingunitfield = "WATERSHED NAME")
+
+# adjustedweights should be TRUE because the weights have been adjusted by reporting unit
+# reportingunit.type needs to meaningfully describe the reporting units, e.g. "Watershed", "Grazing Allotment", "Seasonal Habitat"
+analysis.reportingunits <- analyze(evaluated.points = points.benchmarked,
+                                   point.weights = weights.design$point.weights,
+                                   reportingunit.type = "Watershed",
+                                   adjustedweights = TRUE)
+
+write.analysis(analysis.output = analysis.reportingunits$analyses,
+               name = project.name,
+               out.path = output.path)
+
+write.shapefile(spdf = reportingunits.spdf,
+                name = project.name,
+                type = "reporting_units",
+                out.path = output.path)
+```
+## How weight() Works
+### Calculating Weights
+Weights of points are calculated using the point fates and the area they are associated with.
+
+Points are considered sampled only if their point fate is in the vector `target.values` which by default contains "TS" and "Target Sampled". These are points that were drawn as part of the design and a field crew gathered data at because they met the sampling criteria. Other point fates are classified into "Non-target", "Inaccessible", "Unneeded", and "Unknown", but for the purposes of calculating the weight are grouped into a single "unsampled" category.
+
+Because not all of the intended points are sampled within an area, the proportion of the area that *was* sampled needs to be calculated.
+
+> $\text{proportion of area sampled} =  \text{area} * \frac{\text{number of sampled points}}{\text{number of sampled points + number of unsampled points}}$
+
+Then weight given to any sampled point's data expressed as units of area per point is calculated with:
+
+> $\text{weight} = \frac{\text{proportion of area sampled}}{\text{number of sampled points}}$
+
+### Combining Multiple Designs
+When combining multiple designs, points are reassigned to design sample frames and the design sample frames themselves are modified before the weights are calculated. This process is dependent on the order that the designs are considered, but the standard approach is to order the designs from smallest extent to largest extent. These factors can be controlled in `weight()` with the logical arguments `combine` and `reorder`.
+
+For the first sample frame, all of the points from all of the designs are compared against it to determine if they fall within its boundary. Those points that do are assigned to that sample frame and are not considered again in the combining process. Then the geometry of the sample frame is removed from the geometries of all other sample frames being combined.
+
+Each subsequent sample frame is compared against the remaining points to see which will be reassigned to it and then its geometry is erased from the remaining sample frames.
+
+The end result is that there is no spatial overlap between the design sample frames and points are assigned to the polygons they fall within regardless of whether or not that was the design they originated from. Because the geometries of the sample frames have been modified, the areas are changed and must be recalculated before moving into the weighting process.

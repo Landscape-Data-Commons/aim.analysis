@@ -26,11 +26,15 @@ The general steps this will cover are:
 5. Running a weighted analysis
 6. Exporting results
 
+## Minimum Software Requirements
+
+Although **R** has very robust data manipulation package support, there are some difficulties with reliably handling small slivers of spatial geometry which inevitably occur when combining multiple designs. The spatial manipulation here is by default handled by programmatically creating a `.py` script and executing a call to `ArcPy` because ESRI has written it in such a way that it will successfully execute where **R** won't. So, a valid install of `ArcPy` and its dependencies is very strongly recommended.
+
 ## Minimum Data Requirements
 
 - The terrestrial and/or remote sensing feature classes from TerrADat (`SV_IND_TERRESTRIALAIM`, `SV_IND_REMOTESENSING`). Which feature class depends on what indicators are being included in the analysis. It's easiest if this is a file geodatabase (`.gdb`).
 - The relevant sample design databases describing the designs included in the analysis. These are maintained and stored by the Bureau of Land Management National Operations Center.
-- A DataExplorer^[INSERT LINK HERE FOR DATA EXPLORER STUFF] `xlsx` workbook with the Management Objectives sheet populated.
+- A DataExplorer^[INSERT LINK HERE FOR DATA EXPLORER STUFF] `.xlsx` workbook with the Management Objectives sheet populated.
 - Evaluation groups/strata as a polygon shapefile. This is used to connect the values from TerrADat to specific benchmarks in the DataExplorer workbook. The polygons can be multipart and overlapping.
 
 ## Optional Additional Data
@@ -69,7 +73,7 @@ designdatabases <- c("Jornada_2014.gdb",
 
 ## Importing Your Data
 
-Importing data is straightforward, so long as the data are correctly formatted. `aim.analysis::` has a family of functions written to import AIM-specific datasets: `read.tdat()`, `read.dd()`, and `read.benchmarks`.
+Importing data is straightforward, so long as the data are correctly formatted. `aim.analysis::` has a family of functions written to import AIM-specific datasets: `read.tdat()`, `read.dd()`, and `read.benchmarks()`.
 
 `read.tdat()` will read in whichever of the feature classes `SV_IND_TERRESTRIALAIM` and `SV_IND_REMOTESENSING` it finds in the `.gdb` it's directed to. These are combined into a single, wide-format spatial points data frame.
 `read.benchmarks()` will read in the benchmark information from a DataExplorer workbook as stored in the sheet "Management Objectives" into a data frame. This process is actually why the requirements for populating that particular sheet are so stringent.
@@ -104,7 +108,7 @@ This is also an excellent place to check to make sure that the imported data are
 
 ## Setting Up Relationships and Prepping Data
 
-The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using `aim.analysis::attribute.shapefile()` to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).
+The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using `attribute.shapefile()` to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).
 ```
 ###############################################################
 ## Manipulating and prepping data
@@ -117,7 +121,7 @@ tdat.spdf.attribute <- attribute.shapefile(spdf1 = tdat.spdf,
 ```
 Note that you could populate an attribute field called `"Evaluation.Stratum"` by non-spatial means as well if there are other relationships you need to use. This is merely the most common kind of evaluation group assignment.
 
-Because the analysis will be done based on classifications from benchmarks, the new relationship between the version of the TerrADat points and benchmarks needs to be used to apply the benchmarks to the indicator values. The function for this is `aim.analysis::benchmark()`.
+Because the analysis will be done based on classifications from benchmarks, the new relationship between the version of the TerrADat points and benchmarks needs to be used to apply the benchmarks to the indicator values. The function for this is `benchmark()`.
 ```
 points.benchmarked <- benchmark(benchmarks = benchmarks.df,
                                 tdat = tdat.spdf.attribute,
@@ -126,7 +130,7 @@ points.benchmarked <- benchmark(benchmarks = benchmarks.df,
 
 ## Calculating Weights
 
-Weight calculations are mostly automated by `aim.analysis::weight()` which produces a list of three data frames, the one directly relevant being `weight()$point.weights`. The default values for all of `weight()`'s arguments are already set up for a standard AIM analysis run, and include combining the designs that are provided, starting from the smallest design provided, using an external `ArcPy` call to do some spatial manipulations that are unstable in **R**, and all the field names as they appear in the standard sample design database schema.
+Weight calculations are mostly automated by `weight()` which produces a list of three data frames, the one directly relevant being `weight()$point.weights`. The default values for all of `weight()`'s arguments are already set up for a standard AIM analysis run, and include combining the designs that are provided, starting from the smallest design provided, using an external `ArcPy` call to do some spatial manipulations that are unstable in **R**, and all the field names as they appear in the standard sample design database schema.
 So, for a standard analysis run where the full extent of all the designs that have been imported should be considered and the designs should be combined, the call is as simple as:
 ```
 ###############################################################

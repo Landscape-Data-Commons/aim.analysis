@@ -312,8 +312,11 @@ restrict.tdat <- function(dd.raw, tdat.spdf){
   if (length(restrictions) > 1) {
     ## Prime this with an empty data frame made from an empty subset. Ridiculous but necessary
     tdat.spdf.restricted <- subset(sp::spTransform(tdat.spdf, nad83.prj), "SiteID" == "Nothing")
-    ## Mash together all the SPDFs
-    tdat.spdf.restricted <- dplyr::bind_rows(restrictions)
+    ## Mash together all the SPDFs because beautiful dplyr::bind_rows() doesn't work on SPDFs
+    for (n in seq_along(restrictions)) {
+      tdat.spdf.restricted <- rbind(tdat.spdf.restricted, restrictions[[n]])
+    }
+    return(tdat.spdf.restricted)
   } else {
     tdat.spdf.restricted <- spTransform(restrictions[[1]], nad83.prj)
   }

@@ -141,7 +141,7 @@ weights.design <- weight(dd.import = dd.data)
 
 ## Running The Weighted Analysis
 
-Once point weights are calculated and the TerrADat indicators have been benchmarked to sort them into evaluation categories, that information can be provided to `spsurvey::cat.analysis()`. The function `aim.analysis::analyze()` will take the outputs already created and format them correctly for `cat.analysis()` for you. `analyze()` assumes that there is some sort of reporting unit applied to the points being analyzed, so in the case that they were not, the reporting unit is assumed to be the study area and the weights of the points will be used without adjustment. The argument `default.reportingunit` is for those times when the data weren't clipped by reporting units in `weight()` but `reportingunit.type` should always be provided.
+Once point weights are calculated and the TerrADat indicators have been benchmarked to sort them into evaluation categories, that information can be provided to `spsurvey::cat.analysis()`. The function `analyze()` will take the outputs already created and format them correctly for `cat.analysis()` for you. `analyze()` assumes that there is some sort of reporting unit applied to the points being analyzed, so in the case that they were not, the reporting unit is assumed to be the study area and the weights of the points will be used without adjustment. The argument `default.reportingunit` is for those times when the data weren't clipped by reporting units in `weight()` but `reportingunit.type` should always be provided.
 ```
 ###############################################################
 ## Analyze

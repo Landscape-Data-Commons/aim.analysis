@@ -52,10 +52,25 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="..//index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
 </li>
 <li>
-  <a href="../articles/index.html">Articles</a>
+  <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/analysis.html">A Basic Analysis Workflow For AIM</a>
+    </li>
+  </ul>
 </li>
       </ul>
       
@@ -76,7 +91,7 @@
     </div>
 
     
-    <p>Basically a wrapping of <code>rgeos::gIntersection()</code> and <code>raster::intersect()</code> with additional opportunity to call area.add() and automatically added unique identifiers for each resultant polygon</p>
+    <p>Basically a wrapping of <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/topo-bin-gIntersection'>rgeos::gIntersection()</a></code> and <code><a href='http://www.rdocumentation.org/packages/raster/topics/intersect'>raster::intersect()</a></code> with additional opportunity to call area.add() and automatically added unique identifiers for each resultant polygon</p>
     
 
     <pre class="usage"><span class='fu'>intersect</span>(<span class='no'>spdf1</span>, <span class='no'>spdf1.attributefieldname</span>,
@@ -114,7 +129,7 @@
     </tr>
     <tr>
       <th>method</th>
-      <td><p>A string specifying which function to use for the interscting step: either <code>rgeos::gIntersection()</code> or <code>raster::intersect()</code>. Valid options are <code>"gintersection"</code> and <code>"intersect"</code>. Defaults to <code>"gintersection"</code>.</p></td>
+      <td><p>A string specifying which function to use for the interscting step: either <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/topo-bin-gIntersection'>rgeos::gIntersection()</a></code> or <code><a href='http://www.rdocumentation.org/packages/raster/topics/intersect'>raster::intersect()</a></code>. Valid options are <code>"gintersection"</code> and <code>"intersect"</code>. Defaults to <code>"gintersection"</code>.</p></td>
     </tr>
     <tr>
       <th>area.ha</th>
@@ -126,7 +141,7 @@
     </tr>
     <tr>
       <th>projection</th>
-      <td><p>An <code>sp::CRS()</code> argument. The final output will be reprojected using this. Defaults to <code>CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")</code></p></td>
+      <td><p>An <code><a href='http://www.rdocumentation.org/packages/sp/topics/CRS-class'>sp::CRS()</a></code> argument. The final output will be reprojected using this. Defaults to <code>CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")</code></p></td>
     </tr>
     </table>
     

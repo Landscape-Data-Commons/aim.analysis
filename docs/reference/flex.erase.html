@@ -52,10 +52,25 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="..//index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
 </li>
 <li>
-  <a href="../articles/index.html">Articles</a>
+  <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/analysis.html">A Basic Analysis Workflow For AIM</a>
+    </li>
+  </ul>
 </li>
       </ul>
       
@@ -76,7 +91,7 @@
     </div>
 
     
-    <p>Spatial manipulations in R can get, for lack of a better term, squirrelly. Even with multiple failsafes in place to try to compensate for sliver geometry, <code>rgeos::gDifference()</code> still isn't as robust as one might hope. This wrapper removes the geometry of one SPDF from another via a system call to <code>Python</code> using the library <code>ArcPy</code> or via <code>rgeos::gDifference()</code>.</p>
+    <p>Spatial manipulations in R can get, for lack of a better term, squirrelly. Even with multiple failsafes in place to try to compensate for sliver geometry, <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/topo-bin-gDifference'>rgeos::gDifference()</a></code> still isn't as robust as one might hope. This wrapper removes the geometry of one SPDF from another via a system call to <code>Python</code> using the library <code>ArcPy</code> or via <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/topo-bin-gDifference'>rgeos::gDifference()</a></code>.</p>
     
 
     <pre class="usage"><span class='fu'>flex.erase</span>(<span class='no'>spdf</span>, <span class='no'>spdf.erase</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"arcpy"</span>, <span class='kw'>temp.path</span> <span class='kw'>=</span> <span class='st'>""</span>,
@@ -108,15 +123,15 @@
     </tr>
     <tr>
       <th>sliverdrop</th>
-      <td><p>Optional logical value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code>rgeos::set_RGEOS_dropSlivers()</code> to temporarily set the environment during the erasure attempt. Defaults to <code>TRUE</code>.</p></td>
+      <td><p>Optional logical value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/utility-functions'>rgeos::set_RGEOS_dropSlivers()</a></code> to temporarily set the environment during the erasure attempt. Defaults to <code>TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>sliverwarn</th>
-      <td><p>Optional logical value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code>rgeos::set_RGEOS_warnSlivers()</code> to temporarily set the environment during the erasure attempt. Defaults to <code>TRUE</code>.</p></td>
+      <td><p>Optional logical value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/utility-functions'>rgeos::set_RGEOS_warnSlivers()</a></code> to temporarily set the environment during the erasure attempt. Defaults to <code>TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>sliverdrop</th>
-      <td><p>Optional numeric value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code>rgeos::set_RGEOS_polyThreshold()</code> to temporarily set the environment during the erasure attempt. Defaults to <code>0.01</code>.</p></td>
+      <td><p>Optional numeric value. If <code>erase</code> is <code>"rgeos"</code> this will be passed to <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/utility-functions'>rgeos::set_RGEOS_polyThreshold()</a></code> to temporarily set the environment during the erasure attempt. Defaults to <code>0.01</code>.</p></td>
     </tr>
     </table>
     

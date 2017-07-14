@@ -29,10 +29,25 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="..//index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
 </li>
 <li>
-  <a href="../articles/index.html">Articles</a>
+  <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../articles/analysis.html">A Basic Analysis Workflow For AIM</a>
+    </li>
+  </ul>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
@@ -50,7 +65,7 @@
       <h1>A Basic Analysis Workflow For AIM</h1>
                         <h4 class="author">Nelson Stauffer</h4>
             
-            <h4 class="date">2017-06-30</h4>
+            <h4 class="date">2017-07-14</h4>
           </div>
 
     
@@ -70,13 +85,18 @@
 <li>Running a weighted analysis</li>
 <li>Exporting results</li>
 </ol>
+<div id="minimum-software-requirements" class="section level2">
+<h2 class="hasAnchor">
+<a href="#minimum-software-requirements" class="anchor"></a>Minimum Software Requirements</h2>
+<p>Although <strong>R</strong> has very robust data manipulation package support, there are some difficulties with reliably handling small slivers of spatial geometry which inevitably occur when combining multiple designs. The spatial manipulation here is by default handled by programmatically creating a <code>.py</code> script and executing a call to <code>ArcPy</code> because ESRI has written it in such a way that it will successfully execute where <strong>R</strong> won’t. So, a valid install of <code>ArcPy</code> and its dependencies is very strongly recommended.</p>
+</div>
 <div id="minimum-data-requirements" class="section level2">
 <h2 class="hasAnchor">
 <a href="#minimum-data-requirements" class="anchor"></a>Minimum Data Requirements</h2>
 <ul>
 <li>The terrestrial and/or remote sensing feature classes from TerrADat (<code>SV_IND_TERRESTRIALAIM</code>, <code>SV_IND_REMOTESENSING</code>). Which feature class depends on what indicators are being included in the analysis. It’s easiest if this is a file geodatabase (<code>.gdb</code>).</li>
 <li>The relevant sample design databases describing the designs included in the analysis. These are maintained and stored by the Bureau of Land Management National Operations Center.</li>
-<li>A DataExplorer<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <code>xlsx</code> workbook with the Management Objectives sheet populated.</li>
+<li>A DataExplorer<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <code>.xlsx</code> workbook with the Management Objectives sheet populated.</li>
 <li>Evaluation groups/strata as a polygon shapefile. This is used to connect the values from TerrADat to specific benchmarks in the DataExplorer workbook. The polygons can be multipart and overlapping.</li>
 </ul>
 </div>
@@ -119,9 +139,9 @@ designdatabases &lt;- c("Jornada_2014.gdb",
 <div id="importing-your-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#importing-your-data" class="anchor"></a>Importing Your Data</h2>
-<p>Importing data is straightforward, so long as the data are correctly formatted. <code>aim.analysis::</code> has a family of functions written to import AIM-specific datasets: <code><a href="../reference/read.tdat.html">read.tdat()</a></code>, <code><a href="../reference/read.dd.html">read.dd()</a></code>, and <code>read.benchmarks</code>.</p>
+<p>Importing data is straightforward, so long as the data are correctly formatted. <code>aim.analysis::</code> has a family of functions written to import AIM-specific datasets: <code><a href="../reference/read.tdat.html">read.tdat()</a></code>, <code><a href="../reference/read.dd.html">read.dd()</a></code>, and <code><a href="../reference/read.benchmarks.html">read.benchmarks()</a></code>.</p>
 <p><code><a href="../reference/read.tdat.html">read.tdat()</a></code> will read in whichever of the feature classes <code>SV_IND_TERRESTRIALAIM</code> and <code>SV_IND_REMOTESENSING</code> it finds in the <code>.gdb</code> it’s directed to. These are combined into a single, wide-format spatial points data frame. <code><a href="../reference/read.benchmarks.html">read.benchmarks()</a></code> will read in the benchmark information from a DataExplorer workbook as stored in the sheet “Management Objectives” into a data frame. This process is actually why the requirements for populating that particular sheet are so stringent. <code><a href="../reference/read.dd.html">read.dd()</a></code> will read in one or more sample design database and produce a list of lists of their contents as spatial points/polygons data frames. The sub-lists are <code>'sf'</code> containing whatever sample frame feature classes were found, <code>'pts'</code> containing whatever point feature classes were found, an <code>'strata'</code> containing any stratification polygon feeature classes that were found. If a design database was missing any feature class, a <code>NULL</code> value is inserted into the relevant list as a placeholder.</p>
-<p>There is not an AIM-specific function for importing shapefiles containing evaluation groups or reporting units, so those need to be imported using something like <code>rgdal::readOGR()</code>. The shapefile you use should not have polygons included that don’t have values in the attribute field containing the evaluation group identities. If they do, then another step to filter the resulting spatial polygons data frame to remove the unattributed polygons is necessary.</p>
+<p>There is not an AIM-specific function for importing shapefiles containing evaluation groups or reporting units, so those need to be imported using something like <code><a href="http://www.rdocumentation.org/packages/rgdal/topics/readOGR">rgdal::readOGR()</a></code>. The shapefile you use should not have polygons included that don’t have values in the attribute field containing the evaluation group identities. If they do, then another step to filter the resulting spatial polygons data frame to remove the unattributed polygons is necessary.</p>
 <p>For example:</p>
 <pre><code>###############################################################
 ## Reading in data
@@ -147,7 +167,7 @@ dd.data &lt;- read.dd(src = data.source,
 <div id="setting-up-relationships-and-prepping-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#setting-up-relationships-and-prepping-data" class="anchor"></a>Setting Up Relationships and Prepping Data</h2>
-<p>The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using <code>aim.analysis::attribute.shapefile()</code> to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).</p>
+<p>The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using <code><a href="../reference/attribute.shapefile.html">attribute.shapefile()</a></code> to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).</p>
 <pre><code>###############################################################
 ## Manipulating and prepping data
 ###############################################################
@@ -157,7 +177,7 @@ tdat.spdf.attribute &lt;- attribute.shapefile(spdf1 = tdat.spdf,
                                            newfield = "Evaluation.Stratum",
                                            attributefield = eval.group.field)</code></pre>
 <p>Note that you could populate an attribute field called <code>"Evaluation.Stratum"</code> by non-spatial means as well if there are other relationships you need to use. This is merely the most common kind of evaluation group assignment.</p>
-<p>Because the analysis will be done based on classifications from benchmarks, the new relationship between the version of the TerrADat points and benchmarks needs to be used to apply the benchmarks to the indicator values. The function for this is <code>aim.analysis::benchmark()</code>.</p>
+<p>Because the analysis will be done based on classifications from benchmarks, the new relationship between the version of the TerrADat points and benchmarks needs to be used to apply the benchmarks to the indicator values. The function for this is <code><a href="../reference/benchmark.html">benchmark()</a></code>.</p>
 <pre><code>points.benchmarked &lt;- benchmark(benchmarks = benchmarks.df,
                                 tdat = tdat.spdf.attribute,
                                 evalstratumfield = "Evaluation.Stratum")</code></pre>
@@ -165,7 +185,7 @@ tdat.spdf.attribute &lt;- attribute.shapefile(spdf1 = tdat.spdf,
 <div id="calculating-weights" class="section level2">
 <h2 class="hasAnchor">
 <a href="#calculating-weights" class="anchor"></a>Calculating Weights</h2>
-<p>Weight calculations are mostly automated by <code>aim.analysis::weight()</code> which produces a list of three data frames, the one directly relevant being <code>weight()$point.weights</code>. The default values for all of <code><a href="../reference/weight.html">weight()</a></code>’s arguments are already set up for a standard AIM analysis run, and include combining the designs that are provided, starting from the smallest design provided, using an external <code>ArcPy</code> call to do some spatial manipulations that are unstable in <strong>R</strong>, and all the field names as they appear in the standard sample design database schema. So, for a standard analysis run where the full extent of all the designs that have been imported should be considered and the designs should be combined, the call is as simple as:</p>
+<p>Weight calculations are mostly automated by <code><a href="../reference/weight.html">weight()</a></code> which produces a list of three data frames, the one directly relevant being <code>weight()$point.weights</code>. The default values for all of <code><a href="../reference/weight.html">weight()</a></code>’s arguments are already set up for a standard AIM analysis run, and include combining the designs that are provided, starting from the smallest design provided, using an external <code>ArcPy</code> call to do some spatial manipulations that are unstable in <strong>R</strong>, and all the field names as they appear in the standard sample design database schema. So, for a standard analysis run where the full extent of all the designs that have been imported should be considered and the designs should be combined, the call is as simple as:</p>
 <pre><code>###############################################################
 ## Weight
 ###############################################################
@@ -174,7 +194,7 @@ weights.design &lt;- weight(dd.import = dd.data)</code></pre>
 <div id="running-the-weighted-analysis" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-the-weighted-analysis" class="anchor"></a>Running The Weighted Analysis</h2>
-<p>Once point weights are calculated and the TerrADat indicators have been benchmarked to sort them into evaluation categories, that information can be provided to <code>spsurvey::cat.analysis()</code>. The function <code>aim.analysis::analyze()</code> will take the outputs already created and format them correctly for <code>cat.analysis()</code> for you. <code><a href="../reference/analyze.html">analyze()</a></code> assumes that there is some sort of reporting unit applied to the points being analyzed, so in the case that they were not, the reporting unit is assumed to be the study area and the weights of the points will be used without adjustment. The argument <code>default.reportingunit</code> is for those times when the data weren’t clipped by reporting units in <code><a href="../reference/weight.html">weight()</a></code> but <code>reportingunit.type</code> should always be provided.</p>
+<p>Once point weights are calculated and the TerrADat indicators have been benchmarked to sort them into evaluation categories, that information can be provided to <code><a href="http://www.rdocumentation.org/packages/spsurvey/topics/cat.analysis">spsurvey::cat.analysis()</a></code>. The function <code><a href="../reference/analyze.html">analyze()</a></code> will take the outputs already created and format them correctly for <code>cat.analysis()</code> for you. <code><a href="../reference/analyze.html">analyze()</a></code> assumes that there is some sort of reporting unit applied to the points being analyzed, so in the case that they were not, the reporting unit is assumed to be the study area and the weights of the points will be used without adjustment. The argument <code>default.reportingunit</code> is for those times when the data weren’t clipped by reporting units in <code><a href="../reference/weight.html">weight()</a></code> but <code>reportingunit.type</code> should always be provided.</p>
 <pre><code>###############################################################
 ## Analyze
 ###############################################################
@@ -236,7 +256,7 @@ write.shapefile(spdf = eval.groups.spdf,
 <div id="using-reporting-units" class="section level3">
 <h3 class="hasAnchor">
 <a href="#using-reporting-units" class="anchor"></a>Using Reporting Units</h3>
-<p>If you have a spatial polygons data frame defining the reporting units extents, <code><a href="../reference/weight.html">weight()</a></code> takes two additional arguments: one for the spatial polygons data frame and one for the name of the attribute in it that contains the identities of the reporting units. The points and the sample frames and/or strata polygons will be clipped using that spatial polygons data frame and an additional step of adjusting weights to reflect the new extents using <code><a href="../reference/weight.adjust.html">weight.adjust()</a></code> which is a wrapper for <code>spsurvey::adjwgt</code>. So, to include reporting units, the code might look like:</p>
+<p>If you have a spatial polygons data frame defining the reporting units extents, <code><a href="../reference/weight.html">weight()</a></code> takes two additional arguments: one for the spatial polygons data frame and one for the name of the attribute in it that contains the identities of the reporting units. The points and the sample frames and/or strata polygons will be clipped using that spatial polygons data frame and an additional step of adjusting weights to reflect the new extents using <code><a href="../reference/weight.adjust.html">weight.adjust()</a></code> which is a wrapper for <code><a href="http://www.rdocumentation.org/packages/spsurvey/topics/adjwgt">spsurvey::adjwgt</a></code>. So, to include reporting units, the code might look like:</p>
 <pre><code>reportingunits.spdf &lt;- rgdal::readOGR(dsn = data.source,
                                       layer = "priority_watersheds",
                                       stringsAsFactors = F)
@@ -305,7 +325,8 @@ write.shapefile(spdf = reportingunits.spdf,
       <ul class="nav nav-pills nav-stacked">
 <li>
 <a href="#introduction">Introduction</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#minimum-data-requirements">Minimum Data Requirements</a></li>
+<li><a href="#minimum-software-requirements">Minimum Software Requirements</a></li>
+      <li><a href="#minimum-data-requirements">Minimum Data Requirements</a></li>
       <li><a href="#optional-additional-data">Optional Additional Data</a></li>
       </ul>
 </li>

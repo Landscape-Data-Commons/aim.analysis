@@ -670,7 +670,7 @@ flex.erase <- function(spdf,
 
            ## Read in the results and rename the attributes because rgdal::writeOGR() truncated them
            erase.results <- rgdal::readOGR(dsn = temp.directory, layer = "eraseresults", stringsAsFactors = FALSE)
-           names(erase.results@data) <- names(frame.spdf.temp@data)
+           names(erase.results@data) <- names(spdf@data)
 
            if (erase.results@proj4string@projargs != spdf@proj4string@projargs) {
              output <- spTransform(erase.results, CRSobj = spdf@proj4string)

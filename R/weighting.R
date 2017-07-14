@@ -476,7 +476,7 @@ weight <- function(dd.import,
               print(paste("Both frames had values in the @data slot"))
               ## Remove the current frame from the temporary frame. This will let us build concentric frame areas as we work up to larger designs through dd.order
               ## Note: I'm not sure what happens if these don't overlap or if x is completely encompassed by y
-              print(paste("Attempting to remove the", s, "frame from the", r, "frame with rgeos::gDifference()"))
+              print(paste("Attempting to remove the", s, "frame from the", r, "frame with flex.erase()"))
 
               frame.spdf.temp <- flex.erase(spdf = frame.spdf.temp,
                                             spdf.erase = frame.spdf,

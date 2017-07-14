@@ -478,7 +478,7 @@ weight <- function(dd.import,
               ## Note: I'm not sure what happens if these don't overlap or if x is completely encompassed by y
               print(paste("Attempting to remove the", s, "frame from the", r, "frame with rgeos::gDifference()"))
 
-              spdf.frame.temp <- flex.erase(spdf = frame.spdf.temp,
+              frame.spdf.temp <- flex.erase(spdf = frame.spdf.temp,
                                             spdf.erase = frame.spdf,
                                             method = erase,
                                             temp.path = data.path)

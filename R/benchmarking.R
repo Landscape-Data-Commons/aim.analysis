@@ -61,7 +61,7 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   tdat.tall.benched <- merge(x = tdat.tall,
                              y = benchmarks.distinct,
                              by.x = c(names(tdat.tall)[grepl(x = names(tdat.tall), pattern = evalstratumfield, ignore.case = TRUE)], "Indicator"),
-                             by.y = c(eval.name.benchmarks, "INDICATOR.TDAT"))
+                             by.y = c("INDICATOR.TDAT"))
 
   ## Create parseable evaluation strings
   tdat.tall.benched$EVAL.STRING.LOWER <- paste0(tdat.tall.benched$EVAL.STRING.LOWER, tdat.tall.benched$Value)

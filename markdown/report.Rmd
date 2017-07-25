@@ -1,0 +1,438 @@
+---
+title: "Draft `r project.shortname` Project Analysis Report"
+date: 'Report date: `r format(Sys.time(), "%d %B, %Y")`'
+description: ''
+output:
+  html_document:
+    css: C:\Users\jasokarl\Documents\GitHub\AIM_Analysis\Viz_Reporting\styles.css
+    fig_caption: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+params:
+  grassShrubDir: C:\Users\jasokarl\Google Drive\BLM_AIM\geodata\grass_shrub
+  project.file.dir: C:\Users\jasokarl\Google Drive\BLM_AIM\Analysis_Reporting\Bruneau\BFO_2015_test_170217
+  sdd.gdb: C:\Users\jasokarl\Documents\GitHub\AIM_Analysis\Viz_Reporting\Bruneau_Example\BFO_2015-2019_SDD_122116.gdb
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+## Set up the environmente and define the functions used in creating the report
+
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(reshape2)
+library(leaflet)
+library(sp)
+library(multcomp) 
+library(RODBC)
+library(rgdal)
+library(raster)
+library(xlsx)
+library(gridExtra)
+library(grid)
+library(rgeos)
+library(xtable)
+library(plotly)
+
+#### Standard messages to insert at will
+msg1 <- paste0("This graph shows the estimated percentage of the reporting unit in different categories for the specified indicator. ", conf.level, "% confidence intervals (CI) around those estimates are provided as error bars. The yellow bar denotes the landscape criterion, or point at which an objective is deemed to be met or not met as defined in the Sample Design Worksheet.")
+
+msg2 <- paste0("This table gives the analysis results for the specified indicator and reporting unit, and contains the data used to create the graph above.")
+
+msgGrob <- "EXAMPLE\nESTIMATES\nDo not use!"
+```
+
+```{r loadData, message=FALSE, warning=FALSE, include=FALSE}
+#######
+## Analysis results from cat.analysis
+  ru.levels <- unique(analysis$Type)
+
+## Reporting Unit Spatial Polygons
+## Clean up so that the geometry will display right on the map
+reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
+                                       byid = TRUE,
+                                       width = 0) %>% spTransform(CRSobj = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+
+## Plot information from TerrADat (date sampled, lat/long, indicator values)
+  ## Load the TerrADat points and their attributes from the output of the analysis script
+  ##    Faster, smaller, and already filtered to the points that were used in the analysis
+  tdat.spdf <- sp::spTransform(tdat.spdf, sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+  
+  # fix the dates for plotting
+  tdat.spdf$year <- lubridate::year(lubridate::as_date(tdat.spdf$DateVisited))
+  tdat.spdf$yday <- lubridate::yday(lubridate::as_date(tdat.spdf$DateVisited))
+
+#######
+## Objectives and benchmark information from the Excel template
+
+  # For each benchmark add in the name of the field in TerrADat that corresponds
+  benchmarks.sum <- dplyr::group_by(benchmarks, Management.Question, Evaluation.Category) %>% dplyr::summarise(
+      indicator.name.alt = dplyr::first(Indicator),
+      Required.Proportion = dplyr::first(Required.Proportion),
+      Proportion.Relation = dplyr::first(Proportion.Relation),
+      indicator.tdat = dplyr::first(indicator.tdat),
+      Benchmark.Source = dplyr::first(Benchmark.Source))
+
+######
+  ## Sample Design Information (point fate, stratification, study area bdy)
+  # Dissolve any additional polygons so we have a single boundary for the project area
+  project.area.spdf$dissolve <- 1
+  project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
+                                          id = project.area.spdf@data$dissolve)
+  
+  ## Get the design points info from the analysis script output files
+  ## stratum.stats and design.stratum.weights
+  names(stratum.stats)[5:9] <- c("Target Sampled","Inaccessible","Non-target","Unknown","Unneeded")
+  
+  #reshape the dataframe for plotting
+  point.fates <- reshape2::melt(data = stratum.stats,
+                                id = "YEAR",
+                                measure.vars = c("Target Sampled",
+                                                 "Inaccessible",
+                                                 "Non-target",
+                                                 "Unknown",
+                                                 "Unneeded")) %>% 
+    dplyr::group_by(YEAR, variable) %>% 
+    dplyr::summarise(n=sum(value))
+  
+######
+## Grass/shrub
+    ## These need to be clipped to the project area boundary and projected into GCS DD
+bare.g <- raster::aggregate(raster(paste(params$grassShrubDir,"\\Bruneau_Bare_Ground_DD.tif",sep="")),fact=4)
+crs(bare.g) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+shrub.g <- raster::aggregate(raster(paste(params$grassShrubDir,"\\Bruneau_Shrub_Cover_DD.tif",sep="")),fact=4)
+crs(shrub.g) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+```
+
+
+# Introduction
+
+Information about the health of the landscapes we manage is essential to achieve the BLM mission (Federal Land Policy and Management Act of 1976).  It enables BLM to measure the benefits that these lands and waters provide, understand the effects of multiple uses, and thus create management plans to sustain these landscapes for future generations.
+
+This report provides information about the health of terrestrial and aquatic ecosystems.  This information was collected on-the-ground by field biologists who measure and assess important indicators related to ecosystem health.  In terrestrial ecosystems, they focus on cover and composition of plant species, plant height, gaps between plant canopies, and stability of soils.  In aquatic ecosystems, they focus on water quality, stream morphology, and biological characteristics.  These quantitative measurements and qualitative assessments were collected under the BLM Assessment, Inventory, and Monitoring (AIM) program.   For more information about AIM, see <http://aim.landscapetoolbox.org/learn-3/about/>.  
+
+This report also includes relevant standard geospatial datasets.  Some relate to ecosystem health, while others provide contextual information about landscapes such as the management activities occurring there.
+
+This report was generated through partnership among the BLM National Operations Center, USDA-ARS Jornada, and the BLM National Aquatic Monitoring Center.
+
+## Report Purpose and use
+
+The purpose of this report is to describe key indicators of ecosystem health across an area of interest. This information can be used to evaluate whether or not goals or desired conditions are being achieved across BLM lands, an essential step in adaptive management. Specific management applications include but are not limited to: treatment effectiveness, Land Health Standards evaluation, sage-grouse habitat analysis and Resource Management Plan effectiveness. Tables, graphs, and other content from this report can be pasted into decision-making documents, or the entire report can be used as an appendix to such documents.
+
+The standard core indicators contained in this report are relevant to management questions across all BLM ecosystem types, as identified through the BLM AIM Strategy and related efforts (TN440, TR1735-1).  This report also contains standard national geospatial datasets managed by the BLM National Operations Center and partners.  These geospatial datasets provide spatial and management context for the standard AIM core indicators.
+
+## Report Organization
+
+This report has five main sections.  The **introduction** sets the stage.  The **data summary** provides contextual information that is helpful for interpreting the results, including the list of indicators, time period, timing of sampling, and maps.
+
+Report results begin with the **goals, monitoring objectives, benchmarks, and results summary** section.  This contains tables of which indicators met specified objectdives by reporting unit, and a summary of the stated objectdives.  These table can be used by BLM land managers to evaluate whether goals or management objectives were achieved. This table is a summary of results for all indicators.  
+
+The **indicator estimates by reporting unit for monitoring objectives** section identifies the condition of each indicator for each area of interest or reporting unit.  Condition refers to the proportion of land or water resources that is achieving desired values known as benchmarks. This section provides further detail about each row of the table in the previous section and can be used as supporting information for the conclusions drawn from that table. This is followed by the **spatial distribution of core indicators** section which provides remote-sensing-derived maps of various core indicators for the study area.
+
+Finally, the **appendices** contain additional background information on AIM, the core indicators and methods, and the analysis approaches used to generate this reports.
+
+## Information Sources
+This report summarizes and analyzes information collected from an AIM project. The following information sources were used in the analysis presented in this report:
+
+  * The Monitoring Design Worksheet summarises the goals and objectives of the monitoring project.
+  * The AIM Data Analysis Template provides data summaries of the AIM data collected for the project and clearly states the objectives, indicators, benchmarks, and required landscape proportions for each objective.
+  * AIM data from TerrADat are the quantitative data collected in the field for the project.
+  * The project's Sample Design Database captures all of the technical details of the project sample design (e.g., sample frame, stratification, initial point selections, fate of the sample points, and design weights). This information is used to adjust the sample point weights to produce unbiased estimates.
+  * Spatial data files defining the different levels of reporting units for which estimates will be generated from the AIM data.
+  * Spatial or tabular Information defining benchmark classes (i.e., categories assigned to each sample point for the purpose of evaluating an indicator against a benchmark that may change across a landscape).
+  * (OPTIONAL) - Additional sample points from the BLM Landscape Monitoring Framework to supplement the AIM project data.
+  * (OPTIONAL) - Remote sensing products such as the Grass/Shrub continuous variable predictions or the Landfire EVT map to supplement the quantitative field-derived estimates.
+
+## Interpreting the Results
+
+Results in this report can be used to evaluate whether goals regarding ecosystem health are being achieved across a landscape. Success criteria for each goal are specified as measureable monitoring objectives that include a natural resource indicator of interest, a benchmark that identifies desired values of that indicator, and the proportion of the landscape that should meet the benchmark. This report provides statistical estimates of the proportion of the landscape achieving the monitoring objectives, in the form of tables, graphs and other information (see summary in objectives, benchmarks, and landscape thresholds or detailed info in condition estimates by objective). BLM land managers requesting the report supplied relevant goals, monitoring objectives and reporting units as part of the process of designing their monitoring effort (see <http://aim.landscapetoolbox.org/design>). Upon receipt, it will be the responsibility of BLM land managers to evaluate whether goals are achieved and make management recommendations.
+
+Consider important contextual information when you evaluate whether goals are achieved:
+
+  * Monitoring objectives: Are benchmarks well-justified and based on best available knowledge? Are desired proportions informed by management goals and landscape context?
+  * Reporting unit: Is this appropriate to evaluate whether goals are achieved?  
+  * Timing of sampling: Is sample timing appropriate for the ecosystem type as well as the goals and objectives for the reporting unit?  Does sample timing vary between years?  Does sample timing affect your results?
+  * Sample spread/point fates: Are monitoring sites distributed across the area of interest?  Were some areas systematically missed, which could lead to bias?
+
+## Analysis Outputs
+In addition to this report from which charts and tablar data can be copied/pasted, the following standard outputs are created as part of this analysis:
+
+  * Data table containing the plot-level raw data from TerrADat combined with the adjusted point weights (input for analysis).
+  * Data table listing each monitoring objective with its indicator(s), benchmarks, and required landsdcape proportions (input for analysis).
+  * Data table listing the categories assigned by indicator to each point based on the benchmarks (input for analysis).
+  * Data table containing the analysis results of the category analyses by reporting unit (spsurvey cat.analysis output table).
+
+## Additional Information
+
+For additional information, please see <http://aim.landscapetoolbox.org> or contact <ekachergis@blm.gov>. 
+
+***
+# Data Summary {.tabset .tabset-fade .tabset-pills}
+The following tabs contain tables and graphs describing the information in this report and the sampling effort. This includes the indicators being considered, the time period of sampling, descriptions of the actual sampling effort relative to the original sampling design, and a map of the sample points and reporting units.
+
+## Map of Study Area, Reporting Units, and Sample Points
+The map below is provided for general reference only. It was created from the spatial data stored in the project's Sample Design Database, the reporting units provided for this analysis, and the actual sample point locations recorded in TerrADat. The map is dynamic - you can pan and zoom it. Layers may also be toggled on/off to view specific features.
+
+```{r studyMap, echo=FALSE}
+## Create the study area map - project boundary, sample frame, points sampled (from TerrADat)
+## Use leaflet.
+bnds <- sp::bbox(project.area.spdf)
+m <- leaflet(sample.frame.spdf) %>% addTiles() %>%
+  fitBounds(bnds[1,1],bnds[2,1],bnds[1,2],bnds[2,2]) %>%
+  addPolygons(data=sample.frame.spdf,fill=TRUE,stroke=TRUE,color="tan",fillOpacity = 0.6,weight=2, group="BLM Lands") %>%
+  addPolygons(data=project.area.spdf,fill=FALSE,stroke=TRUE,color="#222",weight=3, group="Study Area") %>%
+  addPolygons(data=reporting.units.spdf,fill=FALSE,stroke=TRUE,color="#000",weight=2,fillOpacity=0.6,group="Reporting Units") %>%
+  addCircleMarkers(data=tdat.spdf, radius=4, color="navy",stroke=FALSE,fillOpacity = 0.8, group="Sample Points") %>%
+  addLegend("bottomright",colors=c("#222","tan","navy","#000"),labels=c("Study Area Boundary","BLM Lands","Sample Points","Reporting Units")) %>%
+  addLayersControl(
+    overlayGroups = c("Sample Points","BLM Lands","Reporting Units","Study Area"),
+    options=layersControlOptions(collapsed=FALSE)
+  )
+m
+
+
+#m <- get_map(bnds,maptype="roadmap")
+#ggmap(m)+
+#  geom_polygon(data=tidy(project.area.spdf),aes(x=long,y=lat,group=group), color='black', size=0.25)+
+  #geom_polygon(data=fortify(sample.frame.spdf,region="OBJECTID"),aes(x=long,y=lat,group=group), fill="tan", color="tan")+
+#  geom_point(data=as.data.frame(dsgnpts.spdf),aes(x=coords.x1,y=coords.x2))+
+#  coord_map()
+
+```
+
+## Indicators included in the report
+ The following indicators were specified in the AIM data analysis template and are included in this report:
+```{r indicatorsIncluded, echo=FALSE, results='asis'}
+  inds <- unique(benchmarks$Indicator)
+  for (ind in inds) {
+    cat("\n  * ",ind,"\n")
+  }
+
+```
+
+ 
+## Time period of the report
+This report covers data collected between __`r as.Date(min(tdat.spdf$DateVisited))`__ and __`r as.Date(max(tdat.spdf$DateVisited))`__. Timing of the data collection in each year is shown below.
+
+```{r plotDates, echo=FALSE, message=FALSE, warning=FALSE}
+  mstartdays <- c(0,32,61,92,122,153,183,214,245,275,306,336)
+  mnames=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec")
+  g <- ggplot(data=as.data.frame(tdat.spdf), aes(x=yday,fill=factor(year))) + geom_histogram(binwidth=(7)) + xlim(0,365) +
+    geom_vline(xintercept=mstartdays,color="white",size=0.75) +
+    scale_x_continuous(breaks=mstartdays, labels=mnames) +
+    ggtitle("Histogram of sample points by week") +
+    theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
+    xlab("Week of the year") + ylab("Number of Plots")+labs(fill="Year")
+  ggplotly(g)
+```
+
+## Plot Sampling Summary
+Not all points originally selected as part of a design can be sampled. Selected points may not be accessible or when evaluated may be deemed to not even be part of the population. The [Rejection Criteria page on the AIM Landscape Toolbox website](http://aim.landscapetoolbox.org/office-sample-point-evaluation/) describes the rejection criteria for evaluating plots. To properly adjust the sampling weights and ensure unbiased estimates, it is important to know the fate of each of the originally-selected points. The graph below summarizes the point fates for the sample design(s) considered in this report.
+
+**Target sampled** points are those that occurred on BLM lands and were visited by a field crew. **Inaccessible** points were ones that were on BLM lands, but for one reason or another, the crew could not physically access the site (e.g., needed to cross private land and access was denied, road was washed out). **Non-target** points refers to points that upon evaluation were determined to not be on BLM lands or occurred in water. **Unknown** points are those for which their fate was not recorded. If sampling objectives (e.g., condition estimate or confidence interval width) were achieved without sampling all of the selected points, then any excess points could be marked as **Unneeded** (this is not common in terrestrial AIM studies).
+
+```{r samplingSummary, error=FALSE, message=FALSE, echo=FALSE}
+ggplot(data=as.data.frame(point.fates), aes(x=factor(YEAR), fill=variable, y=n,label=n))+geom_bar(stat="identity",width=0.5)+coord_flip()+
+  scale_fill_brewer(type="div",palette="RdYlBu")+
+  geom_text(data=subset(as.data.frame(point.fates),n!=0),aes(label=n,y=n),position=position_stack(vjust=0.5))+
+  ylab("Number of Original Sample Points")+xlab("Year")+ggtitle("Summary of Point Fate by Year")+
+  labs(fill="Final Point\nDesignation")
+
+
+```
+
+## Stratum Sampling Info
+The initial designs considered for this report used stratification as a way to spread sampling effort across the study area. The extent to which estimates calculated from monitoring data reflect conditions across the study area depends on whether or not the strata were adequately sampled. It is not uncommon for some sample sites to be not visited for various reasons (e.g., inaccessibility, time ran out). This is typically not a problem as long as: 1) the missed points do not account for a majority of the selected sample points and 2) the points that were not sampled were missed at random (i.e, there was no pattern to which points were missed and which were sampled). The table below summarizes the total calculated area and estimated sampling area by design stratum for the **study area**. Separate strata sampling proportions are calculated for each reporting unit, but looking at the study area overall gives a good rough estimation of whether or not there were issues with how the sample data represents the different strata. If there are strata with very low sampled proportions, this may affect the ability to draw inferences beyond the sample data in these strata, and should be more thoroughly evaluated. 
+
+```{r stratumSampling, error=FALSE, message=FALSE, echo=FALSE, results='asis'}
+strat.sampling.table <- stratum.weights[,c("Stratum","Total.pts","Observed.pts","Prop.dsgn.pts.obsrvd","Area.HA","Sampled.area.HA","Weight")]
+names(strat.sampling.table) <- c("Design Stratum","# Design Points","# Sampled Points","Prop. Design Points Sampled","Estimated Stratum Area (ha)","Stratum Area Sampled","Calculated Point Weight (ha/pt)")
+
+print(xtable(strat.sampling.table),type='html',include.rownames=FALSE,html.table.attributes=list("border='0' cellpadding='5', class='bordered_table' "))
+```
+
+
+***
+# Goals, Monitoring Objectives, Benchmarks, and Results Summary
+This table summarizes the results of this report.  It contains broad goals as well as monitoring objectives and whether they were achieved based on available monitoring data for the area of interest.  Monitoring objectives include key indicators, benchmarks that define desired values of the indicators, and the proportion of the landscape required to meet benchmarks.  Together, this information can be used by BLM land managers to determine whether goals are being achieved and to recommend changes in management, if needed.  
+
+*Note that the Monitoring Objectives and Benchmarks listed here are directly from the Terrestrial Benchmark Workbook that was filled out by the field office.*
+
+## Results Summary {.tabset .tabset-fade .tabset-pills}
+```{r lsPropsTables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
+prop.table <- benchmarks.sum[,c(1,7,3,2,4,5)]
+prop.table$LS.Prop <- paste(prop.table$Proportion.Relation,prop.table$Required.Proportion*100,"%",sep=" ")
+prop.table[prop.table$LS.Prop == "NA NA %","LS.Prop"] <- ""
+
+tables.hold <- c()
+i <- 1
+summary.table <- data.frame()
+for (lev in ru.levels) { # by reporting unit level
+  data.rulevel <- aim.analysis %>% dplyr::filter(Type == lev)
+  rus <- unique(data.rulevel$Subpopulation)
+  for (ru in rus) { # by specific reporting unit
+    prop.table.ru <- addLSProp(prop.table, aim.analysis, ru)
+    prop.table.ru <-  prop.table.ru[,-c(2,5,6,8)] %>% arrange(Management.Question,Evaluation.Category)  # sort by mgt question and category
+    prop.table.ru <- prop.table.ru %>% select(-StdError.P)
+    names(prop.table.ru) <- c("Management Question","Indicator","Category","Required Percent","n","Estimated Percent","Lower CI","Upper CI","Objective Met?")
+    prop.table.ru.strip <- prop.table.ru[prop.table.ru$Category!=params $cats.to.suppress,] # Strip out the categories to suppress
+    
+    ## Dump these into a list so we can print them out later. Need to first generate the summary table
+    tables.hold[[i]] <- xtable(prop.table.ru.strip,align=c("l","l","l","l","c","c","c","c","c","c"))
+    i <- i+1
+    
+    prop.table.ru$lev <- lev
+    prop.table.ru$ru <- ru
+    summary.table <- rbind(summary.table,as.data.frame(prop.table.ru))
+  }
+}
+
+# print the summary tables by whether or not meeting objectives
+vals <- unique(summary.table[summary.table[,9]!="",9])
+#vals <- sort(vals,decreasing=T)
+vals <- c("YES","NO","AT THRESHOLD")
+for (val in vals) {
+  #d <- summary.table[which(summary.table[,9]==val),]
+  d <- summary.table[grepl(paste(val,"$",sep=""),toupper(summary.table[,9])),]
+  d <- d[,c(1,2,9,11)]
+  names(d) <- c("Managment Question","Indicator","Objective Met?","Reporting Unit")
+  if (nrow(d)>0) {
+    cat("\n### Objectives Met: ",val,"\n")
+    print(xtable(d),type='html',include.rownames=FALSE, html.table.attributes=list("border='0' cellpadding='5' class='bordered_table' "))
+  }
+}
+```
+## Goals, Objectives, Results and Benchmarks by Reporting Unit {.tabset .tabset-fade .tabset-pills}
+These tables below summarize the results of specific indicators that were evaluated against management objectives and reporting units that were defined in the Monitoring Design Worksheet. A seprate table is presented for each reporting unit, and these tables state the indicators, evaluation categories, and required landscape proportion that should be met for each management question. The estimated proportion of the reporting unit in the different categories, upper and lower confidence intervals (CI), and a statement of whether the stated objective was met (based on the required landscape percent) are also presented.This information can be used by BLM land managers to determine whether goals are being achieved and to recommend changes in management, if needed. 
+```{r GORBtables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
+# Then print the tables by reporting unit
+i<-1
+for (lev in ru.levels) {
+  data.rulevel <- aim.analysis %>% filter(Type==lev)
+  rus <- unique(data.rulevel$Subpopulation)
+  for (ru in rus) { # by specific reporting unit
+    cat("\n### Reporting Unit Level:",ru,"\n")
+    print(tables.hold[[i]],type='html',include.rownames=FALSE, html.table.attributes=list("border='0' cellpadding='5' class='bordered_table' "))
+    i<-i+1
+  }
+}
+```
+
+### Benchmarks
+```{r objectivesSummary, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
+bm.table <- benchmarks[,c(2,1,3,4,10,13,14,16)]
+bm.table$Benchmark <- paste(bm.table$eval.string.lower,bm.table$indicator.tdat,bm.table$eval.string.upper,sep=" ")
+bm.table <-  bm.table[,-c(6:8)] %>% arrange(Management.Question,Evaluation.Category)  # Drop the unneeded fields and sort by mgt question
+names(bm.table) <- c("Management Question","Indicator","Benchmark Source","Evaluation Stratum","Category","Evaluation Benchmark")
+knitr::kable(bm.table)
+
+```
+
+***
+
+# Indicator Estimates by Reporting Unit for Monitoring Objectives
+
+This section identifies the condition of each indicator for each area of interest or reporting unit.  Condition refers to the proportion of land or water resources that is achieving desired values known as benchmarks. This section provides further detail about each row of the table in the previous section and can be used as supporting information for the conclusions drawn from that table.  Specifically, for each indicator, the following are reported:
+
+  * Graph of proportion of the area achieving desired conditions (benchmarks) relative to the required proportion in the monitoring objective
+  * Table showing the proportion of the area achieving desired conditions (benchmarks) as well as the indicator, benchmark, and required proportion of the landscape
+  * Map of the reporting unit relative to the sample frame
+  * Map(s) of spatial distribution of indicator from USGS grass/shrub, or Landfire.
+
+
+```{r conditionResults, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, results='asis'}
+cat("\n## Results by Reporting Unit {.tabset .tabset-fade .tabset-pills}\n")
+for (lev in ru.levels) { # by reporting unit level
+
+  #cat("\n",msg1,"\n")
+  data.rulevel <- aim.analysis %>% filter(Type==lev)
+  rus <- unique(data.rulevel$Subpopulation)
+  for (ru in rus) {
+    cat("\n###",lev,": ",ru,"\n")
+    data.ru <- data.rulevel %>% filter(Subpopulation==ru)
+    mqs <- unique(data.ru$MANAGEMENT.QUESTION)
+    for (mq in mqs) { # by specific reporting unit
+      cat("\n#### Management Question: ",mq,"\n")
+      #cat("\n",msg1,"\n")
+      data.mq <- data.ru %>% filter(MANAGEMENT.QUESTION==mq)
+      Indicators <- unique(data.mq$Indicator)
+      for (ind in Indicators) {  # by indicator
+        ind.name <- vlookup(ind,indicator.lut,1,2)
+        cat("\n#### Indicator: ",ind.name,"\n")
+        #cat("\n",msg1,"\n")
+        ## Look up the landscape threshold value for the RU and indicator
+        req.prop <- benchmarks.sum[benchmarks.sum$indicator.tdat==ind & !is.na(benchmarks.sum$Required.Proportion),4]
+        req.prop <- as.numeric(req.prop[1,1])
+        #cat("\n",req.prop,"\n")
+        if (!is.na(req.prop)) {
+          req.prop <- req.prop*100
+        } else {
+          req.prop<-0
+        }
+        
+        g <- indicatorPlot(aim.analysis,lev,ru,ind,mq,req.prop)
+        #m <- indicatorMap(lev,ru,reporting.units.spdf,project.area.spdf)
+        m <- indicatorMap.new(lev,ru,reporting.units.spdf,project.area.spdf,tdat.spdf,ind,mq)
+        txt <- textGrob(msgGrob,just="centre",gp=gpar(fontsize=18,col="red"))
+        grid.arrange(arrangeGrob(m,txt,nrow=2),g,ncol=2,widths=c(1,3))
+        cat("\n")
+        cat("\n",msg1,"\n")
+        cat("\n#### Results Table\n")
+        cat(pander::pander(indicatorTable(aim.analysis,lev,ru,ind,mq)))
+        cat("\n",msg2,"\n")
+        cat("\n***\n")
+      }
+    }
+  }
+}
+
+
+```
+
+***
+# Spatial Distribution of Core Indicators
+The USGS, in partnership with the BLM, has developed a series of shrubland remote-sensing products that predict the spatial distribution of many of the core indicators. This includes maps of shrub cover, sagebrush cover, bare ground, perennial grass cover, annual grass cover, and more. Land cover data from the USGS National Land Cover Database (NLCD) 2011 shows the distribution of general vegetation types in the study area. In some cases these maps represent indicators directly related to management questions. In other cases, these maps may show indicators that are related indirectly to a management question. In either case, these products can be very useful in beginning to understand **WHERE** resource concerns might be within a reporting unit or study area. 
+
+The map below depicts a selection of AIM indicators available from the USGS NLCD Shrublands Products and the NLCD 2011. The full suite of NLCD Shrubland products is available for download from USGS at <https://www.mrlc.gov/nlcdshrub_avail.php>. The NLCD 2011 data can be downloaded from <https://www.mrlc.gov/nlcd11_data.php>.
+
+**This map is provided for general reference only.** To maintain performance of the report document and keep file sizes small, the map products displayed here have been resampled from their native resolution (30m) to a scale of 120m resolution. For detailed analyses or for higher-quality maps, download the products from their source.
+
+```{r rsMaps, echo=FALSE, fig.height=7, fig.width=7, message=FALSE, warning=FALSE}
+pal.bare <- colorNumeric("OrRd", 100:0, na.color = "transparent")
+pal.veg <- colorNumeric("YlGn", 100:0, na.color = "transparent")
+m <- leaflet() %>% addTiles() %>%
+  addRasterImage(bare.g,colors=pal.bare,opacity=0.8,group="Bare Ground") %>% 
+    addLegend(pal=pal.bare, values=1:100, title="% Bare Ground", labFormat = labelFormat(suffix="%")) %>%
+  addRasterImage(shrub.g,colors=pal.veg,opacity=0.8,group="Shrub Cover") %>% 
+    addLegend(pal=pal.veg, values=1:100, title="% Shrub Cover", labFormat = labelFormat(suffix="%")) %>%
+  addPolygons(data=reporting.units.spdf,fill=FALSE,stroke=TRUE,color="#000",weight=2,fillOpacity=0.6,group="Reporting Units") %>%
+  addCircleMarkers(data=tdat.spdf, radius=4, color="navy",stroke=FALSE,fillOpacity = 0.8, group="Sample Points") %>%
+  addLegend("bottomleft",colors=c("navy","#000"),labels=c("Sample Points","Reporting Units")) %>%
+  addLayersControl(
+      overlayGroups = c("Sample Points","Reporting Units","Bare Ground","Shrub Cover"),
+      options=layersControlOptions(collapsed=FALSE), position="topleft") %>%
+  hideGroup("Shrub Cover")
+m
+
+
+```
+
+
+***
+# Appendices
+
+  * [Summary of methods for data collection](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
+  * [Sample design information](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
+  * [Analysis methods](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
+  * Report Inputs
+    + Raw data from TerrADat (?? Point to Data Explorer workbook?)
+    + Sample design geodatabase
+    + Project planning workbook
+    + Reporting units spatial data
+    + Remote-sensing datasets

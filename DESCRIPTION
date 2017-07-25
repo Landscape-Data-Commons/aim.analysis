@@ -21,7 +21,18 @@ Imports:
   rgeos,
   digest,
   readxl,
-  spdplyr
+  spdplyr,
+  ggplot2,
+  lubridate,
+  reshape2,
+  leaflet,
+  multcomp, 
+  RODBC,
+  raster,
+  gridExtra,
+  grid,
+  xtable,
+  plotly
 Suggests:
   arcgisbinding,
     knitr,

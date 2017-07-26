@@ -34,7 +34,7 @@ analyze <- function(evaluated.points,
   }
 
   ## Then we combine them!
-  data <- merge(x = evaluated.points,
+  data <- merge(x = dplyr::select(.data = evaluated.points, -dplyr::matches(match = "^(LONGITUDE)|(LATITUDE)$", ignore.case = FALSE)),
                 y = point.weights,
                 by.x = "PRIMARYKEY",
                 by.y = "PRIMARYKEY") %>% distinct()

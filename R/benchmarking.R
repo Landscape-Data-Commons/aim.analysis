@@ -77,8 +77,8 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
 
   ## Because all the benchmark evaluation categories should be mutually exclusive, applying the vector from $meeting should result in one row per indicator per plot
   ## Also restricting this to the relevant columns that are required for the next step
-  output <- tdat.tall.benched[tdat.tall.benched$MEETING, c("PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY")] %>%
-    filter(!is.na(PRIMARYKEY))
+  output <- tdat.tall.benched[tdat.tall.benched$MEETING, c("PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY", "LONGITUDE", "LATITUDE")] %>%
+    dplyr::filter(!is.na(PRIMARYKEY))
   names(output) <- stringr::str_to_upper(names(output))
   return(output)
 }

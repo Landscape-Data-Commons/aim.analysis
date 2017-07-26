@@ -40,12 +40,9 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
     message("All of these are being dropped from consideration and the remaining indicators are being used.")
   }
   ## Making a tall version of the TerrADat data frame
-  ## Indicators listed in order of appearance in TerrADat, line breaks inserted at thematic breaks
-  tdat.tall <- eval(parse(text = paste0("gather(tdat, Indicator, Value, ",
-                                        paste(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)],collapse = ", ") %>% stringr::str_replace_all("'", ""),
-                                        ")"
-  )
-  ))
+  tdat.tall <- tidyr::gather(data = tdat, key = Indicator, value = Value,
+                                        !!!rlang::quos(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)])
+                                        )
 
   ## This shouldn't be needed except in weird scenarios, but occasionally you end up with the string <Null> where you shouldn't.
   ## This is likely the result of exporting an attribute table from a geodatabase to a spreadsheet, converting that to a .csv, then reading it in and converting it to an SPDF

@@ -30,6 +30,7 @@ Imports:
   gridExtra,
   grid,
   xtable,
+  pander,
   plotly
 Suggests:
   arcgisbinding,

@@ -60,12 +60,12 @@ if (!is.null(reporting.units.spdf)) {
 ## Objectives and benchmark information from the Excel template
 
   # For each benchmark add in the name of the field in TerrADat that corresponds
-  benchmarks.sum <- dplyr::group_by(benchmarks, Management.Question, Evaluation.Category) %>% dplyr::summarise(
-      indicator.name.alt = dplyr::first(Indicator),
-      Required.Proportion = dplyr::first(Required.Proportion),
-      Proportion.Relation = dplyr::first(Proportion.Relation),
-      indicator.tdat = dplyr::first(indicator.tdat),
-      Benchmark.Source = dplyr::first(Benchmark.Source))
+  benchmarks.sum <- dplyr::group_by(benchmarks, MANAGEMENT.QUESTION, EVALUATION.CATEGORY) %>% dplyr::summarise(
+      indicator.name.alt = dplyr::first(INDICATOR),
+      Required.Proportion = dplyr::first(REQUIRED.PROPORTION),
+      Proportion.Relation = dplyr::first(PROPORTION.RELATION),
+      indicator.tdat = dplyr::first(INDICATOR.TDAT),
+      Benchmark.Source = dplyr::first(BENCHMARK.SOURCE))
 
 ######
   ## Sample Design Information (point fate, stratification, study area bdy)
@@ -330,7 +330,6 @@ prop.table$LS.Prop <- paste(prop.table$Proportion.Relation,
 prop.table[prop.table$LS.Prop == "NA NA %", "LS.Prop"] <- ""
 
 tables.hold <- c()
-i <- 1
 summary.table <- data.frame()
 for (lev in ru.levels) { # by reporting unit level
   data.rulevel <- analysis %>% dplyr::filter(Type == lev)
@@ -338,8 +337,9 @@ for (lev in ru.levels) { # by reporting unit level
   for (ru in rus) { # by specific reporting unit
     prop.table.ru <- addLSProp(prop.table = prop.table,
                                analysis.table = analysis,
-                               ru = ru)
-    prop.table.ru <-  prop.table.ru[,-c(2,5,6,8)] %>% dplyr::arrange(Management.Question, Evaluation.Category)  # sort by mgt question and category
+                               ru = ru,
+                               indicator.lut = indicator.lut,conf.level = conf.level)
+    prop.table.ru <-  prop.table.ru[,-c(2,5,6,8)] %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # sort by mgt question and category
     prop.table.ru <- prop.table.ru %>% dplyr::select(-StdError.P)
     names(prop.table.ru) <- c("Management Question",
                               "Indicator",
@@ -353,13 +353,13 @@ for (lev in ru.levels) { # by reporting unit level
     prop.table.ru.strip <- prop.table.ru[!(prop.table.ru$Category %in% cats.to.suppress),] # Strip out the categories to suppress
     
     ## Dump these into a list so we can print them out later. Need to first generate the summary table
-    tables.hold[[i]] <- xtable::xtable(prop.table.ru.strip,
+    tables.hold[[ru]] <- xtable::xtable(prop.table.ru.strip,
                                        align = c("l","l","l","l","c","c","c","c","c","c"))
-    i <- i + 1
     
     prop.table.ru$lev <- lev
     prop.table.ru$ru <- ru
-    summary.table <- rbind(summary.table,as.data.frame(prop.table.ru))
+    summary.table <- rbind(summary.table,
+                           as.data.frame(prop.table.ru))
   }
 }
 
@@ -387,28 +387,36 @@ for (val in vals) {
 These tables below summarize the results of specific indicators that were evaluated against management objectives and reporting units that were defined in the Monitoring Design Worksheet. A seprate table is presented for each reporting unit, and these tables state the indicators, evaluation categories, and required landscape proportion that should be met for each management question. The estimated proportion of the reporting unit in the different categories, upper and lower confidence intervals (CI), and a statement of whether the stated objective was met (based on the required landscape percent) are also presented.This information can be used by BLM land managers to determine whether goals are being achieved and to recommend changes in management, if needed. 
 ```{r GORBtables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
 # Then print the tables by reporting unit
-i < -1
 for (lev in ru.levels) {
   data.rulevel <- analysis %>% dplyr::filter(Type == lev)
   rus <- unique(data.rulevel$Subpopulation)
   for (ru in rus) { # by specific reporting unit
     cat("\n### Reporting Unit Level:",ru,"\n")
-    print(tables.hold[[i]],
+    print(tables.hold[[ru]],
           type = 'html',
           include.rownames = FALSE,
           html.table.attributes = list("border='0' cellpadding='5' class='bordered_table' "))
-    i <- i + 1
   }
 }
 ```
 
 ### Benchmarks
 ```{r objectivesSummary, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
-bm.table <- benchmarks[, c(2, 1, 3, 4, 10, 13, 14, 16)]
-bm.table$Benchmark <- paste(bm.table$eval.string.lower,
-                            bm.table$indicator.tdat,
-                            bm.table$eval.string.upper)
-bm.table <-  bm.table[, -c(6:8)] %>% dplyr::arrange(Management.Question,Evaluation.Category)  # Drop the unneeded fields and sort by mgt question
+bm.table <- dplyr::select(.data = benchmarks,
+                          MANAGEMENT.QUESTION,
+                          INDICATOR,
+                          BENCHMARK.SOURCE,
+                          EVALUATION.STRATUM,
+                          EVALUATION.CATEGORY,
+                          EVAL.STRING.LOWER,
+                          EVAL.STRING.UPPER,
+                          INDICATOR.TDAT)
+bm.table$BENCHMARK <- paste(bm.table$EVAL.STRING.LOWER,
+                            bm.table$INDICATOR.TDAT,
+                            bm.table$EVAL.STRING.UPPER)
+bm.table <- dplyr::select(.data = bm.table,
+                          -dplyr::starts_with("eval.string"),
+                          -INDICATOR.TDAT) %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # Drop the unneeded fields and sort by mgt question
 names(bm.table) <- c("Management Question",
                      "Indicator",
                      "Benchmark Source",
@@ -463,6 +471,7 @@ for (lev in ru.levels) { # by reporting unit level
                            ru = lev,
                            subpop = ru,
                            indicator = ind,
+                           indicator.lut = indicator.lut,
                            mq = mq,
                            threshold = req.prop)
         #m <- indicatorMap(lev,ru,reporting.units.spdf,project.area.spdf)
@@ -470,7 +479,7 @@ for (lev in ru.levels) { # by reporting unit level
                           ru = ru,
                           repunits.spdf = reporting.units.spdf,
                           prjarea.spdf = project.area.spdf,
-                          samplpts.spdf = points.benchmarked.spdf)
+                          samplepts.spdf = points.benchmarked.spdf)
         txt <- grid::textGrob(label = msgGrob,
                               just = "centre",
                               gp = grid::gpar(fontsize = 18,

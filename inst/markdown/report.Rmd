@@ -11,9 +11,6 @@ output:
     toc: yes
   word_document:
     toc: yes
-params:
-  project.file.dir: C:\Users\jasokarl\Google Drive\BLM_AIM\Analysis_Reporting\Bruneau\BFO_2015_test_170217
-  sdd.gdb: C:\Users\jasokarl\Documents\GitHub\AIM_Analysis\Viz_Reporting\Bruneau_Example\BFO_2015-2019_SDD_122116.gdb
 always_allow_html: yes
 ---
 

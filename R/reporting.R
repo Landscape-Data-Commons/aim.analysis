@@ -67,6 +67,7 @@ indicatorPlot <- function(df,
                           ru,
                           subpop,
                           indicator,
+                          indicator.lut,
                           mq,
                           threshold = 0.5) {
   plot.data <- dplyr::filter(.data = df,
@@ -75,7 +76,7 @@ indicatorPlot <- function(df,
                              Indicator == indicator,
                              MANAGEMENT.QUESTION == mq,
                              Category != "Total")
-  ind.realname <- vlookup(indicator,indicator.lut, 1, 2) ## Lookup the pretty name for the indicator
+  ind.realname <- vlookup(indicator, indicator.lut, 1, 2) ## Lookup the pretty name for the indicator
   p <- ggplot2::ggplot(plot.data, ggplot2::aes(x = Category, y = Estimate.P, fill = Category)) +
     ggplot2::geom_bar(stat = "identity", width = 0.5) +
     ggplot2::coord_flip() +
@@ -164,7 +165,9 @@ indicatorMap <- function(level,
 ##    ru = name of the reporting unit
 addLSProp <- function(prop.table,
                       analysis.table,
-                      ru) {
+                      ru,
+                      indicator.lut,
+                      conf.level) {
   # Get the terradat indicator names that are used in cat.analysis
   prop.table$Indicator <- unlist(lapply(prop.table$indicator.name.alt,
                                         FUN = vlookup,

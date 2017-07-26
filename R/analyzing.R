@@ -13,11 +13,11 @@
 #' @export
 
 analyze <- function(evaluated.points,
-                     point.weights,
-                     default.reportingunit = "No reporting unit",
-                     reportingunit.type = NA,
-                     adjustedweights = FALSE
-                     ){
+                    point.weights,
+                    default.reportingunit = "No reporting unit",
+                    reportingunit.type = NA,
+                    adjustedweights = FALSE
+){
 
   ## Sanitization
   names(evaluated.points) <- stringr::str_to_upper(names(evaluated.points))

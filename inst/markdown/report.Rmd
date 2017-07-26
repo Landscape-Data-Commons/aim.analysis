@@ -32,15 +32,18 @@ msgGrob <- "EXAMPLE\nESTIMATES\nDo not use!"
 
 ```{r loadData, message=FALSE, warning=FALSE, include=FALSE}
 #######
+
+## Sanitize the benchmarks column names
+names(benchmarks) <- stringr::str_to_upper(names(benchmarks))
 ## Analysis results from cat.analysis
   ru.levels <- unique(analysis$Type)
 
 ## Reporting Unit Spatial Polygons
 ## Clean up so that the geometry will display right on the map
 if (!is.null(reporting.units.spdf)) {
-  reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
-                                       byid = TRUE,
-                                       width = 0) %>% spTransform(CRSobj = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+  # reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
+  #                                      byid = TRUE,
+  #                                      width = 0) %>% spTransform(CRSobj = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
 }
 
 

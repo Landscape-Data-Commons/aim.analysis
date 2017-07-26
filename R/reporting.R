@@ -126,7 +126,8 @@ indicatorMap <- function(level,
                          repunits.spdf,
                          prjarea.spdf,
                          samplepts.spdf) {
-  runit <- repunits.spdf[repunits.spdf$Type == level & repunits.spdf$Sbppltn == ru,] # get the reporting unit
+  runit <- sp::spTransform(repunits.spdf[repunits.spdf$Type == level & repunits.spdf$Subpopulation == ru,],
+                           samplepts.spdf@proj4string)
   ru.points <- sp::over(samplepts.spdf,
                         runit,
                         returnList = F)

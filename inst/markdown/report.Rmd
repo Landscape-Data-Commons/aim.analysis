@@ -1,10 +1,10 @@
 ---
-title: "Draft `r project.shortname` Project Analysis Report"
+title: "Draft `r project.name` Project Analysis Report"
 date: 'Report date: `r format(Sys.time(), "%d %B, %Y")`'
 description: ''
 output:
   html_document:
-    css: C:\Users\jasokarl\Documents\GitHub\AIM_Analysis\Viz_Reporting\styles.css
+    # css: `r paste0(path.package("aim.analysis"), "/markdown/style.css")`
     fig_caption: yes
     toc: yes
   pdf_document:
@@ -12,7 +12,6 @@ output:
   word_document:
     toc: yes
 params:
-  grassShrubDir: C:\Users\jasokarl\Google Drive\BLM_AIM\geodata\grass_shrub
   project.file.dir: C:\Users\jasokarl\Google Drive\BLM_AIM\Analysis_Reporting\Bruneau\BFO_2015_test_170217
   sdd.gdb: C:\Users\jasokarl\Documents\GitHub\AIM_Analysis\Viz_Reporting\Bruneau_Example\BFO_2015-2019_SDD_122116.gdb
 always_allow_html: yes
@@ -22,22 +21,6 @@ always_allow_html: yes
 ## Set up the environmente and define the functions used in creating the report
 
 knitr::opts_chunk$set(echo = TRUE)
-library(dplyr)
-library(ggplot2)
-library(lubridate)
-library(reshape2)
-library(leaflet)
-library(sp)
-library(multcomp) 
-library(RODBC)
-library(rgdal)
-library(raster)
-library(xlsx)
-library(gridExtra)
-library(grid)
-library(rgeos)
-library(xtable)
-library(plotly)
 
 #### Standard messages to insert at will
 msg1 <- paste0("This graph shows the estimated percentage of the reporting unit in different categories for the specified indicator. ", conf.level, "% confidence intervals (CI) around those estimates are provided as error bars. The yellow bar denotes the landscape criterion, or point at which an objective is deemed to be met or not met as defined in the Sample Design Worksheet.")
@@ -54,9 +37,12 @@ msgGrob <- "EXAMPLE\nESTIMATES\nDo not use!"
 
 ## Reporting Unit Spatial Polygons
 ## Clean up so that the geometry will display right on the map
-reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
+if (!is.null(reporting.units.spdf)) {
+  reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
                                        byid = TRUE,
                                        width = 0) %>% spTransform(CRSobj = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+}
+
 
 ## Plot information from TerrADat (date sampled, lat/long, indicator values)
   ## Load the TerrADat points and their attributes from the output of the analysis script
@@ -81,32 +67,35 @@ reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
 ######
   ## Sample Design Information (point fate, stratification, study area bdy)
   # Dissolve any additional polygons so we have a single boundary for the project area
-  project.area.spdf$dissolve <- 1
-  project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
-                                          id = project.area.spdf@data$dissolve)
+  if (!is.null(project.area.spdf)) {
+    project.area.spdf$dissolve <- 1
+    project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
+                                            id = project.area.spdf@data$dissolve)
+  }
   
   ## Get the design points info from the analysis script output files
-  ## stratum.stats and design.stratum.weights
-  names(stratum.stats)[5:9] <- c("Target Sampled","Inaccessible","Non-target","Unknown","Unneeded")
+  ## strata.stats and design.strata.weights
+  names(strata.stats)[names(strata.stats) == "Observed.pts"] <- "Target Sampled"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unknown$")] <- "Unknown"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.nontarget$")] <- "Non-target"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.inaccessible$")] <- "Inaccessible"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unneeded$")] <- "Unneeded"
   
   #reshape the dataframe for plotting
-  point.fates <- reshape2::melt(data = stratum.stats,
-                                id = "YEAR",
-                                measure.vars = c("Target Sampled",
-                                                 "Inaccessible",
-                                                 "Non-target",
-                                                 "Unknown",
-                                                 "Unneeded")) %>% 
+  point.fates <- tidyr::gather(data = strata.stats,
+                        key = "variable",
+                        value = "value",
+                        -DD, -WEIGHT.ID, -YEAR) %>% 
     dplyr::group_by(YEAR, variable) %>% 
     dplyr::summarise(n=sum(value))
   
+  ## Turn the benchmarked points into an spdf
+  points.benchmarked.spdf <- sp::SpatialPointsDataFrame(coords = points.benchmarked[, c("LONGITUDE", "LATITUDE")],
+                                                        data = points.benchmarked,
+                                                        proj4string = projection)
+  
 ######
-## Grass/shrub
-    ## These need to be clipped to the project area boundary and projected into GCS DD
-bare.g <- raster::aggregate(raster(paste(params$grassShrubDir,"\\Bruneau_Bare_Ground_DD.tif",sep="")),fact=4)
-crs(bare.g) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-shrub.g <- raster::aggregate(raster(paste(params$grassShrubDir,"\\Bruneau_Shrub_Cover_DD.tif",sep="")),fact=4)
-crs(shrub.g) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
 
 ```
 
@@ -182,17 +171,43 @@ The map below is provided for general reference only. It was created from the sp
 ```{r studyMap, echo=FALSE}
 ## Create the study area map - project boundary, sample frame, points sampled (from TerrADat)
 ## Use leaflet.
-bnds <- sp::bbox(project.area.spdf)
-m <- leaflet(sample.frame.spdf) %>% addTiles() %>%
-  fitBounds(bnds[1,1],bnds[2,1],bnds[1,2],bnds[2,2]) %>%
-  addPolygons(data=sample.frame.spdf,fill=TRUE,stroke=TRUE,color="tan",fillOpacity = 0.6,weight=2, group="BLM Lands") %>%
-  addPolygons(data=project.area.spdf,fill=FALSE,stroke=TRUE,color="#222",weight=3, group="Study Area") %>%
-  addPolygons(data=reporting.units.spdf,fill=FALSE,stroke=TRUE,color="#000",weight=2,fillOpacity=0.6,group="Reporting Units") %>%
-  addCircleMarkers(data=tdat.spdf, radius=4, color="navy",stroke=FALSE,fillOpacity = 0.8, group="Sample Points") %>%
-  addLegend("bottomright",colors=c("#222","tan","navy","#000"),labels=c("Study Area Boundary","BLM Lands","Sample Points","Reporting Units")) %>%
-  addLayersControl(
-    overlayGroups = c("Sample Points","BLM Lands","Reporting Units","Study Area"),
-    options=layersControlOptions(collapsed=FALSE)
+bounds <- sp::bbox(project.area.spdf)
+m <- leaflet::leaflet(sample.frame.spdf) %>% leaflet::addTiles() %>%
+  leaflet::fitBounds(lng1 = bounds[1,1],
+                     lat1 = bounds[2,1],
+                     lng2 = bounds[1,2],
+                     lat2 = bounds[2,2]) %>%
+  leaflet::addPolygons(data = sample.frame.spdf,
+                       fill = TRUE,
+                       stroke = TRUE,
+                       color = "tan",
+                       fillOpacity = 0.6,
+                       weight = 2,
+                       group = "BLM Lands") %>%
+  leaflet::addPolygons(data = project.area.spdf,
+                       fill = FALSE,
+                       stroke = TRUE,
+                       color = "#222",
+                       weight = 3,
+                       group = "Study Area") %>%
+  leaflet::addPolygons(data = reporting.units.spdf,
+                       fill = FALSE,
+                       stroke = TRUE,
+                       color = "#000",
+                       weight = 2,
+                       fillOpacity = 0.6,
+                       group = "Reporting Units") %>%
+  leaflet::addCircleMarkers(data = tdat.spdf,
+                            radius = 4,
+                            color = "navy",
+                            stroke = FALSE,
+                            fillOpacity = 0.8,
+                            group = "Sample Points") %>%
+  leaflet::addLegend(position = "bottomright",
+                     colors = c("#222", "tan", "navy", "#000"),
+                     labels = c("Study Area Boundary", "BLM Lands", "Sample Points", "Reporting Units")) %>%
+  leaflet::addLayersControl(overlayGroups = c("Sample Points", "BLM Lands", "Reporting Units", "Study Area"),
+                            options = leaflet::layersControlOptions(collapsed = FALSE)
   )
 m
 
@@ -221,15 +236,24 @@ m
 This report covers data collected between __`r as.Date(min(tdat.spdf$DateVisited))`__ and __`r as.Date(max(tdat.spdf$DateVisited))`__. Timing of the data collection in each year is shown below.
 
 ```{r plotDates, echo=FALSE, message=FALSE, warning=FALSE}
-  mstartdays <- c(0,32,61,92,122,153,183,214,245,275,306,336)
-  mnames=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec")
-  g <- ggplot(data=as.data.frame(tdat.spdf), aes(x=yday,fill=factor(year))) + geom_histogram(binwidth=(7)) + xlim(0,365) +
-    geom_vline(xintercept=mstartdays,color="white",size=0.75) +
-    scale_x_continuous(breaks=mstartdays, labels=mnames) +
-    ggtitle("Histogram of sample points by week") +
-    theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
-    xlab("Week of the year") + ylab("Number of Plots")+labs(fill="Year")
-  ggplotly(g)
+  mstartdays <- c(0, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336)
+  mnames = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec")
+  g <- ggplot2::ggplot(data = tdat.spdf@data,
+                       ggplot2::aes(x = yday, fill = factor(year))) +
+    ggplot2::geom_histogram(binwidth = 7) +
+    ggplot2::xlim(0, 365) +
+    ggplot2::geom_vline(xintercept = mstartdays,
+                        color = "white",
+                        size = 0.75) +
+    ggplot2::scale_x_continuous(breaks = mstartdays,
+                                labels = mnames) +
+    ggplot2::ggtitle("Histogram of sample points by week") +
+    ggplot2::theme(panel.grid.major.x = element_blank(),
+                   panel.grid.minor.x = element_blank()) +
+    ggplot2::xlab("Week of the year") +
+    ggplot2::ylab("Number of Plots") +
+    ggplot2::labs(fill = "Year")
+  plotly::ggplotly(g)
 ```
 
 ## Plot Sampling Summary
@@ -238,11 +262,24 @@ Not all points originally selected as part of a design can be sampled. Selected 
 **Target sampled** points are those that occurred on BLM lands and were visited by a field crew. **Inaccessible** points were ones that were on BLM lands, but for one reason or another, the crew could not physically access the site (e.g., needed to cross private land and access was denied, road was washed out). **Non-target** points refers to points that upon evaluation were determined to not be on BLM lands or occurred in water. **Unknown** points are those for which their fate was not recorded. If sampling objectives (e.g., condition estimate or confidence interval width) were achieved without sampling all of the selected points, then any excess points could be marked as **Unneeded** (this is not common in terrestrial AIM studies).
 
 ```{r samplingSummary, error=FALSE, message=FALSE, echo=FALSE}
-ggplot(data=as.data.frame(point.fates), aes(x=factor(YEAR), fill=variable, y=n,label=n))+geom_bar(stat="identity",width=0.5)+coord_flip()+
-  scale_fill_brewer(type="div",palette="RdYlBu")+
-  geom_text(data=subset(as.data.frame(point.fates),n!=0),aes(label=n,y=n),position=position_stack(vjust=0.5))+
-  ylab("Number of Original Sample Points")+xlab("Year")+ggtitle("Summary of Point Fate by Year")+
-  labs(fill="Final Point\nDesignation")
+ggplot2::ggplot(data = as.data.frame(point.fates),
+                ggplot2::aes(x = factor(YEAR),
+                             y = n,
+                             fill = variable,
+                             label = n)) +
+  ggplot2::geom_bar(stat = "identity",
+                    width = 0.5) +
+  ggplot2::coord_flip() +
+  ggplot2::scale_fill_brewer(type = "div",
+                             palette = "RdYlBu") +
+  ggplot2::geom_text(data = subset(as.data.frame(point.fates),
+                                   n != 0),
+                     ggplot2::aes(label = n, y = n),
+                     position = ggplot2::position_stack(vjust = 0.5)) +
+  ggplot2::ylab("Number of Original Sample Points") +
+  ggplot2::xlab("Year") +
+  ggplot2::ggtitle("Summary of Point Fate by Year") +
+  ggplot2::labs(fill = "Final Point\nDesignation")
 
 
 ```
@@ -251,10 +288,26 @@ ggplot(data=as.data.frame(point.fates), aes(x=factor(YEAR), fill=variable, y=n,l
 The initial designs considered for this report used stratification as a way to spread sampling effort across the study area. The extent to which estimates calculated from monitoring data reflect conditions across the study area depends on whether or not the strata were adequately sampled. It is not uncommon for some sample sites to be not visited for various reasons (e.g., inaccessibility, time ran out). This is typically not a problem as long as: 1) the missed points do not account for a majority of the selected sample points and 2) the points that were not sampled were missed at random (i.e, there was no pattern to which points were missed and which were sampled). The table below summarizes the total calculated area and estimated sampling area by design stratum for the **study area**. Separate strata sampling proportions are calculated for each reporting unit, but looking at the study area overall gives a good rough estimation of whether or not there were issues with how the sample data represents the different strata. If there are strata with very low sampled proportions, this may affect the ability to draw inferences beyond the sample data in these strata, and should be more thoroughly evaluated. 
 
 ```{r stratumSampling, error=FALSE, message=FALSE, echo=FALSE, results='asis'}
-strat.sampling.table <- stratum.weights[,c("Stratum","Total.pts","Observed.pts","Prop.dsgn.pts.obsrvd","Area.HA","Sampled.area.HA","Weight")]
-names(strat.sampling.table) <- c("Design Stratum","# Design Points","# Sampled Points","Prop. Design Points Sampled","Estimated Stratum Area (ha)","Stratum Area Sampled","Calculated Point Weight (ha/pt)")
+strat.sampling.table <- dplyr::select(.data = strata.weights,
+                                      Stratum,
+                                      Total.pts,
+                                      Observed.pts,
+                                      Prop.dsgn.pts.obsrvd,
+                                      Area.HA,
+                                      Sampled.area.HA,
+                                      Weight)
+names(strat.sampling.table) <- c("Design Stratum",
+                                 "# Design Points",
+                                 "# Sampled Points",
+                                 "Prop. Design Points Sampled",
+                                 "Estimated Stratum Area (ha)",
+                                 "Stratum Area Sampled",
+                                 "Calculated Point Weight (ha/pt)")
 
-print(xtable(strat.sampling.table),type='html',include.rownames=FALSE,html.table.attributes=list("border='0' cellpadding='5', class='bordered_table' "))
+print(xtable::xtable(strat.sampling.table),
+      type = 'html',
+      include.rownames = FALSE,
+      html.table.attributes = list("border='0' cellpadding='5', class='bordered_table' "))
 ```
 
 
@@ -266,26 +319,40 @@ This table summarizes the results of this report.  It contains broad goals as we
 
 ## Results Summary {.tabset .tabset-fade .tabset-pills}
 ```{r lsPropsTables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
-prop.table <- benchmarks.sum[,c(1,7,3,2,4,5)]
-prop.table$LS.Prop <- paste(prop.table$Proportion.Relation,prop.table$Required.Proportion*100,"%",sep=" ")
-prop.table[prop.table$LS.Prop == "NA NA %","LS.Prop"] <- ""
+prop.table <- benchmarks.sum[,c(1, 7, 3, 2, 4, 5)]
+prop.table$LS.Prop <- paste(prop.table$Proportion.Relation,
+                            prop.table$Required.Proportion*100,
+                            "%",
+                            sep=" ")
+prop.table[prop.table$LS.Prop == "NA NA %", "LS.Prop"] <- ""
 
 tables.hold <- c()
 i <- 1
 summary.table <- data.frame()
 for (lev in ru.levels) { # by reporting unit level
-  data.rulevel <- aim.analysis %>% dplyr::filter(Type == lev)
+  data.rulevel <- analysis %>% dplyr::filter(Type == lev)
   rus <- unique(data.rulevel$Subpopulation)
   for (ru in rus) { # by specific reporting unit
-    prop.table.ru <- addLSProp(prop.table, aim.analysis, ru)
-    prop.table.ru <-  prop.table.ru[,-c(2,5,6,8)] %>% arrange(Management.Question,Evaluation.Category)  # sort by mgt question and category
-    prop.table.ru <- prop.table.ru %>% select(-StdError.P)
-    names(prop.table.ru) <- c("Management Question","Indicator","Category","Required Percent","n","Estimated Percent","Lower CI","Upper CI","Objective Met?")
-    prop.table.ru.strip <- prop.table.ru[prop.table.ru$Category!=params $cats.to.suppress,] # Strip out the categories to suppress
+    prop.table.ru <- addLSProp(prop.table = prop.table,
+                               analysis.table = analysis,
+                               ru = ru)
+    prop.table.ru <-  prop.table.ru[,-c(2,5,6,8)] %>% dplyr::arrange(Management.Question, Evaluation.Category)  # sort by mgt question and category
+    prop.table.ru <- prop.table.ru %>% dplyr::select(-StdError.P)
+    names(prop.table.ru) <- c("Management Question",
+                              "Indicator",
+                              "Category",
+                              "Required Percent",
+                              "n",
+                              "Estimated Percent",
+                              "Lower CI",
+                              "Upper CI",
+                              "Objective Met?")
+    prop.table.ru.strip <- prop.table.ru[!(prop.table.ru$Category %in% cats.to.suppress),] # Strip out the categories to suppress
     
     ## Dump these into a list so we can print them out later. Need to first generate the summary table
-    tables.hold[[i]] <- xtable(prop.table.ru.strip,align=c("l","l","l","l","c","c","c","c","c","c"))
-    i <- i+1
+    tables.hold[[i]] <- xtable::xtable(prop.table.ru.strip,
+                                       align = c("l","l","l","l","c","c","c","c","c","c"))
+    i <- i + 1
     
     prop.table.ru$lev <- lev
     prop.table.ru$ru <- ru
@@ -294,17 +361,22 @@ for (lev in ru.levels) { # by reporting unit level
 }
 
 # print the summary tables by whether or not meeting objectives
-vals <- unique(summary.table[summary.table[,9]!="",9])
-#vals <- sort(vals,decreasing=T)
 vals <- c("YES","NO","AT THRESHOLD")
+
 for (val in vals) {
-  #d <- summary.table[which(summary.table[,9]==val),]
-  d <- summary.table[grepl(paste(val,"$",sep=""),toupper(summary.table[,9])),]
-  d <- d[,c(1,2,9,11)]
-  names(d) <- c("Managment Question","Indicator","Objective Met?","Reporting Unit")
-  if (nrow(d)>0) {
-    cat("\n### Objectives Met: ",val,"\n")
-    print(xtable(d),type='html',include.rownames=FALSE, html.table.attributes=list("border='0' cellpadding='5' class='bordered_table' "))
+  d <- summary.table[grepl(paste(val,"$",sep=""),
+                           toupper(summary.table[, 9])),]
+  d <- d[, c(1, 2, 9, 11)]
+  names(d) <- c("Managment Question",
+                "Indicator",
+                "Objective Met?",
+                "Reporting Unit")
+  if (nrow(d) > 0) {
+    cat("\n### Objectives Met: ", val, "\n")
+    print(xtable::xtable(d),
+          type = 'html',
+          include.rownames = FALSE,
+          html.table.attributes = list("border='0' cellpadding='5' class='bordered_table' "))
   }
 }
 ```
@@ -312,24 +384,34 @@ for (val in vals) {
 These tables below summarize the results of specific indicators that were evaluated against management objectives and reporting units that were defined in the Monitoring Design Worksheet. A seprate table is presented for each reporting unit, and these tables state the indicators, evaluation categories, and required landscape proportion that should be met for each management question. The estimated proportion of the reporting unit in the different categories, upper and lower confidence intervals (CI), and a statement of whether the stated objective was met (based on the required landscape percent) are also presented.This information can be used by BLM land managers to determine whether goals are being achieved and to recommend changes in management, if needed. 
 ```{r GORBtables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
 # Then print the tables by reporting unit
-i<-1
+i < -1
 for (lev in ru.levels) {
-  data.rulevel <- aim.analysis %>% filter(Type==lev)
+  data.rulevel <- analysis %>% dplyr::filter(Type == lev)
   rus <- unique(data.rulevel$Subpopulation)
   for (ru in rus) { # by specific reporting unit
     cat("\n### Reporting Unit Level:",ru,"\n")
-    print(tables.hold[[i]],type='html',include.rownames=FALSE, html.table.attributes=list("border='0' cellpadding='5' class='bordered_table' "))
-    i<-i+1
+    print(tables.hold[[i]],
+          type = 'html',
+          include.rownames = FALSE,
+          html.table.attributes = list("border='0' cellpadding='5' class='bordered_table' "))
+    i <- i + 1
   }
 }
 ```
 
 ### Benchmarks
 ```{r objectivesSummary, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
-bm.table <- benchmarks[,c(2,1,3,4,10,13,14,16)]
-bm.table$Benchmark <- paste(bm.table$eval.string.lower,bm.table$indicator.tdat,bm.table$eval.string.upper,sep=" ")
-bm.table <-  bm.table[,-c(6:8)] %>% arrange(Management.Question,Evaluation.Category)  # Drop the unneeded fields and sort by mgt question
-names(bm.table) <- c("Management Question","Indicator","Benchmark Source","Evaluation Stratum","Category","Evaluation Benchmark")
+bm.table <- benchmarks[, c(2, 1, 3, 4, 10, 13, 14, 16)]
+bm.table$Benchmark <- paste(bm.table$eval.string.lower,
+                            bm.table$indicator.tdat,
+                            bm.table$eval.string.upper)
+bm.table <-  bm.table[, -c(6:8)] %>% dplyr::arrange(Management.Question,Evaluation.Category)  # Drop the unneeded fields and sort by mgt question
+names(bm.table) <- c("Management Question",
+                     "Indicator",
+                     "Benchmark Source",
+                     "Evaluation Stratum",
+                     "Category",
+                     "Evaluation Benchmark")
 knitr::kable(bm.table)
 
 ```
@@ -351,40 +433,58 @@ cat("\n## Results by Reporting Unit {.tabset .tabset-fade .tabset-pills}\n")
 for (lev in ru.levels) { # by reporting unit level
 
   #cat("\n",msg1,"\n")
-  data.rulevel <- aim.analysis %>% filter(Type==lev)
+  data.rulevel <- analysis %>% dplyr::filter(Type == lev)
   rus <- unique(data.rulevel$Subpopulation)
   for (ru in rus) {
     cat("\n###",lev,": ",ru,"\n")
-    data.ru <- data.rulevel %>% filter(Subpopulation==ru)
+    data.ru <- data.rulevel %>% dplyr::filter(Subpopulation==ru)
     mqs <- unique(data.ru$MANAGEMENT.QUESTION)
     for (mq in mqs) { # by specific reporting unit
-      cat("\n#### Management Question: ",mq,"\n")
-      #cat("\n",msg1,"\n")
-      data.mq <- data.ru %>% filter(MANAGEMENT.QUESTION==mq)
+      cat("\n#### Management Question: ", mq, "\n")
+      data.mq <- data.ru %>% dplyr::filter(MANAGEMENT.QUESTION == mq)
       Indicators <- unique(data.mq$Indicator)
       for (ind in Indicators) {  # by indicator
-        ind.name <- vlookup(ind,indicator.lut,1,2)
-        cat("\n#### Indicator: ",ind.name,"\n")
-        #cat("\n",msg1,"\n")
+        ind.name <- vlookup(ind, indicator.lut, 1, 2)
+        cat("\n#### Indicator: ", ind.name, "\n")
         ## Look up the landscape threshold value for the RU and indicator
-        req.prop <- benchmarks.sum[benchmarks.sum$indicator.tdat==ind & !is.na(benchmarks.sum$Required.Proportion),4]
-        req.prop <- as.numeric(req.prop[1,1])
-        #cat("\n",req.prop,"\n")
+        req.prop <- benchmarks.sum[benchmarks.sum$indicator.tdat == ind & !is.na(benchmarks.sum$Required.Proportion), 4]
+        req.prop <- as.numeric(req.prop[1, 1])
+        
         if (!is.na(req.prop)) {
           req.prop <- req.prop*100
         } else {
-          req.prop<-0
+          req.prop <- 0
         }
         
-        g <- indicatorPlot(aim.analysis,lev,ru,ind,mq,req.prop)
+        g <- indicatorPlot(df = analysis,
+                           ru = lev,
+                           subpop = ru,
+                           indicator = ind,
+                           mq = mq,
+                           threshold = req.prop)
         #m <- indicatorMap(lev,ru,reporting.units.spdf,project.area.spdf)
-        m <- indicatorMap.new(lev,ru,reporting.units.spdf,project.area.spdf,tdat.spdf,ind,mq)
-        txt <- textGrob(msgGrob,just="centre",gp=gpar(fontsize=18,col="red"))
-        grid.arrange(arrangeGrob(m,txt,nrow=2),g,ncol=2,widths=c(1,3))
+        m <- indicatorMap(level = lev,
+                          ru = ru,
+                          repunits.spdf = reporting.units.spdf,
+                          prjarea.spdf = project.area.spdf,
+                          samplpts.spdf = points.benchmarked.spdf)
+        txt <- grid::textGrob(label = msgGrob,
+                              just = "centre",
+                              gp = grid::gpar(fontsize = 18,
+                                              col = "red"))
+        gridExtra::grid.arrange(gridExtra::arrangeGrob(m, txt, nrow = 2),
+                                g,
+                                ncol = 2,
+                                widths = c(1, 3))
         cat("\n")
         cat("\n",msg1,"\n")
         cat("\n#### Results Table\n")
-        cat(pander::pander(indicatorTable(aim.analysis,lev,ru,ind,mq)))
+        cat(pander::pander(indicatorTable(df = analysis,
+                                          ru = lev,
+                                          subpop = ru,
+                                          indicator = ind,
+                                          mq = mq,
+                                          conf.level = conf.level)))
         cat("\n",msg2,"\n")
         cat("\n***\n")
       }
@@ -399,25 +499,28 @@ for (lev in ru.levels) { # by reporting unit level
 # Spatial Distribution of Core Indicators
 The USGS, in partnership with the BLM, has developed a series of shrubland remote-sensing products that predict the spatial distribution of many of the core indicators. This includes maps of shrub cover, sagebrush cover, bare ground, perennial grass cover, annual grass cover, and more. Land cover data from the USGS National Land Cover Database (NLCD) 2011 shows the distribution of general vegetation types in the study area. In some cases these maps represent indicators directly related to management questions. In other cases, these maps may show indicators that are related indirectly to a management question. In either case, these products can be very useful in beginning to understand **WHERE** resource concerns might be within a reporting unit or study area. 
 
-The map below depicts a selection of AIM indicators available from the USGS NLCD Shrublands Products and the NLCD 2011. The full suite of NLCD Shrubland products is available for download from USGS at <https://www.mrlc.gov/nlcdshrub_avail.php>. The NLCD 2011 data can be downloaded from <https://www.mrlc.gov/nlcd11_data.php>.
-
-**This map is provided for general reference only.** To maintain performance of the report document and keep file sizes small, the map products displayed here have been resampled from their native resolution (30m) to a scale of 120m resolution. For detailed analyses or for higher-quality maps, download the products from their source.
-
 ```{r rsMaps, echo=FALSE, fig.height=7, fig.width=7, message=FALSE, warning=FALSE}
-pal.bare <- colorNumeric("OrRd", 100:0, na.color = "transparent")
-pal.veg <- colorNumeric("YlGn", 100:0, na.color = "transparent")
-m <- leaflet() %>% addTiles() %>%
-  addRasterImage(bare.g,colors=pal.bare,opacity=0.8,group="Bare Ground") %>% 
-    addLegend(pal=pal.bare, values=1:100, title="% Bare Ground", labFormat = labelFormat(suffix="%")) %>%
-  addRasterImage(shrub.g,colors=pal.veg,opacity=0.8,group="Shrub Cover") %>% 
-    addLegend(pal=pal.veg, values=1:100, title="% Shrub Cover", labFormat = labelFormat(suffix="%")) %>%
-  addPolygons(data=reporting.units.spdf,fill=FALSE,stroke=TRUE,color="#000",weight=2,fillOpacity=0.6,group="Reporting Units") %>%
-  addCircleMarkers(data=tdat.spdf, radius=4, color="navy",stroke=FALSE,fillOpacity = 0.8, group="Sample Points") %>%
-  addLegend("bottomleft",colors=c("navy","#000"),labels=c("Sample Points","Reporting Units")) %>%
-  addLayersControl(
-      overlayGroups = c("Sample Points","Reporting Units","Bare Ground","Shrub Cover"),
-      options=layersControlOptions(collapsed=FALSE), position="topleft") %>%
-  hideGroup("Shrub Cover")
+m <- leaflet::leaflet() %>%
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(data = reporting.units.spdf,
+                       fill = FALSE,
+                       stroke = TRUE,
+                       color = "#000",
+                       weight = 2,
+                       fillOpacity = 0.6,
+                       group = "Reporting Units") %>%
+  leaflet::addCircleMarkers(data = tdat.spdf,
+                            radius = 4,
+                            color = "navy",
+                            stroke = FALSE,
+                            fillOpacity = 0.8,
+                            group = "Sample Points") %>%
+  leaflet::addLegend(position = "bottomleft",
+                     colors = c("navy", "#000"),
+                     labels = c("Sample Points", "Reporting Units")) %>%
+  leaflet::addLayersControl(overlayGroups = c("Sample Points", "Reporting Units"),
+                            options = leaflet::layersControlOptions(collapsed = FALSE),
+                            position = "topleft")
 m
 
 

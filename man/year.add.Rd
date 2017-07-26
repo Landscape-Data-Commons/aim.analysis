@@ -4,7 +4,7 @@
 \alias{year.add}
 \title{Adding sampling years based on date of visit and panel}
 \usage{
-year.add(pts, date.field = NULL, source.field = NULL)
+\method{year}{add}(pts, date.field = NULL, source.field = NULL)
 }
 \arguments{
 \item{pts}{The SPDF or data frame to add the field \code{YEAR} to.}

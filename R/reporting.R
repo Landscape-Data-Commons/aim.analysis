@@ -131,27 +131,37 @@ indicatorMap <- function(level,
   ru.points <- sp::over(samplepts.spdf,
                         runit,
                         returnList = F)
+  ru.points$LONGITUDE <- samplepts.spdf@data$LONGITUDE
+  ru.points$LATITUDE <- samplepts.spdf@data$LATITUDE
+  ru.points$EVALUATION.CATEGORY <- samplepts.spdf@data$EVALUATION.CATEGORY
+
   m <- ggplot2::ggplot() +
-    ggplot2::geom_polygon(data = fortify(prjarea.spdf),
-                          aes(x = long, y = lat),
+    ggplot2::geom_polygon(data = ggplot2::fortify(prjarea.spdf),
+                          ggplot2::aes(x = long, y = lat),
                           fill = "white",
                           color = "black") +
     ggplot2::coord_map()
   if (level == "Study Area") {
     m <- m +
-      ggplot2::geom_polygon(data = fortify(prjarea.spdf),
-                            aes(x = long, y = lat, group = group),
+      ggplot2::geom_polygon(data = ggplot2::fortify(prjarea.spdf),
+                            ggplot2::aes(x = long, y = lat, group = group),
                             fill = "darkgray")
   } else {
     m <- m +
-      ggplot2::geom_polygon(data = fortify(runit),
-                            aes(x = long, y = lat, group = group),
+      ggplot2::geom_polygon(data = ggplot2::fortify(runit),
+                            ggplot2::aes(x = long, y = lat, group = group),
                             fill="darkgray")
   }
   m <- m +
     ggplot2::geom_point(data = ru.points,
-                        aes(x = LONGITUDE, y = LATITUDE, group = ProjectName),
-                        color="black") +
+                        ggplot2::aes(x = LONGITUDE,
+                                     y = LATITUDE,
+                                     group = EVALUATION.CATEGORY,
+                                     colour = EVALUATION.CATEGORY),
+                        show.legend = FALSE) +
+    ggplot2::scale_color_brewer(type = "div",
+                                palette ="RdYlBu",
+                                guide = FALSE) +
     ggplot2::theme(line = element_blank(),
                    text = element_blank(),
                    title = element_blank())

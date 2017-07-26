@@ -54,7 +54,7 @@ vlookup <- function(value,
                     table,
                     lcol,
                     rcol) {
-  return(indicator.lut[indicator.lut[[lcol]] == value, rcol])
+  return(table[table[[lcol]] == value, rcol])
 }
 
 ## Function to programatically create output bar plots for a given indicator.

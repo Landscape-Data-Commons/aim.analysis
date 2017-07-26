@@ -29,8 +29,7 @@ report <- function(out.path,
                    project.area.spdf = NULL,
                    points.benchmarked = NULL,
                    projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")) {
-  rmarkdown::render(input = "C:/Users/Nelson/Documents/Projects/aim.analysis/inst/markdown/report.Rmd",
-                    #input = paste0(path.package("aim.analysis"), "/markdown/report.Rmd"),
+  rmarkdown::render(input = paste0(path.package("aim.analysis"), "/markdown/report.Rmd"),
                     output_file = filename.aim(name = project.name, type = "report"),
                     output_dir = out.path)
 }

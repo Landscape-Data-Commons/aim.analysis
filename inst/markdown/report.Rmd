@@ -104,7 +104,7 @@ if (!is.null(reporting.units.spdf)) {
 
 Information about the health of the landscapes we manage is essential to achieve the BLM mission (Federal Land Policy and Management Act of 1976).  It enables BLM to measure the benefits that these lands and waters provide, understand the effects of multiple uses, and thus create management plans to sustain these landscapes for future generations.
 
-This report provides information about the health of terrestrial and aquatic ecosystems.  This information was collected on-the-ground by field biologists who measure and assess important indicators related to ecosystem health.  In terrestrial ecosystems, they focus on cover and composition of plant species, plant height, gaps between plant canopies, and stability of soils.  In aquatic ecosystems, they focus on water quality, stream morphology, and biological characteristics.  These quantitative measurements and qualitative assessments were collected under the BLM Assessment, Inventory, and Monitoring (AIM) program.   For more information about AIM, see <http://aim.landscapetoolbox.org/learn-3/about/>.  
+This report provides information about the health of terrestrial and aquatic ecosystems.  This information was collected on-the-ground by field biologists who measure and assess important indicators related to ecosystem health.  In terrestrial ecosystems, they focus on cover and composition of plant species, plant height, gaps between plant canopies, and stability of soils.  In aquatic ecosystems, they focus on water quality, stream morphology, and biological characteristics.  These quantitative measurements and qualitative assessments were collected under the BLM Assessment, Inventory, and Monitoring (AIM) program.   For more information about AIM, see <http://aim.landscapetoolbox.org/learn-3/about/>.
 
 This report also includes relevant standard geospatial datasets.  Some relate to ecosystem health, while others provide contextual information about landscapes such as the management activities occurring there.
 
@@ -112,31 +112,31 @@ This report was generated through partnership among the BLM National Operations 
 
 ## Report Purpose and use
 
-The purpose of this report is to describe key indicators of ecosystem health across an area of interest. This information can be used to evaluate whether or not goals or desired conditions are being achieved across BLM lands, an essential step in adaptive management. Specific management applications include but are not limited to: treatment effectiveness, Land Health Standards evaluation, sage-grouse habitat analysis and Resource Management Plan effectiveness. Tables, graphs, and other content from this report can be pasted into decision-making documents, or the entire report can be used as an appendix to such documents.
+The purpose of this report is to describe key indicators of ecosystem health across an area of interest. This information can be used to evaluate whether or not goals, standards, and/or desired conditions are being achieved across BLM lands, an essential step in adaptive management (Figure). Specific management applications include but are not limited to: treatment effectiveness, Land Health Standards evaluation, sage-grouse habitat analysis and Resource Management Plan effectiveness. Tables, graphs, and other content from this report can be pasted into decision-making documents, or the entire report can be used as an appendix to such documents.
 
-The standard core indicators contained in this report are relevant to management questions across all BLM ecosystem types, as identified through the BLM AIM Strategy and related efforts (TN440, TR1735-1).  This report also contains standard national geospatial datasets managed by the BLM National Operations Center and partners.  These geospatial datasets provide spatial and management context for the standard AIM core indicators.
+The standard core indicators contained in this report are relevant to management questions across all BLM ecosystem types, as identified through the BLM AIM Strategy and related efforts (<BLM Tech Note 440>, <BLM Tech Ref 1735-1>).  This report also contains standard national geospatial datasets managed by the BLM National Operations Center and partners.  These geospatial datasets provide spatial and management context for the standard AIM core indicators.
 
 ## Report Organization
 
-This report has five main sections.  The **introduction** sets the stage.  The **data summary** provides contextual information that is helpful for interpreting the results, including the list of indicators, time period, timing of sampling, and maps.
+This report has five main sections.  The **introduction** sets the stage.  The **data summary** provides contextual information that is helpful for interpreting the results, including the list of indicators, time period, timing of data collection, and maps.
 
-Report results begin with the **goals, monitoring objectives, benchmarks, and results summary** section.  This contains tables of which indicators met specified objectdives by reporting unit, and a summary of the stated objectdives.  These table can be used by BLM land managers to evaluate whether goals or management objectives were achieved. This table is a summary of results for all indicators.  
+Report results begin with the **goals, monitoring objectives, benchmarks, and results summary** section.  This contains tables of which indicators met specified objectdives by reporting unit, and a summary of the stated objectdives.  These table can be used by BLM land managers to evaluate whether goals or management objectives were achieved. These tables summarize results for all indicators.
 
 The **indicator estimates by reporting unit for monitoring objectives** section identifies the condition of each indicator for each area of interest or reporting unit.  Condition refers to the proportion of land or water resources that is achieving desired values known as benchmarks. This section provides further detail about each row of the table in the previous section and can be used as supporting information for the conclusions drawn from that table. This is followed by the **spatial distribution of core indicators** section which provides remote-sensing-derived maps of various core indicators for the study area.
 
 Finally, the **appendices** contain additional background information on AIM, the core indicators and methods, and the analysis approaches used to generate this reports.
 
 ## Information Sources
+
 This report summarizes and analyzes information collected from an AIM project. The following information sources were used in the analysis presented in this report:
 
-  * The Monitoring Design Worksheet summarises the goals and objectives of the monitoring project.
-  * The AIM Data Analysis Template provides data summaries of the AIM data collected for the project and clearly states the objectives, indicators, benchmarks, and required landscape proportions for each objective.
-  * AIM data from TerrADat are the quantitative data collected in the field for the project.
-  * The project's Sample Design Database captures all of the technical details of the project sample design (e.g., sample frame, stratification, initial point selections, fate of the sample points, and design weights). This information is used to adjust the sample point weights to produce unbiased estimates.
-  * Spatial data files defining the different levels of reporting units for which estimates will be generated from the AIM data.
-  * Spatial or tabular Information defining benchmark classes (i.e., categories assigned to each sample point for the purpose of evaluating an indicator against a benchmark that may change across a landscape).
-  * (OPTIONAL) - Additional sample points from the BLM Landscape Monitoring Framework to supplement the AIM project data.
-  * (OPTIONAL) - Remote sensing products such as the Grass/Shrub continuous variable predictions or the Landfire EVT map to supplement the quantitative field-derived estimates.
+  * The Monitoring Design Worksheet summarizes the goals and objectives of the monitoring project.
+* AIM data from TerrADat are the quantitative monitoring data collected in the field for the project.
+* The AIM Terrestrial Benchmark Tool clearly states the monitoring objectives, including indicators, benchmarks, and required proportion of the landscape. It also contains tabular information defining evaluation strata  (i.e., categories assigned to each sample point for the purpose of evaluating an indicator against a benchmark that may change across a landscape). The tool also provides a count of the number of sites meeting and not meeting objectives.
+* The project's Sample Design Database captures all of the technical details of the project sample design (e.g., sample frame, stratification, initial site selections, fate of the monitoring sites, and design weights). This information is used to produce unbiased estimates by adjusting the sample point weights.
+* Spatial data files defining the different reporting units for which estimates will be generated from the AIM data.
+* (OPTIONAL) - Additional sample points from the BLM Landscape Monitoring Framework to supplement the AIM project data.
+* (OPTIONAL) - Remote sensing products such as the Grass/Shrub continuous variable predictions or the Landfire EVT map to supplement the quantitative field-derived estimates.
 
 ## Interpreting the Results
 
@@ -144,18 +144,10 @@ Results in this report can be used to evaluate whether goals regarding ecosystem
 
 Consider important contextual information when you evaluate whether goals are achieved:
 
-  * Monitoring objectives: Are benchmarks well-justified and based on best available knowledge? Are desired proportions informed by management goals and landscape context?
-  * Reporting unit: Is this appropriate to evaluate whether goals are achieved?  
-  * Timing of sampling: Is sample timing appropriate for the ecosystem type as well as the goals and objectives for the reporting unit?  Does sample timing vary between years?  Does sample timing affect your results?
-  * Sample spread/point fates: Are monitoring sites distributed across the area of interest?  Were some areas systematically missed, which could lead to bias?
-
-## Analysis Outputs
-In addition to this report from which charts and tablar data can be copied/pasted, the following standard outputs are created as part of this analysis:
-
-  * Data table containing the plot-level raw data from TerrADat combined with the adjusted point weights (input for analysis).
-  * Data table listing each monitoring objective with its indicator(s), benchmarks, and required landsdcape proportions (input for analysis).
-  * Data table listing the categories assigned by indicator to each point based on the benchmarks (input for analysis).
-  * Data table containing the analysis results of the category analyses by reporting unit (spsurvey cat.analysis output table).
+* Monitoring objectives: Are benchmarks well-justified and based on best available knowledge? Are required proportions informed by management goals and landscape context?
+* Reporting unit: Is this appropriate to evaluate whether goals are achieved?
+* Timing of data collection: Was data collected during an appropriate season for the ecosystem type as well as the goals and objectives for the reporting unit?  Does timing vary between years?  Does data collection timing affect your results?
+* Monitoring site spread: Are monitoring sites distributed across the area of interest?  Were some areas systematically missed, which could lead to bias?
 
 ## Additional Information
 
@@ -163,10 +155,10 @@ For additional information, please see <http://aim.landscapetoolbox.org> or cont
 
 ***
 # Data Summary {.tabset .tabset-fade .tabset-pills}
-The following tabs contain tables and graphs describing the information in this report and the sampling effort. This includes the indicators being considered, the time period of sampling, descriptions of the actual sampling effort relative to the original sampling design, and a map of the sample points and reporting units.
+The following tabs contain tables and graphs describing the information in this report and the data collection effort. This includes the indicators being considered, the time period of data collection, descriptions of the actual data collection effort relative to the original sampling design, and a map of the monitoring sites and reporting units.
 
 ## Map of Study Area, Reporting Units, and Sample Points
-The map below is provided for general reference only. It was created from the spatial data stored in the project's Sample Design Database, the reporting units provided for this analysis, and the actual sample point locations recorded in TerrADat. The map is dynamic - you can pan and zoom it. Layers may also be toggled on/off to view specific features.
+The map below is provided for general reference only. It was created from the spatial data stored in the project's Sample Design Database, the reporting units provided for this analysis, and the actual monitoring site locations recorded in TerrADat. The map is dynamic - you can pan and zoom it. Layers may also be toggled on/off to view specific features.
 
 ```{r studyMap, echo=FALSE}
 ## Create the study area map - project boundary, sample frame, points sampled (from TerrADat)
@@ -211,18 +203,10 @@ m <- leaflet::leaflet(sample.frame.spdf) %>% leaflet::addTiles() %>%
   )
 m
 
-
-#m <- get_map(bnds,maptype="roadmap")
-#ggmap(m)+
-#  geom_polygon(data=tidy(project.area.spdf),aes(x=long,y=lat,group=group), color='black', size=0.25)+
-  #geom_polygon(data=fortify(sample.frame.spdf,region="OBJECTID"),aes(x=long,y=lat,group=group), fill="tan", color="tan")+
-#  geom_point(data=as.data.frame(dsgnpts.spdf),aes(x=coords.x1,y=coords.x2))+
-#  coord_map()
-
 ```
 
 ## Indicators included in the report
- The following indicators were specified in the AIM data analysis template and are included in this report:
+The following indicators were specified in the AIM Terrestrial Benchmarks Tool and are included in this report:
 ```{r indicatorsIncluded, echo=FALSE, results='asis'}
   inds <- unique(benchmarks$Indicator)
   for (ind in inds) {
@@ -256,10 +240,10 @@ This report covers data collected between __`r as.Date(min(tdat.spdf$DateVisited
   plotly::ggplotly(g)
 ```
 
-## Plot Sampling Summary
-Not all points originally selected as part of a design can be sampled. Selected points may not be accessible or when evaluated may be deemed to not even be part of the population. The [Rejection Criteria page on the AIM Landscape Toolbox website](http://aim.landscapetoolbox.org/office-sample-point-evaluation/) describes the rejection criteria for evaluating plots. To properly adjust the sampling weights and ensure unbiased estimates, it is important to know the fate of each of the originally-selected points. The graph below summarizes the point fates for the sample design(s) considered in this report.
+## Data Collection Summary
+Some sites originally selected as part of a monitoring design will not undergo data collection. For example, selected sites may not be accessible to field crews, or safety concerns may prevent data from being collected. The [Rejection Criteria page on the AIM Landscape Toolbox website](http://aim.landscapetoolbox.org/office-sample-point-evaluation/) describes the rejection criteria and process for evaluating sites. To ensure unbiased estimates of the proportion of the landscape achieving desired conditions, it is important to know the fate of each of the originally-selected sites. The graph below summarizes the fates for every location in the sample design(s) considered in this report.
 
-**Target sampled** points are those that occurred on BLM lands and were visited by a field crew. **Inaccessible** points were ones that were on BLM lands, but for one reason or another, the crew could not physically access the site (e.g., needed to cross private land and access was denied, road was washed out). **Non-target** points refers to points that upon evaluation were determined to not be on BLM lands or occurred in water. **Unknown** points are those for which their fate was not recorded. If sampling objectives (e.g., condition estimate or confidence interval width) were achieved without sampling all of the selected points, then any excess points could be marked as **Unneeded** (this is not common in terrestrial AIM studies).
+**Target sampled** sites are locations on BLM lands where monitoring data were collected. **Inaccessible** sites are on BLM lands, but the data collectors could not physically access the site (e.g., needed to cross private land and access was denied, road was washed out). **Non-target** sites are locations that upon further review were determined to not be on BLM-managed lands. **Unknown** sites are those for which their fate was not recorded. If the necessary information was gained (e.g., condition estimate with desired confidence) without sampling all of the selected points, then any extra points could be marked as **Unneeded** (this is not common).
 
 ```{r samplingSummary, error=FALSE, message=FALSE, echo=FALSE}
 ggplot2::ggplot(data = as.data.frame(point.fates),
@@ -285,7 +269,9 @@ ggplot2::ggplot(data = as.data.frame(point.fates),
 ```
 
 ## Stratum Sampling Info
-The initial designs considered for this report used stratification as a way to spread sampling effort across the study area. The extent to which estimates calculated from monitoring data reflect conditions across the study area depends on whether or not the strata were adequately sampled. It is not uncommon for some sample sites to be not visited for various reasons (e.g., inaccessibility, time ran out). This is typically not a problem as long as: 1) the missed points do not account for a majority of the selected sample points and 2) the points that were not sampled were missed at random (i.e, there was no pattern to which points were missed and which were sampled). The table below summarizes the total calculated area and estimated sampling area by design stratum for the **study area**. Separate strata sampling proportions are calculated for each reporting unit, but looking at the study area overall gives a good rough estimation of whether or not there were issues with how the sample data represents the different strata. If there are strata with very low sampled proportions, this may affect the ability to draw inferences beyond the sample data in these strata, and should be more thoroughly evaluated. 
+The monitoring designs related to this report used stratification as a way to spread monitoring effort across different types of land in the study area. The accuracy of estimates from monitoring data depends on whether or not the strata were adequately sampled. Some sites are not visited for various reasons (e.g., inaccessibility, time ran out; see [Rejection Criteria](http://aim.landscapetoolbox.org/wp-content/uploads/2016/12/RejectionCriteria_161228.pdf)). This does not affect accuracy of estimates as long as: 1) the missed sites do not account for a majority of the selected sites in the design and 2) sites were missed at random (i.e, there was no pattern to which sites had data collected and which were missed).
+
+The table below summarizes the total area of each stratum in the monitoring design and the estimated area sampled during data collectionfor the study area. Looking at the **study area** overall gives a general idea of whether or not there were issues with how the sample data represents the different strata. Proportion of design sites sampled is ideally close to one.  If there are strata with very low sampled proportions (less than 0.5), this may affect the ability to draw inferences beyond the sample data in these strata, which should be more thoroughly evaluated.
 
 ```{r stratumSampling, error=FALSE, message=FALSE, echo=FALSE, results='asis'}
 strat.sampling.table <- dplyr::select(.data = strata.weights,
@@ -313,11 +299,15 @@ print(xtable::xtable(strat.sampling.table),
 
 ***
 # Goals, Monitoring Objectives, Benchmarks, and Results Summary
-This table summarizes the results of this report.  It contains broad goals as well as monitoring objectives and whether they were achieved based on available monitoring data for the area of interest.  Monitoring objectives include key indicators, benchmarks that define desired values of the indicators, and the proportion of the landscape required to meet benchmarks.  Together, this information can be used by BLM land managers to determine whether goals are being achieved and to recommend changes in management, if needed.  
+The following tables summarize the results of this report. They contain land management goals and whether desired conditions, stated as monitoring objectives, were achieved based on available monitoring data in the areas of interest. Monitoring objectives include key indicators of ecosystem health, benchmarks that define desired values of the indicators, and the proportion of the landscape required to meet benchmarks. Monitoring objectives were specified by field office staff in the project's Monitoring Design Worksheet and/or Terrestrial Benchmark Workbook.
 
-*Note that the Monitoring Objectives and Benchmarks listed here are directly from the Terrestrial Benchmark Workbook that was filled out by the field office.*
+BLM land managers can use this information to determine whether goals are being achieved and to recommend changes in management.  If many of the objectives related to a goal are met, then the goal is likely being achieved.  Conversely, if many of the objectives are not met, then the goal is likely not being achieved, and changes in management are necessary.
+
+The Results Summary provides a high level overview. Goals, Objectives, Benchmarks and Results by Reporting Unit provides more detailed results including monitoring objectives and the estimated proportion of the landscape achieving them.
 
 ## Results Summary {.tabset .tabset-fade .tabset-pills}
+These tables summarize land management goals and whether related monitoring objectives were achieved based on available monitoring data for the reporting units of interest.  Results are separated into two categories: monitoring objectives which are being achieved ("at threshold"), and those that aren't ("no"). Supporting information including the monitoring objectives themselves and estimated area meeting desired condition are in the next section (Goals, Objectives, Results and Benchmarks by Reporting Unit).
+
 ```{r lsPropsTables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
 prop.table <- benchmarks.sum[,c(1, 7, 3, 2, 4, 5)]
 prop.table$LS.Prop <- paste(prop.table$Proportion.Relation,
@@ -381,7 +371,10 @@ for (val in vals) {
 }
 ```
 ## Goals, Objectives, Results and Benchmarks by Reporting Unit {.tabset .tabset-fade .tabset-pills}
-These tables below summarize the results of specific indicators that were evaluated against management objectives and reporting units that were defined in the Monitoring Design Worksheet. A seprate table is presented for each reporting unit, and these tables state the indicators, evaluation categories, and required landscape proportion that should be met for each management question. The estimated proportion of the reporting unit in the different categories, upper and lower confidence intervals (CI), and a statement of whether the stated objective was met (based on the required landscape percent) are also presented.This information can be used by BLM land managers to determine whether goals are being achieved and to recommend changes in management, if needed. 
+The tables below provide supporting information about monitoring objectives and whether they were achieved for each reporting unit. A separate table is presented for each reporting unit.  These tables state the indicators, evaluation groups relative to the benchmark(s) (e.g., "meeting", "unsuitable"), and required proportion of the landscape that should meet desired conditions for each monitoring objective to be achieved. The benchmark values for each indicator, the final component of the monitoring objective, are in the last table.
+
+The tables also report monitoring results. The main result is the estimated proportion of the reporting unit in the different evaluation groups relative to the benchmark(s). Eighty percent confidence intervals (CI) around those estimates show a range of values that likely includes the true proportion. The table also states whether the monitoring objective was met  based on the estimated proportion compared to the required proportion of the landscape. This information can be used by BLM land managers to determine whether goals are being achieved and to recommend changes in management, if needed.
+
 ```{r GORBtables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
 # Then print the tables by reporting unit
 for (lev in ru.levels) {
@@ -428,12 +421,13 @@ knitr::kable(bm.table)
 
 # Indicator Estimates by Reporting Unit for Monitoring Objectives
 
-This section identifies the condition of each indicator for each area of interest or reporting unit.  Condition refers to the proportion of land or water resources that is achieving desired values known as benchmarks. This section provides further detail about each row of the table in the previous section and can be used as supporting information for the conclusions drawn from that table.  Specifically, for each indicator, the following are reported:
+This section identifies the proportion of land or water resources that is achieving desired values known as benchmarks. This section provides further detail about each row of the table in the previous section. This information can be used as supporting information for the conclusions drawn from the previous section. Specifically, for each indicator, the following are reported:
 
   * Graph of proportion of the area achieving desired conditions (benchmarks) relative to the required proportion in the monitoring objective
-  * Table showing the proportion of the area achieving desired conditions (benchmarks) as well as the indicator, benchmark, and required proportion of the landscape
-  * Map of the reporting unit relative to the sample frame
-  * Map(s) of spatial distribution of indicator from USGS grass/shrub, or Landfire.
+* Table showing the proportion of the area achieving desired conditions (benchmarks) as well as the indicator, benchmark, and required proportion of the landscape
+* Map of the reporting unit relative to the sample frame
+
+For the details of each monitoring objective, see "Goals, Objectives, Benchmarks, and Results by Reporting Unit."  Monitoring objectives were determined by the field office in their Monitoring Design Worksheet and/or Terrestrial Benchmark Tool.
 
 
 ```{r conditionResults, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, results='asis'}
@@ -506,7 +500,11 @@ for (lev in ru.levels) { # by reporting unit level
 
 ***
 # Spatial Distribution of Core Indicators
-The USGS, in partnership with the BLM, has developed a series of shrubland remote-sensing products that predict the spatial distribution of many of the core indicators. This includes maps of shrub cover, sagebrush cover, bare ground, perennial grass cover, annual grass cover, and more. Land cover data from the USGS National Land Cover Database (NLCD) 2011 shows the distribution of general vegetation types in the study area. In some cases these maps represent indicators directly related to management questions. In other cases, these maps may show indicators that are related indirectly to a management question. In either case, these products can be very useful in beginning to understand **WHERE** resource concerns might be within a reporting unit or study area. 
+The USGS, in partnership with the BLM, has developed a series of shrubland remote-sensing products that predict the spatial distribution of many of the core indicators. This includes maps of shrub cover, sagebrush cover, bare ground, perennial grass cover, annual grass cover, and more. Land cover data from the USGS National Land Cover Database (NLCD) 2011 shows the distribution of general vegetation types in the study area. In some cases these maps represent indicators directly related to management questions. In other cases, these maps may show indicators that are related indirectly to a management question. In either case, these products can be very useful in beginning to understand **WHERE** resource concerns might be within a reporting unit or study area.
+
+The map below depicts a selection of AIM indicators available from the USGS NLCD Shrublands Products and the NLCD 2011. The full suite of NLCD Shrubland products is available for download from USGS at <https://www.mrlc.gov/nlcdshrub_avail.php>. The NLCD 2011 data can be downloaded from <https://www.mrlc.gov/nlcd11_data.php>.
+
+**This map is provided for general reference only.** To maintain performance of the report document and keep file sizes small, the map products displayed here have been resampled from their native resolution (30m) to a scale of 120m resolution. For detailed analyses or for higher-quality maps, download the products from their source. 
 
 ```{r rsMaps, echo=FALSE, fig.height=7, fig.width=7, message=FALSE, warning=FALSE}
 m <- leaflet::leaflet() %>%
@@ -539,12 +537,13 @@ m
 ***
 # Appendices
 
-  * [Summary of methods for data collection](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
-  * [Sample design information](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
-  * [Analysis methods](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
-  * Report Inputs
-    + Raw data from TerrADat (?? Point to Data Explorer workbook?)
-    + Sample design geodatabase
-    + Project planning workbook
-    + Reporting units spatial data
-    + Remote-sensing datasets
+  * [Methods for terrestrial data collection](http://www.landscapetoolbox.org/manuals/monitoring-manual/)
+* [Sample design information](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
+* [Analysis methods](http://aim.landscapetoolbox.org/analysis-reporting/reporting/report-appendices/)
+* Report Inputs
++ Monitoring Design Worksheet
++ Raw data from TerrADat
++ Terrestrial Benchmark Tool
++ Sample design geodatabase
++ Reporting units spatial data
++ Remote-sensing datasets

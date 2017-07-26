@@ -7,7 +7,7 @@
 write.analysis(analysis.output, name, out.path)
 }
 \arguments{
-\item{analysis.output}{Either a single output from \code{analyze()} or a list of multiple outputs, e.g. \code{c(analyze(dataset1), analyze(dataset2))}.}
+\item{analysis.output}{Either a single output from \code{analyze()} or a list of multiple outputs, e.g. \code{list(analyze(dataset1), analyze(dataset2))}.}
 
 \item{name}{A string of the project name, e.g. "Idaho_SageGrouse"}
 

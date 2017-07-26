@@ -149,7 +149,7 @@ indicatorMap <- function(level,
   }
   m <- m +
     ggplot2::geom_point(data = ru.points,
-                        aes(x = Longitude, y = Latitude, group = ProjectName),
+                        aes(x = LONGITUDE, y = LATITUDE, group = ProjectName),
                         color="black") +
     ggplot2::theme(line = element_blank(),
                    text = element_blank(),
@@ -191,7 +191,7 @@ addLSProp <- function(prop.table,
   prop.table <- dplyr::left_join(x = prop.table,
                                  y= a,
                                  by = c("Indicator" = "Indicator",
-                                        "Evaluation.Category" = "Category"))
+                                        "EVALUATION.CATEGORY" = "Category"))
 
   # Calc whether or not objective is met
   prop.table$Objective.Met <- ""

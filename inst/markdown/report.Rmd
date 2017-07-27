@@ -4,7 +4,7 @@ date: 'Report date: `r format(Sys.time(), "%d %B, %Y")`'
 description: ''
 output:
   html_document:
-    # css: `r paste0(path.package("aim.analysis"), "/markdown/style.css")`
+    css: style.css
     fig_caption: yes
     toc: yes
   pdf_document:
@@ -16,7 +16,6 @@ always_allow_html: yes
 
 ```{r setup, include=FALSE}
 ## Set up the environmente and define the functions used in creating the report
-
 knitr::opts_chunk$set(echo = TRUE)
 
 #### Standard messages to insert at will

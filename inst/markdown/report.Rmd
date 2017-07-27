@@ -52,41 +52,7 @@ if (!is.null(reporting.units.spdf)) {
   tdat.spdf$year <- lubridate::year(lubridate::as_date(tdat.spdf$DateVisited))
   tdat.spdf$yday <- lubridate::yday(lubridate::as_date(tdat.spdf$DateVisited))
 
-#######
-## Objectives and benchmark information from the Excel template
 
-  # For each benchmark add in the name of the field in TerrADat that corresponds
-  benchmarks.sum <- dplyr::group_by(benchmarks, MANAGEMENT.QUESTION, EVALUATION.CATEGORY) %>% dplyr::summarise(
-      indicator.name.alt = dplyr::first(INDICATOR),
-      Required.Proportion = dplyr::first(REQUIRED.PROPORTION),
-      Proportion.Relation = dplyr::first(PROPORTION.RELATION),
-      indicator.tdat = dplyr::first(INDICATOR.TDAT),
-      Benchmark.Source = dplyr::first(BENCHMARK.SOURCE))
-
-######
-  ## Sample Design Information (point fate, stratification, study area bdy)
-  # Dissolve any additional polygons so we have a single boundary for the project area
-  if (!is.null(project.area.spdf)) {
-    project.area.spdf$dissolve <- 1
-    project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
-                                            id = project.area.spdf@data$dissolve)
-  }
-  
-  ## Get the design points info from the analysis script output files
-  ## strata.stats and design.strata.weights
-  names(strata.stats)[names(strata.stats) == "Observed.pts"] <- "Target Sampled"
-  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unknown$")] <- "Unknown"
-  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.nontarget$")] <- "Non-target"
-  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.inaccessible$")] <- "Inaccessible"
-  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unneeded$")] <- "Unneeded"
-  
-  #reshape the dataframe for plotting
-  point.fates <- tidyr::gather(data = strata.stats,
-                        key = "variable",
-                        value = "value",
-                        -DD, -WEIGHT.ID, -YEAR) %>% 
-    dplyr::group_by(YEAR, variable) %>% 
-    dplyr::summarise(n=sum(value))
   
   ## Turn the benchmarked points into an spdf
   points.benchmarked.spdf <- sp::SpatialPointsDataFrame(coords = points.benchmarked[, c("LONGITUDE", "LATITUDE")],

@@ -28,7 +28,8 @@ report <- function(out.path,
                    sample.frame.spdf,
                    project.area.spdf = NULL,
                    points.benchmarked = NULL,
-                   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")) {
+                   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
+                   extension = "html") {
 
   if (is.null(indicator.lut)) {
     message("Using default indicator.lut because no alternative was provided.")
@@ -38,8 +39,50 @@ report <- function(out.path,
     )
   }
 
-  rmarkdown::render(input = paste0(path.package("aim.analysis"), "/markdown/report.Rmd"),
-                    output_file = filename.aim(name = project.name, type = "report"),
+  ## Turn the benchmarked points into an spdf
+  points.benchmarked.spdf <- sp::SpatialPointsDataFrame(coords = points.benchmarked[, c("LONGITUDE", "LATITUDE")],
+                                                        data = points.benchmarked,
+                                                        proj4string = projection)
+
+  #######
+  ## Objectives and benchmark information from the Excel template
+
+  # For each benchmark add in the name of the field in TerrADat that corresponds
+  benchmarks.sum <- dplyr::group_by(benchmarks, MANAGEMENT.QUESTION, EVALUATION.CATEGORY) %>% dplyr::summarise(
+    indicator.name.alt = dplyr::first(INDICATOR),
+    Required.Proportion = dplyr::first(REQUIRED.PROPORTION),
+    Proportion.Relation = dplyr::first(PROPORTION.RELATION),
+    indicator.tdat = dplyr::first(INDICATOR.TDAT),
+    Benchmark.Source = dplyr::first(BENCHMARK.SOURCE))
+
+  ######
+  ## Sample Design Information (point fate, stratification, study area bdy)
+  # Dissolve any additional polygons so we have a single boundary for the project area
+  if (!is.null(project.area.spdf)) {
+    project.area.spdf$dissolve <- 1
+    project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
+                                            id = project.area.spdf@data$dissolve)
+  }
+
+  ## Get the design points info from the analysis script output files
+  ## strata.stats and design.strata.weights
+  names(strata.stats)[names(strata.stats) == "Observed.pts"] <- "Target Sampled"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unknown$")] <- "Unknown"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.nontarget$")] <- "Non-target"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.inaccessible$")] <- "Inaccessible"
+  names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unneeded$")] <- "Unneeded"
+
+  #reshape the dataframe for plotting
+  point.fates <- tidyr::gather(data = strata.stats,
+                               key = "variable",
+                               value = "value",
+                               -DD, -WEIGHT.ID, -YEAR) %>%
+    dplyr::group_by(YEAR, variable) %>%
+    dplyr::summarise(n=sum(value))
+
+  rmarkdown::render(input = "C:/Users/Nelson/Documents/Projects/aim.analysis/inst/markdown/report.Rmd",
+                    #input = paste0(path.package("aim.analysis"), "/markdown/report.Rmd"),
+                    output_file = filename.aim(name = project.name, type = "report", extension = extension),
                     output_dir = out.path)
 }
 

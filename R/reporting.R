@@ -324,7 +324,8 @@ objectiveMet <- function(prop.base,
   return(paste0(sig,result))
 }
 
-num2nom <- function(number) {
+num2nom <- function(number,
+                    capitalize = FALSE) {
   ones <- c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
   tens <- c("ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
   exceptions <- c("0" = "zero",
@@ -342,19 +343,19 @@ num2nom <- function(number) {
   }
 
   if (as.character(number) %in% names(exceptions)) {
-    return(unname(exceptions[as.character(number)]))
-  }
-
-  if (nchar(number) == 1) {
-    return(ones[number])
-  }
-
-  if (nchar(number) == 2) {
+    output <- unname(exceptions[as.character(number)])
+  } else if (nchar(number) == 1) {
+    output <- ones[number]
+  } else if (nchar(number) == 2) {
     if (substr(number, 2, 2) != "0") {
-      return(paste(tens[as.numeric(substr(number, 1, 1))], ones[as.numeric(substr(number, 2, 2))], sep = "-"))
+      output <- paste(tens[as.numeric(substr(number, 1, 1))], ones[as.numeric(substr(number, 2, 2))], sep = "-")
     } else {
-      return(tens[as.numeric(substr(number, 1, 1))])
+      output <- tens[as.numeric(substr(number, 1, 1))]
     }
-
   }
+  if (capitalize) {
+    substr(output, 1, 1) <- toupper(substr(output, 1, 1))
+  }
+
+  return(output)
 }

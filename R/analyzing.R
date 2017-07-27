@@ -6,6 +6,7 @@
 #' @param default.reportingunit A string to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}
 #' @param reportingunit.type A string to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.
 #' @param adjustedweights Logical. If \code{TRUE}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{FALSE}.
+#' @param conf Numeric. The confidence level. Defaults to \code{80}.
 #' @return A data frame with the output from \code{spsurvey::cat.analysis()}
 #' @keywords analysis
 #' @examples
@@ -16,7 +17,8 @@ analyze <- function(evaluated.points,
                     point.weights,
                     default.reportingunit = "No reporting unit",
                     reportingunit.type = NA,
-                    adjustedweights = FALSE
+                    adjustedweights = FALSE,
+                    conf = 80
 ){
 
   ## Sanitization
@@ -120,7 +122,8 @@ analyze <- function(evaluated.points,
                                            subpop = aim.subpop,
                                            design = aim.design,
                                            data.cat = aim.datacat,
-                                           popsize = aim.popsize)
+                                           popsize = aim.popsize,
+                                           conf = conf)
 
     ## Add in the reporting unit type
     aim.analysis$Type <- as.character(aim.analysis$Type)

@@ -193,11 +193,11 @@ m <- leaflet::leaflet(sample.frame.spdf) %>% leaflet::addTiles() %>%
                             color = "navy",
                             stroke = FALSE,
                             fillOpacity = 0.8,
-                            group = "Sample Points") %>%
+                            group = "Monitoring Sites") %>%
   leaflet::addLegend(position = "bottomright",
                      colors = c("#222", "tan", "navy", "#000"),
-                     labels = c("Study Area Boundary", "BLM Lands", "Sample Points", "Reporting Units")) %>%
-  leaflet::addLayersControl(overlayGroups = c("Sample Points", "BLM Lands", "Reporting Units", "Study Area"),
+                     labels = c("Study Area Boundary", "BLM Lands", "Monitoring Sites", "Reporting Units")) %>%
+  leaflet::addLayersControl(overlayGroups = c("Monitoring Sites", "BLM Lands", "Reporting Units", "Study Area"),
                             options = leaflet::layersControlOptions(collapsed = FALSE)
   )
 m
@@ -230,7 +230,7 @@ This report covers data collected between __`r as.Date(min(tdat.spdf$DateVisited
                         size = 0.75) +
     ggplot2::scale_x_continuous(breaks = mstartdays,
                                 labels = mnames) +
-    ggplot2::ggtitle("Histogram of sample points by week") +
+    ggplot2::ggtitle("Number of monitoring sites where data was collected by week") +
     ggplot2::theme(panel.grid.major.x = element_blank(),
                    panel.grid.minor.x = element_blank()) +
     ggplot2::xlab("Week of the year") +

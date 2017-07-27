@@ -28,7 +28,7 @@ report(out.path, project.name, conf.level = 80, indicator.lut = NULL,
 
 \item{strata.stats}{Data frame. The data frame \code{strata.stats} from the output of \code{weight()}.}
 
-\item{reporting.units.spdf}{Spatial polygons data frame. Used in plotting maps.}
+\item{reporting.units.spdf}{Spatial polygons data frame. Used in plotting maps. This MUST have a field named exactly "Type" containing the type of reporting unit (e.g. "Watershed" or "Study Area") and a field named exactly "Subpopulation" which contains the identity of the reporting unit[s] (e.g. the watersheds "Dickshooter Creek" and "Headwaters Deep Creek").}
 
 \item{sample.frame.spdf}{Spatial polygons data frame. Used in plotting maps.}
 

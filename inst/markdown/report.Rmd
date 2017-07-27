@@ -500,43 +500,6 @@ for (lev in ru.levels) { # by reporting unit level
 
 
 ```
-
-***
-# Spatial Distribution of Core Indicators
-The USGS, in partnership with the BLM, has developed a series of shrubland remote-sensing products that predict the spatial distribution of many of the core indicators. This includes maps of shrub cover, sagebrush cover, bare ground, perennial grass cover, annual grass cover, and more. Land cover data from the USGS National Land Cover Database (NLCD) 2011 shows the distribution of general vegetation types in the study area. In some cases these maps represent indicators directly related to management questions. In other cases, these maps may show indicators that are related indirectly to a management question. In either case, these products can be very useful in beginning to understand **WHERE** resource concerns might be within a reporting unit or study area.
-
-The map below depicts a selection of AIM indicators available from the USGS NLCD Shrublands Products and the NLCD 2011. The full suite of NLCD Shrubland products is available for download from USGS at <https://www.mrlc.gov/nlcdshrub_avail.php>. The NLCD 2011 data can be downloaded from <https://www.mrlc.gov/nlcd11_data.php>.
-
-**This map is provided for general reference only.** To maintain performance of the report document and keep file sizes small, the map products displayed here have been resampled from their native resolution (30m) to a scale of 120m resolution. For detailed analyses or for higher-quality maps, download the products from their source. 
-
-```{r rsMaps, echo=FALSE, fig.height=7, fig.width=7, message=FALSE, warning=FALSE}
-m <- leaflet::leaflet() %>%
-  leaflet::addTiles() %>%
-  leaflet::addPolygons(data = reporting.units.spdf,
-                       fill = FALSE,
-                       stroke = TRUE,
-                       color = "#000",
-                       weight = 2,
-                       fillOpacity = 0.6,
-                       group = "Reporting Units") %>%
-  leaflet::addCircleMarkers(data = tdat.spdf,
-                            radius = 4,
-                            color = "navy",
-                            stroke = FALSE,
-                            fillOpacity = 0.8,
-                            group = "Sample Points") %>%
-  leaflet::addLegend(position = "bottomleft",
-                     colors = c("navy", "#000"),
-                     labels = c("Sample Points", "Reporting Units")) %>%
-  leaflet::addLayersControl(overlayGroups = c("Sample Points", "Reporting Units"),
-                            options = leaflet::layersControlOptions(collapsed = FALSE),
-                            position = "topleft")
-m
-
-
-```
-
-
 ***
 # Appendices
 

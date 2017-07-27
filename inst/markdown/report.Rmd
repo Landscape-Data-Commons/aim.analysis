@@ -253,8 +253,11 @@ ggplot2::ggplot(data = as.data.frame(point.fates),
   ggplot2::geom_bar(stat = "identity",
                     width = 0.5) +
   ggplot2::coord_flip() +
-  ggplot2::scale_fill_brewer(type = "div",
-                             palette = "RdYlBu") +
+  scale_fill_manual(values = c("Unneeded" = "#2c7bb6",
+                               "Unknown" = "#abd9e9",
+                               "Non-target" = "#ffffbf",
+                               "Inaccessible" = "#fdae61",
+                               "Target Sampled" = "#d7191c")) +
   ggplot2::geom_text(data = subset(as.data.frame(point.fates),
                                    n != 0),
                      ggplot2::aes(label = n, y = n),
@@ -264,10 +267,10 @@ ggplot2::ggplot(data = as.data.frame(point.fates),
   ggplot2::ggtitle("Summary of Point Fate by Year") +
   ggplot2::labs(fill = "Final Point\nDesignation")
 
-
 ```
 
 ## Stratum Sampling Info
+
 The monitoring designs related to this report used stratification as a way to spread monitoring effort across different types of land in the study area. The accuracy of estimates from monitoring data depends on whether or not the strata were adequately sampled. Some sites are not visited for various reasons (e.g., inaccessibility, time ran out; see [Rejection Criteria](http://aim.landscapetoolbox.org/wp-content/uploads/2016/12/RejectionCriteria_161228.pdf)). This does not affect accuracy of estimates as long as: 1) the missed sites do not account for a majority of the selected sites in the design and 2) sites were missed at random (i.e, there was no pattern to which sites had data collected and which were missed).
 
 The table below summarizes the total area of each stratum in the monitoring design and the estimated area sampled during data collectionfor the study area. Looking at the **study area** overall gives a general idea of whether or not there were issues with how the sample data represents the different strata. Proportion of design sites sampled is ideally close to one.  If there are strata with very low sampled proportions (less than 0.5), this may affect the ability to draw inferences beyond the sample data in these strata, which should be more thoroughly evaluated.

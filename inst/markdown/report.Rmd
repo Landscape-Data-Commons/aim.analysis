@@ -327,10 +327,11 @@ for (lev in ru.levels) { # by reporting unit level
     prop.table.ru <- addLSProp(prop.table = prop.table,
                                analysis.table = analysis,
                                ru = ru,
-                               indicator.lut = indicator.lut,conf.level = conf.level)
-    prop.table.ru <-  prop.table.ru[,-c(2,5,6,8)] %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # sort by mgt question and category
+                               indicator.lut = indicator.lut,
+                               conf.level = conf.level)
+    prop.table.ru <-  prop.table.ru[,-c(2, 5, 6, 8)] %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # sort by mgt question and category
     prop.table.ru <- prop.table.ru %>% dplyr::select(-StdError.P)
-    names(prop.table.ru) <- c("Management Question",
+    names(prop.table.ru) <- c("Goal/Management Objective",
                               "Indicator",
                               "Category",
                               "Required Percent",
@@ -359,7 +360,7 @@ for (val in vals) {
   d <- summary.table[grepl(paste(val,"$",sep=""),
                            toupper(summary.table[, 9])),]
   d <- d[, c(1, 2, 9, 11)]
-  names(d) <- c("Managment Question",
+  names(d) <- c("Goal/Managment Question",
                 "Indicator",
                 "Objective Met?",
                 "Reporting Unit")
@@ -383,7 +384,7 @@ for (lev in ru.levels) {
   data.rulevel <- analysis %>% dplyr::filter(Type == lev)
   rus <- unique(data.rulevel$Subpopulation)
   for (ru in rus) { # by specific reporting unit
-    cat("\n### Reporting Unit Level:",ru,"\n")
+    cat("\n### ",ru,"\n")
     print(tables.hold[[ru]],
           type = 'html',
           include.rownames = FALSE,
@@ -409,11 +410,11 @@ bm.table$BENCHMARK <- paste(bm.table$EVAL.STRING.LOWER,
 bm.table <- dplyr::select(.data = bm.table,
                           -dplyr::starts_with("eval.string"),
                           -INDICATOR.TDAT) %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # Drop the unneeded fields and sort by mgt question
-names(bm.table) <- c("Management Question",
+names(bm.table) <- c("Goal/Management Question",
                      "Indicator",
                      "Benchmark Source",
-                     "Evaluation Stratum",
-                     "Category",
+                     "Evaluation Group",
+                     "Evaluation Category",
                      "Evaluation Benchmark")
 knitr::kable(bm.table)
 
@@ -444,7 +445,7 @@ for (lev in ru.levels) { # by reporting unit level
     data.ru <- data.rulevel %>% dplyr::filter(Subpopulation==ru)
     mqs <- unique(data.ru$MANAGEMENT.QUESTION)
     for (mq in mqs) { # by specific reporting unit
-      cat("\n#### Management Question: ", mq, "\n")
+      cat("\n#### Goal/Management Question: ", mq, "\n")
       data.mq <- data.ru %>% dplyr::filter(MANAGEMENT.QUESTION == mq)
       Indicators <- unique(data.mq$Indicator)
       for (ind in Indicators) {  # by indicator

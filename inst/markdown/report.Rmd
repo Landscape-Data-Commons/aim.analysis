@@ -187,7 +187,7 @@ This report covers data collected between __`r as.Date(min(tdat.spdf$DateVisited
 ```{r plotDates, echo=FALSE, message=FALSE, warning=FALSE}
   mstartdays <- c(0, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336)
   mnames = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec")
-  g <- ggplot2::ggplot(data = tdat.spdf@data,
+  ggplot2::ggplot(data = tdat.spdf@data,
                        ggplot2::aes(x = yday, fill = factor(year))) +
     ggplot2::geom_histogram(binwidth = 7) +
     ggplot2::xlim(0, 365) +
@@ -202,7 +202,6 @@ This report covers data collected between __`r as.Date(min(tdat.spdf$DateVisited
     ggplot2::xlab("Week of the year") +
     ggplot2::ylab("Number of Plots") +
     ggplot2::labs(fill = "Year")
-  plotly::ggplotly(g)
 ```
 
 ## Data Collection Summary

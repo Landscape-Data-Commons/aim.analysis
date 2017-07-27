@@ -415,7 +415,7 @@ for (lev in ru.levels) { # by reporting unit level
       Indicators <- unique(data.mq$Indicator)
       for (ind in Indicators) {  # by indicator
         ind.name <- indicator.lut$indicator.name[indicator.lut$indicator.tdat == ind]
-        cat("\n#### Indicator: ", ind.name, "\n")
+        cat("\n#### Indicator: ", indicator.lut$indicator.name[indicator.lut$indicator.tdat == ind], "\n")
         ## Look up the landscape threshold value for the RU and indicator
         req.prop <- benchmarks.sum[benchmarks.sum$indicator.tdat == ind & !is.na(benchmarks.sum$Required.Proportion), 4]
         req.prop <- as.numeric(req.prop[1, 1])

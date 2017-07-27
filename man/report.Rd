@@ -8,7 +8,8 @@ report(out.path, project.name, conf.level = 80, indicator.lut = NULL,
   benchmarks = NULL, analysis = NULL, cats.to.suppress = c("Not Meeting"),
   strata.stats, strata.weights, reporting.units.spdf = NULL,
   sample.frame.spdf, project.area.spdf = NULL, points.benchmarked = NULL,
-  projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"))
+  projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
+  extension = "html")
 }
 \arguments{
 \item{out.path}{Character string. The folder path to write the output reports into.}

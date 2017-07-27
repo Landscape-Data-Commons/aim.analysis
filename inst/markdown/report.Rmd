@@ -284,7 +284,7 @@ strat.sampling.table <- dplyr::select(.data = strata.weights,
                                       Area.HA,
                                       Sampled.area.HA,
                                       Weight)
-names(strat.sampling.table) <- c("Design Stratum",
+names(strat.sampling.table) <- c("Design Stratum (Type of Land)",
                                  "# Design Points",
                                  "# Sampled Points",
                                  "Prop. Design Points Sampled",

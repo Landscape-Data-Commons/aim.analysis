@@ -323,3 +323,38 @@ objectiveMet <- function(prop.base,
   }
   return(paste0(sig,result))
 }
+
+num2nom <- function(number) {
+  ones <- c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+  tens <- c("ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
+  exceptions <- c("0" = "zero",
+                  "11" = "eleven",
+                  "12" = "twelve",
+                  "13" = "thirteen",
+                  "14" = "fourteen",
+                  "15" = "fifteen",
+                  "16" = "sixteen",
+                  "17" = "seventeen",
+                  "18" = "eighteen",
+                  "19" = "nineteen")
+  if (nchar(number) > 2) {
+    stop("Sorry, this can handle only one and two digit numbers right now.")
+  }
+
+  if (as.character(number) %in% names(exceptions)) {
+    return(unname(exceptions[as.character(number)]))
+  }
+
+  if (nchar(number) == 1) {
+    return(ones[number])
+  }
+
+  if (nchar(number) == 2) {
+    if (substr(number, 2, 2) != "0") {
+      return(paste(tens[as.numeric(substr(number, 1, 1))], ones[as.numeric(substr(number, 2, 2))], sep = "-"))
+    } else {
+      return(tens[as.numeric(substr(number, 1, 1))])
+    }
+
+  }
+}

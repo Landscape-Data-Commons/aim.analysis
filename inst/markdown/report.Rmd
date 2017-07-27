@@ -173,7 +173,7 @@ m
 ## Indicators included in the report
 The following indicators were specified in the AIM Terrestrial Benchmarks Tool and are included in this report:
 ```{r indicatorsIncluded, echo=FALSE, results='asis'}
-  inds <- unique(benchmarks$Indicator)
+  inds <- unique(benchmarks$INDICATOR)
   for (ind in inds) {
     cat("\n  * ",ind,"\n")
   }

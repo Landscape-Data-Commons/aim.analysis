@@ -77,8 +77,22 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
 
   ## Because all the benchmark evaluation categories should be mutually exclusive, applying the vector from $meeting should result in one row per indicator per plot
   ## Also restricting this to the relevant columns that are required for the next step
-  output <- tdat.tall.benched[tdat.tall.benched$MEETING, c("PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY", "LONGITUDE", "LATITUDE")] %>%
+  output <- tdat.tall.benched %>% dplyr::filter(MEETING) %>% dplyr::select(PRIMARYKEY,
+                                                                           PLOTID,
+                                                                           MANAGEMENT.QUESTION,
+                                                                           EVALUATION.STRATUM,
+                                                                           INDICATOR,
+                                                                           VALUE,
+                                                                           EVALUATION.CATEGORY,
+                                                                           LONGITUDE,
+                                                                           LATITUDE,
+                                                                           dplyr::matches(match = "^(DT_VST)|(DATEVISITED)$", ignore.case = TRUE)) %>%
     dplyr::filter(!is.na(PRIMARYKEY))
   names(output) <- stringr::str_to_upper(names(output))
+  ## If dates made it in. These are needed for the reporting step and this means that we don't need TerrADat for anything there anymore
+  names(output)[grepl(names(output), pattern = "^(DT_VST)|(DATEVISITED)$", ignore.case = TRUE)] <- "DATE.VISITED"
+  if ("DATE.VISITED" %in% names(output)) {
+    output$DATE.VISITED <- lubridate::as_date(output$DATE.VISITED)
+  }
   return(output)
 }

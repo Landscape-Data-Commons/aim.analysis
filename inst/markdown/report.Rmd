@@ -394,7 +394,6 @@ for (lev in ru.levels) { # by reporting unit level
                            indicator.lut = indicator.lut,
                            mq = mq,
                            threshold = req.prop)
-        #m <- indicatorMap(lev,ru,reporting.units.spdf,project.area.spdf)
         m <- indicatorMap(level = lev,
                           ru = ru,
                           repunits.spdf = reporting.units.spdf,

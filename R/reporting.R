@@ -216,16 +216,25 @@ indicatorMap <- function(level,
   ru.points$LATITUDE <- samplepts.spdf@data$LATITUDE
   ru.points$EVALUATION.CATEGORY <- samplepts.spdf@data$EVALUATION.CATEGORY
 
+  ## Don't ask why this next stretch works. All that matters is that it does.
+  prjarea.fortified <- ggplot2::fortify(prjarea.spdf)
+
   m <- ggplot2::ggplot() +
-    ggplot2::geom_polygon(data = ggplot2::fortify(prjarea.spdf),
-                          ggplot2::aes(x = long, y = lat),
-                          fill = "white",
-                          color = "black") +
     ggplot2::coord_map()
+
+  ## This commented out produces nonsense and I have no idea why. It's almost identical to the if{}
+  # m <- m +
+  #   ggplot2::geom_polygon(data = prjarea.fortified,
+  #                         ggplot2::aes(x = long,
+  #                                      y = lat,),
+  #                         fill = "white",
+  #                         color = "black")
   if (level == "Study Area") {
     m <- m +
-      ggplot2::geom_polygon(data = ggplot2::fortify(prjarea.spdf),
-                            ggplot2::aes(x = long, y = lat, group = group),
+      ggplot2::geom_polygon(data = prjarea.fortified,
+                            ggplot2::aes(x = long,
+                                         y = lat,
+                                         group = group),
                             fill = "darkgray")
   } else {
     m <- m +

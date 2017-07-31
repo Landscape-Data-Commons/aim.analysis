@@ -398,7 +398,7 @@ for (lev in ru.levels) { # by reporting unit level
                           ru = ru,
                           repunits.spdf = reporting.units.spdf,
                           prjarea.spdf = project.area.spdf,
-                          samplepts.spdf = points.benchmarked.spdf)
+                          samplepts.spdf = points.benchmarked.spdf[points.benchmarked.spdf@data$MANAGEMENT.QUESTION == mq & points.benchmarked.spdf@data$INDICATOR == ind,])
         txt <- grid::textGrob(label = msgGrob,
                               just = "centre",
                               gp = grid::gpar(fontsize = 18,

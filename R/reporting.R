@@ -154,11 +154,14 @@ indicatorPlot <- function(df,
                              Indicator == indicator,
                              MANAGEMENT.QUESTION == mq,
                              Category != "Total")
+  plot.data$UCB <- plot.data[[names(plot.data)[grepl(names(plot.data), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]]]
+  plot.data$LCB <- plot.data[[names(plot.data)[grepl(names(plot.data), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]]]
   ind.realname <- vlookup(indicator, indicator.lut, 1, 2) ## Lookup the pretty name for the indicator
   p <- ggplot2::ggplot(plot.data, ggplot2::aes(x = Category, y = Estimate.P, fill = Category)) +
     ggplot2::geom_bar(stat = "identity", width = 0.5) +
     ggplot2::coord_flip() +
-    ggplot2::geom_errorbar(ggplot2::aes(ymax = UCB95Pct.P, ymin = LCB95Pct.P),
+    ggplot2::geom_errorbar(ggplot2::aes(ymax = UCB,
+                                        ymin = LCB),
                            width = 0.25) +
     ggplot2::scale_fill_brewer(type = "div", palette = "RdYlBu") +
     ggplot2::ylim(0, 100) +
@@ -273,8 +276,8 @@ addLSProp <- function(prop.table,
                   NResp,
                   Estimate.P,
                   StdError.P,
-                  LCB95Pct.P,
-                  UCB95Pct.P)
+                  dplyr::matches(match = "^LCB[0-9]{1,2}Pct\\.P$"),
+                  dplyr::matches(match = "^UCB[0-9]{1,2}Pct\\.P$"))
 
   # join the estimated proportions into prop.table
   prop.table <- dplyr::left_join(x = prop.table,
@@ -285,7 +288,8 @@ addLSProp <- function(prop.table,
   # Calc whether or not objective is met
   prop.table$Objective.Met <- ""
   for (i in 1:nrow(prop.table)) {
-    if (!(is.na(prop.table$Required.Proportion[i]) | prop.table$Required.Proportion[i] == "") & !is.na(prop.table$LCB95Pct.P[i])) {
+    if (!(is.na(prop.table$Required.Proportion[i]) | prop.table$Required.Proportion[i] == "") &
+        !is.na(prop.table[i, names(prop.table)[grepl(names(prop.table), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])) {
       prop.table$Objective.Met[i] <- objectiveMet(prop.base = prop.table$Required.Proportion[i],
                                                   relation = prop.table$Proportion.Relation[i],
                                                   est.prop = prop.table$Estimate.P[i],

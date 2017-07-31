@@ -115,7 +115,7 @@ m <- leaflet::leaflet(sample.frame.spdf) %>% leaflet::addTiles() %>%
                        weight = 2,
                        fillOpacity = 0.6,
                        group = "Reporting Units") %>%
-  leaflet::addCircleMarkers(data = tdat.spdf,
+  leaflet::addCircleMarkers(data = points.benchmarked.spdf,
                             radius = 4,
                             color = "navy",
                             stroke = FALSE,
@@ -143,12 +143,12 @@ The following indicators were specified in the AIM Terrestrial Benchmarks Tool a
 
  
 ## Time period of the report
-This report covers data collected between __`r as.Date(min(tdat.spdf$DateVisited))`__ and __`r as.Date(max(tdat.spdf$DateVisited))`__. Timing of the data collection in each year is shown below.
+This report covers data collected between __`r format(points.benchmarked$DATE.VISITED[order(points.benchmarked$DATE.VISITED)[1]], "%d-%m-%Y")`__ and __`r format(points.benchmarked$DATE.VISITED[order(points.benchmarked$DATE.VISITED)[length(unlist(na.omit(points.benchmarked$DATE.VISITED)))]], "%d-%m-%Y")`__. Timing of the data collection in each year is shown below.
 
 ```{r plotDates, echo=FALSE, message=FALSE, warning=FALSE}
   mstartdays <- c(0, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336)
   mnames = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec")
-  ggplot2::ggplot(data = tdat.spdf@data,
+  ggplot2::ggplot(data = dplyr::distinct(dplyr::select(.data = points.benchmarked, PRIMARYKEY, yday, year)),
                        ggplot2::aes(x = yday, fill = factor(year))) +
     ggplot2::geom_histogram(binwidth = 7) +
     ggplot2::xlim(0, 365) +

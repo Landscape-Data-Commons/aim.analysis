@@ -26,45 +26,6 @@ msg2 <- paste0("This table gives the analysis results for the specified indicato
 msgGrob <- "EXAMPLE\nESTIMATES\nDo not use!"
 ```
 
-```{r loadData, message=FALSE, warning=FALSE, include=FALSE}
-#######
-
-## Sanitize the benchmarks column names
-names(benchmarks) <- stringr::str_to_upper(names(benchmarks))
-## Analysis results from cat.analysis
-  ru.levels <- unique(analysis$Type)
-
-## Reporting Unit Spatial Polygons
-## Clean up so that the geometry will display right on the map
-if (!is.null(reporting.units.spdf)) {
-  # reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
-  #                                      byid = TRUE,
-  #                                      width = 0) %>% spTransform(CRSobj = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
-}
-
-
-## Plot information from TerrADat (date sampled, lat/long, indicator values)
-  ## Load the TerrADat points and their attributes from the output of the analysis script
-  ##    Faster, smaller, and already filtered to the points that were used in the analysis
-  tdat.spdf <- sp::spTransform(tdat.spdf, sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
-  
-  # fix the dates for plotting
-  tdat.spdf$year <- lubridate::year(lubridate::as_date(tdat.spdf$DateVisited))
-  tdat.spdf$yday <- lubridate::yday(lubridate::as_date(tdat.spdf$DateVisited))
-
-
-  
-  ## Turn the benchmarked points into an spdf
-  points.benchmarked.spdf <- sp::SpatialPointsDataFrame(coords = points.benchmarked[, c("LONGITUDE", "LATITUDE")],
-                                                        data = points.benchmarked,
-                                                        proj4string = projection)
-  
-######
-
-
-```
-
-
 # Introduction
 
 Information about the health of the landscapes we manage is essential to achieve the BLM mission (Federal Land Policy and Management Act of 1976).  It enables BLM to measure the benefits that these lands and waters provide, understand the effects of multiple uses, and thus create management plans to sustain these landscapes for future generations.

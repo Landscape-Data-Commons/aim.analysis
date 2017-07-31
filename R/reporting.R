@@ -50,6 +50,19 @@ report <- function(out.path,
 
   #######
   ## Objectives and benchmark information from the Excel template
+  points.benchmarked$year <- lubridate::year(points.benchmarked$DATE.VISITED)
+  points.benchmarked$yday <- lubridate::yday(points.benchmarked$DATE.VISITED)
+
+  ru.levels <- unique(analysis$Type)
+
+
+  ## Clean up so that the geometry will display right on the map
+  if (!is.null(reporting.units.spdf)) {
+    # reporting.units.spdf <- rgeos::gBuffer(reporting.units.spdf,
+    #                                      byid = TRUE,
+    #                                      width = 0) %>% spTransform(CRSobj = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+  }
+
 
   # For each benchmark add in the name of the field in TerrADat that corresponds
   benchmarks.sum <- dplyr::group_by(benchmarks, MANAGEMENT.QUESTION, EVALUATION.CATEGORY) %>% dplyr::summarise(

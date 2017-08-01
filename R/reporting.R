@@ -91,20 +91,6 @@ report <- function(out.path,
   }
 
   ## Get the design points info from the analysis script output files
-  ## strata.stats and design.strata.weights
-  # names(strata.stats)[names(strata.stats) == "Observed.pts"] <- "Target Sampled"
-  # names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unknown$")] <- "Unknown"
-  # names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.nontarget$")] <- "Non-target"
-  # names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.inaccessible$")] <- "Inaccessible"
-  # names(strata.stats)[grepl(x = names(strata.stats), pattern = "pts.unneeded$")] <- "Unneeded"
-  #
-  # #reshape the dataframe for plotting
-  # point.fates <- tidyr::gather(data = strata.stats,
-  #                              key = "variable",
-  #                              value = "value",
-  #                              -DD, -WEIGHT.ID, -YEAR) %>%
-  #   dplyr::group_by(YEAR, variable) %>%
-  #   dplyr::summarise(n = sum(value))
   point.fates <- point.weights %>%
     merge(x = .,
           y = dplyr::distinct(dplyr::select(.data = points.benchmarked,

@@ -245,18 +245,17 @@ prop.table[prop.table$LS.Prop == "NA NA %", "LS.Prop"] <- ""
 
 tables.hold <- c()
 summary.table <- data.frame()
-for (lev in ru.levels) { # by reporting unit level
-  data.rulevel <- analysis %>% dplyr::filter(Type == lev)
-  rus <- unique(data.rulevel$Subpopulation)
-  for (ru in rus) { # by specific reporting unit
-    prop.table.ru <- addLSProp(prop.table = prop.table,
-                               analysis.table = analysis,
-                               ru = ru,
-                               indicator.lut = indicator.lut,
-                               conf.level = conf.level)
-    prop.table.ru <-  prop.table.ru[,-c(2, 5, 6, 8)] %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # sort by mgt question and category
-    prop.table.ru <- prop.table.ru %>% dplyr::select(-StdError.P)
-    names(prop.table.ru) <- c("Goal/Management Objective",
+for (level in reporting.unit.levels) { # by reporting unit level
+  data.reporting.unit.level <- analysis %>% dplyr::filter(Type == level)
+  # by specific reporting unit
+  for (reporting.unit in unique(data.reporting.unit.level$Subpopulation)) {
+    prop.table.reporting.unit <- addLSProp(prop.table = prop.table,
+                                           analysis.table = analysis,
+                                           reporting.unit = reporting.unit,
+                                           indicator.lut = indicator.lut)
+    prop.table.reporting.unit <-  prop.table.reporting.unit[,-c(2, 5, 6, 8)] %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # sort by mgt question and category
+    prop.table.reporting.unit <- prop.table.reporting.unit %>% dplyr::select(-StdError.P)
+    names(prop.table.reporting.unit) <- c("Goal/Management Objective",
                               "Indicator",
                               "Category",
                               "Required Percent",
@@ -265,16 +264,16 @@ for (lev in ru.levels) { # by reporting unit level
                               "Lower CI",
                               "Upper CI",
                               "Objective Met?")
-    prop.table.ru.strip <- prop.table.ru[!(prop.table.ru$Category %in% cats.to.suppress),] # Strip out the categories to suppress
+    prop.table.reporting.unit.strip <- prop.table.reporting.unit[!(prop.table.reporting.unit$Category %in% cats.to.suppress),] # Strip out the categories to suppress
     
     ## Dump these into a list so we can print them out later. Need to first generate the summary table
-    tables.hold[[ru]] <- xtable::xtable(prop.table.ru.strip,
+    tables.hold[[reporting.unit]] <- xtable::xtable(prop.table.reporting.unit.strip,
                                        align = c("l","l","l","l","c","c","c","c","c","c"))
     
-    prop.table.ru$lev <- lev
-    prop.table.ru$ru <- ru
+    prop.table.reporting.unit$level <- level
+    prop.table.reporting.unit$reporting.unit <- reporting.unit
     summary.table <- rbind(summary.table,
-                           as.data.frame(prop.table.ru))
+                           as.data.frame(prop.table.reporting.unit))
   }
 }
 
@@ -305,12 +304,12 @@ The tables also report monitoring results. The main result is the estimated prop
 
 ```{r GORBtables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
 # Then print the tables by reporting unit
-for (lev in ru.levels) {
-  data.rulevel <- analysis %>% dplyr::filter(Type == lev)
-  rus <- unique(data.rulevel$Subpopulation)
-  for (ru in rus) { # by specific reporting unit
-    cat("\n### ",ru,"\n")
-    print(tables.hold[[ru]],
+for (level in reporting.unit.levels) {
+  data.reporting.unit.level <- analysis %>% dplyr::filter(Type == level)
+  # by specific reporting unit
+  for (reporting.unit in unique(data.reporting.unit.level$Subpopulation)) {
+    cat("\n### ",reporting.unit,"\n")
+    print(tables.hold[[reporting.unit]],
           type = 'html',
           include.rownames = FALSE,
           html.table.attributes = list("border='0' cellpadding='5' class='bordered_table' "))
@@ -360,24 +359,24 @@ For the details of each monitoring objective, see "Goals, Objectives, Benchmarks
 
 ```{r conditionResults, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, results='asis'}
 cat("\n## Results by Reporting Unit {.tabset .tabset-fade .tabset-pills}\n")
-for (lev in ru.levels) { # by reporting unit level
+for (level in reporting.unit.levels) { # by reporting unit level
 
   #cat("\n",msg1,"\n")
-  data.rulevel <- analysis %>% dplyr::filter(Type == lev)
-  rus <- unique(data.rulevel$Subpopulation)
-  for (ru in rus) {
-    cat("\n###",lev,": ",ru,"\n")
-    data.ru <- data.rulevel %>% dplyr::filter(Subpopulation==ru)
-    mqs <- unique(data.ru$MANAGEMENT.QUESTION)
+  data.reporting.unit.level <- analysis %>% dplyr::filter(Type == level)
+  reporting.units <- unique(data.reporting.unit.level$Subpopulation)
+  for (reporting.unit in reporting.units) {
+    cat("\n###", level, ": ", reporting.unit, "\n")
+    data.reporting.unit <- data.reporting.unit.level %>% dplyr::filter(Subpopulation == reporting.unit)
+    mqs <- unique(data.reporting.unit$MANAGEMENT.QUESTION)
     for (mq in mqs) { # by specific reporting unit
       cat("\n#### Goal/Management Question: ", mq, "\n")
-      data.mq <- data.ru %>% dplyr::filter(MANAGEMENT.QUESTION == mq)
+      data.mq <- data.reporting.unit %>% dplyr::filter(MANAGEMENT.QUESTION == mq)
       Indicators <- unique(data.mq$Indicator)
-      for (ind in Indicators) {  # by indicator
-        ind.name <- indicator.lut$indicator.name[indicator.lut$indicator.tdat == ind]
-        cat("\n#### Indicator: ", indicator.lut$indicator.name[indicator.lut$indicator.tdat == ind], "\n")
+      for (indicator in Indicators) {  # by indicator
+        indicator.name <- indicator.lut$indicator.name[indicator.lut$indicator.tdat == indicator]
+        cat("\n#### Indicator: ", indicator.lut$indicator.name[indicator.lut$indicator.tdat == indicator], "\n")
         ## Look up the landscape threshold value for the RU and indicator
-        req.prop <- benchmarks.sum[benchmarks.sum$indicator.tdat == ind & !is.na(benchmarks.sum$Required.Proportion), 4]
+        req.prop <- benchmarks.sum[benchmarks.sum$indicator.tdat == indicator & !is.na(benchmarks.sum$Required.Proportion), 4]
         req.prop <- as.numeric(req.prop[1, 1])
         
         if (!is.na(req.prop)) {
@@ -386,35 +385,37 @@ for (lev in ru.levels) { # by reporting unit level
           req.prop <- 0
         }
         
-        g <- indicatorPlot(df = analysis,
-                           ru = lev,
-                           subpop = ru,
-                           indicator = ind,
+        plot <- indicatorPlot(df = analysis,
+                           reporting.unit.level = level,
+                           reporting.unit.name = reporting.unit,
+                           indicator = indicator,
                            indicator.lut = indicator.lut,
                            mq = mq,
                            threshold = req.prop)
-        m <- indicatorMap(level = lev,
-                          ru = ru,
-                          repunits.spdf = reporting.units.spdf,
-                          prjarea.spdf = project.area.spdf,
-                          samplepts.spdf = points.benchmarked.spdf[points.benchmarked.spdf@data$MANAGEMENT.QUESTION == mq & points.benchmarked.spdf@data$INDICATOR == ind,])
+        
+        map <- indicatorMap(reporting.unit.level = level,
+                         reporting.unit.name = reporting.unit,
+                         reporting.units.spdf = reporting.units.spdf,
+                         prjarea.spdf = project.area.spdf,
+                         samplepts.spdf = points.benchmarked.spdf[points.benchmarked.spdf@data$MANAGEMENT.QUESTION == mq & points.benchmarked.spdf@data$INDICATOR == indicator,])
+        
         txt <- grid::textGrob(label = msgGrob,
                               just = "centre",
                               gp = grid::gpar(fontsize = 18,
                                               col = "red"))
         gridExtra::grid.arrange(gridExtra::arrangeGrob(m, txt, nrow = 2),
-                                g,
+                                plot,
                                 ncol = 2,
                                 widths = c(1, 3))
+        
         cat("\n")
         cat("\n",msg1,"\n")
         cat("\n#### Results Table\n")
         cat(pander::pander(indicatorTable(df = analysis,
-                                          ru = lev,
-                                          subpop = ru,
-                                          indicator = ind,
-                                          mq = mq,
-                                          conf.level = conf.level)))
+                                          reporting.unit.level = level,
+                                          reporting.unit.name = reporting.unit,
+                                          indicator = indicator,
+                                          mq = mq)))
         cat("\n",msg2,"\n")
         cat("\n***\n")
       }

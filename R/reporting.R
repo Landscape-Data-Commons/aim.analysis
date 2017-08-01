@@ -62,7 +62,7 @@ report <- function(out.path,
   points.benchmarked$year <- lubridate::year(points.benchmarked$DATE.VISITED)
   points.benchmarked$yday <- lubridate::yday(points.benchmarked$DATE.VISITED)
 
-  ru.levels <- unique(analysis$Type)
+  reporting.unit.levels <- unique(analysis$Type)
 
 
   ## Clean up so that the geometry will display right on the map
@@ -124,35 +124,40 @@ vlookup <- function(value,
 ## Function to programatically create output bar plots for a given indicator.
 ## Requires the following inputs:
 ##  df = data.frame of the cat.analysis results
-##  ru = desired level of reporting units for the graph
+##  reporting.unit = desired level of reporting units for the graph
 ##  subpop = desired specific reporting unit
 ##  indicator = indicator to be graphed
 indicatorPlot <- function(df,
-                          ru,
-                          subpop,
+                          reporting.unit.level,
+                          reporting.unit.name,
                           indicator,
-                          indicator.lut,
+                          indicator.lut = NULL,
                           mq,
                           threshold = 0.5) {
   plot.data <- dplyr::filter(.data = df,
-                             Type == ru,
-                             Subpopulation == subpop,
+                             Type == reporting.unit.level,
+                             Subpopulation == reporting.unit.name,
                              Indicator == indicator,
                              MANAGEMENT.QUESTION == mq,
                              Category != "Total")
   plot.data$UCB <- plot.data[[names(plot.data)[grepl(names(plot.data), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]]]
   plot.data$LCB <- plot.data[[names(plot.data)[grepl(names(plot.data), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]]]
   ind.realname <- vlookup(indicator, indicator.lut, 1, 2) ## Lookup the pretty name for the indicator
-  p <- ggplot2::ggplot(plot.data, ggplot2::aes(x = Category, y = Estimate.P, fill = Category)) +
-    ggplot2::geom_bar(stat = "identity", width = 0.5) +
+  p <- ggplot2::ggplot(plot.data, ggplot2::aes(x = Category,
+                                               y = Estimate.P,
+                                               fill = Category)) +
+    ggplot2::geom_bar(stat = "identity",
+                      width = 0.5) +
     ggplot2::coord_flip() +
     ggplot2::geom_errorbar(ggplot2::aes(ymax = UCB,
                                         ymin = LCB),
                            width = 0.25) +
-    ggplot2::scale_fill_brewer(type = "div", palette = "RdYlBu") +
+    ggplot2::scale_fill_brewer(type = "div",
+                               palette = "RdYlBu") +
     ggplot2::ylim(0, 100) +
     ggplot2::ggtitle(paste0("Percentage of Reporting Unit by Category: \n", ind.realname)) +
     ggplot2::ylab("Estimated Percent of Reporting Unit Area")
+
   if (threshold > 0) {
     p <- p + ggplot2::geom_hline(yintercept = threshold, colour = "gold", size = 2)
   }
@@ -161,18 +166,26 @@ indicatorPlot <- function(df,
 
 ## Function to display table of cat.analysis results. Takes same arguments as indicatorPlot function (minus the threshold argument)
 indicatorTable <- function(df,
-                           ru,
-                           subpop,
+                           reporting.unit.level,
+                           reporting.unit.name,
                            indicator,
-                           mq,
-                           conf.level) {
+                           mq) {
+
+  conf.level <- names(analysis.table)[grepl(names(analysis.table), pattern = "^LCB[0-9]{1,2}Pct\\.P$")] %>%
+    stringr::str_extract(pattern = "[0-9]{1,2}") %>% as.numeric()
+
   table.data <- dplyr::filter(.data = df,
-                              Type == ru,
-                              Subpopulation == subpop,
+                              Type == reporting.unit.level,
+                              Subpopulation == reporting.unit.name,
                               Indicator == indicator,
                               MANAGEMENT.QUESTION == mq,
                               Category != "Total") %>%
-    dplyr::select(Category, NResp, Estimate.P, StdError.P, dplyr::matches(match = "[0-9]{2}Pct.P"))
+    dplyr::select(Category,
+                  NResp,
+                  Estimate.P,
+                  StdError.P,
+                  dplyr::matches(match = "^LCB[0-9]{2}Pct\\.P$"),
+                  dplyr::matches(match = "^UCB[0-9]{2}Pct\\.P$"))
   names(table.data) <- c("Category",
                          "# Points",
                          "% Area Estimate",
@@ -185,27 +198,27 @@ indicatorTable <- function(df,
 ## Function to create a basic map showing the location of the reporting unit within the study area
 ##   Requires the following inputs:
 ##   level = reporting unit level
-##   ru = reporting unit name
+##   reporting.unit = reporting unit name
 ##   repunits.spdf = spatial polygon data frame for the reporting units
 ##   prjarea.spdf = spatial polygon data frame for the project area
-indicatorMap <- function(level,
-                         ru,
-                         repunits.spdf,
+indicatorMap <- function(reporting.unit.level,
+                         reporting.unit.name,
+                         reporting.units.spdf,
                          prjarea.spdf,
                          samplepts.spdf) {
-  runit <- sp::spTransform(repunits.spdf[repunits.spdf$Type == level & repunits.spdf$Subpopulation == ru,],
+  runit <- sp::spTransform(reporting.units.spdf[reporting.units.spdf$Type == reporting.unit.level & reporting.units.spdf$Subpopulation == reporting.unit.name,],
                            samplepts.spdf@proj4string)
-  ru.points <- sp::over(samplepts.spdf,
-                        runit,
-                        returnList = F)
-  ru.points$LONGITUDE <- samplepts.spdf@data$LONGITUDE
-  ru.points$LATITUDE <- samplepts.spdf@data$LATITUDE
-  ru.points$EVALUATION.CATEGORY <- samplepts.spdf@data$EVALUATION.CATEGORY
+  reporting.unit.points <- sp::over(samplepts.spdf,
+                                    runit,
+                                    returnList = F)
+  reporting.unit.points$LONGITUDE <- samplepts.spdf@data$LONGITUDE
+  reporting.unit.points$LATITUDE <- samplepts.spdf@data$LATITUDE
+  reporting.unit.points$EVALUATION.CATEGORY <- samplepts.spdf@data$EVALUATION.CATEGORY
 
   ## Don't ask why this next stretch works. All that matters is that it does.
   prjarea.fortified <- ggplot2::fortify(prjarea.spdf)
 
-  m <- ggplot2::ggplot() +
+  map <- ggplot2::ggplot() +
     ggplot2::coord_map()
 
   ## This commented out produces nonsense and I have no idea why. It's almost identical to the if{}
@@ -215,21 +228,21 @@ indicatorMap <- function(level,
   #                                      y = lat,),
   #                         fill = "white",
   #                         color = "black")
-  if (level == "Study Area") {
-    m <- m +
+  if (reporting.unit.level == "Study Area") {
+    map <- map +
       ggplot2::geom_polygon(data = prjarea.fortified,
                             ggplot2::aes(x = long,
                                          y = lat,
                                          group = group),
                             fill = "darkgray")
   } else {
-    m <- m +
+    map <- map +
       ggplot2::geom_polygon(data = ggplot2::fortify(runit),
                             ggplot2::aes(x = long, y = lat, group = group),
                             fill="darkgray")
   }
-  m <- m +
-    ggplot2::geom_point(data = ru.points,
+  map <- map +
+    ggplot2::geom_point(data = reporting.unit.points,
                         ggplot2::aes(x = LONGITUDE,
                                      y = LATITUDE,
                                      group = EVALUATION.CATEGORY,
@@ -241,7 +254,7 @@ indicatorMap <- function(level,
     ggplot2::theme(line = element_blank(),
                    text = element_blank(),
                    title = element_blank())
-  return(m)
+  return(map)
 }
 
 ## Function to add the estimated landscape proportions to the management objectives table for a reporting unit.
@@ -249,12 +262,11 @@ indicatorMap <- function(level,
 ## Requires the following inputs:
 ##    prop.table = data frame of the management objectives and evaluation categories (that match the cat.analysis input table)
 ##    analysis.table = cat.analysis input table (i.e., aim.analysis)
-##    ru = name of the reporting unit
+##    reporting.unit = name of the reporting unit
 addLSProp <- function(prop.table,
                       analysis.table,
-                      ru,
-                      indicator.lut,
-                      conf.level) {
+                      reporting.unit.name,
+                      indicator.lut) {
   # Get the terradat indicator names that are used in cat.analysis
   prop.table$Indicator <- unlist(lapply(prop.table$indicator.name.alt,
                                         FUN = vlookup,
@@ -262,35 +274,36 @@ addLSProp <- function(prop.table,
                                         lcol = 2,
                                         rcol = 1))
 
-  # Get the estimated proportions from the analysis table for the reporting unit
-  a <- dplyr::filter(.data = analysis.table,
-                     Subpopulation == ru,
-                     Category != "Total") %>%
-    dplyr::select(Indicator,
-                  Category,
-                  NResp,
-                  Estimate.P,
-                  StdError.P,
-                  dplyr::matches(match = "^LCB[0-9]{1,2}Pct\\.P$"),
-                  dplyr::matches(match = "^UCB[0-9]{1,2}Pct\\.P$"))
+  conf.level <- names(analysis.table)[grepl(names(analysis.table), pattern = "^LCB[0-9]{1,2}Pct\\.P$")] %>%
+    stringr::str_extract(pattern = "[0-9]{1,2}") %>% as.numeric()
 
   # join the estimated proportions into prop.table
   prop.table <- dplyr::left_join(x = prop.table,
-                                 y= a,
+                                 # Get the estimated proportions from the analysis table for the reporting unit
+                                 y= dplyr::filter(.data = analysis.table,
+                                                  Subpopulation == reporting.unit.name,
+                                                  Category != "Total") %>%
+                                   dplyr::select(Indicator,
+                                                 Category,
+                                                 NResp,
+                                                 Estimate.P,
+                                                 StdError.P,
+                                                 dplyr::matches(match = "^LCB[0-9]{1,2}Pct\\.P$"),
+                                                 dplyr::matches(match = "^UCB[0-9]{1,2}Pct\\.P$")),
                                  by = c("Indicator" = "Indicator",
                                         "EVALUATION.CATEGORY" = "Category"))
 
   # Calc whether or not objective is met
   prop.table$Objective.Met <- ""
-  for (i in 1:nrow(prop.table)) {
-    if (!(is.na(prop.table$Required.Proportion[i]) | prop.table$Required.Proportion[i] == "") &
-        !is.na(prop.table[i, names(prop.table)[grepl(names(prop.table), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])) {
-      prop.table$Objective.Met[i] <- objectiveMet(prop.base = prop.table$Required.Proportion[i],
-                                                  relation = prop.table$Proportion.Relation[i],
-                                                  est.prop = prop.table$Estimate.P[i],
-                                                  n = prop.table$NResp[i],
-                                                  std.err = prop.table$StdError.P[i],
-                                                  conf.level = conf.level)
+  for (row in 1:nrow(prop.table)) {
+    if (!(is.na(prop.table$Required.Proportion[row]) | prop.table$Required.Proportion[row] == "") &
+        !is.na(prop.table[row, names(prop.table)[grepl(names(prop.table), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])) {
+      prop.table$Objective.Met[row] <- objectiveMet(prop.base = prop.table$Required.Proportion[row],
+                                                    relation = prop.table$Proportion.Relation[row],
+                                                    est.prop = prop.table$Estimate.P[row],
+                                                    n = prop.table$NResp[row],
+                                                    std.err = prop.table$StdError.P[row],
+                                                    conf.level = conf.level)
     }
   }
 

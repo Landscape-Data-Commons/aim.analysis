@@ -171,7 +171,7 @@ indicatorTable <- function(df,
                            indicator,
                            mq) {
 
-  conf.level <- names(analysis.table)[grepl(names(analysis.table), pattern = "^LCB[0-9]{1,2}Pct\\.P$")] %>%
+  conf.level <- names(df)[grepl(names(df), pattern = "^LCB[0-9]{1,2}Pct\\.P$")] %>%
     stringr::str_extract(pattern = "[0-9]{1,2}") %>% as.numeric()
 
   table.data <- dplyr::filter(.data = df,

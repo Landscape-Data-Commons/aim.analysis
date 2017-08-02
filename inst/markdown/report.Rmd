@@ -173,7 +173,7 @@ Some sites originally selected as part of a monitoring design will not undergo d
 ggplot2::ggplot(data = as.data.frame(point.fates),
                 ggplot2::aes(x = factor(YEAR),
                              y = n,
-                             fill = variable,
+                             fill = as.factor(variable),
                              label = n)) +
   ggplot2::geom_bar(stat = "identity",
                     width = 0.5) +
@@ -403,7 +403,8 @@ for (level in reporting.unit.levels) { # by reporting unit level
                               just = "centre",
                               gp = grid::gpar(fontsize = 18,
                                               col = "red"))
-        gridExtra::grid.arrange(gridExtra::arrangeGrob(m, txt, nrow = 2),
+        
+        gridExtra::grid.arrange(gridExtra::arrangeGrob(map, txt, nrow = 2),
                                 plot,
                                 ncol = 2,
                                 widths = c(1, 3))

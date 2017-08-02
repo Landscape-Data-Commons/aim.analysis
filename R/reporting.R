@@ -6,12 +6,12 @@
 #' @param benchmarks Data frame. The output from \code{read.benchmarks()}.
 #' @param analysis Data frame. The data frame \code{"analyses"} from the output of \code{analyze()}.
 #' @param cats.to.suppress Character vector. One or more categories to suppress in tables. Defaults to \code{c("Not Meeting")}.
-#' @param point.weights Data frame. The data frame \code{point.weights} from the output of \code{weight()}.
 #' @param strata.weights Data frame. The data frame \code{strata.weights} from the output of \code{weight()}.
 #' @param reporting.units.spdf Spatial polygons data frame. Used in plotting maps. This MUST have a field named exactly "Type" containing the type of reporting unit (e.g. "Watershed" or "Study Area") and a field named exactly "Subpopulation" which contains the identity of the reporting unit[s] (e.g. the watersheds "Dickshooter Creek" and "Headwaters Deep Creek").
 #' @param sample.frame.spdf Spatial polygons data frame. Used in plotting maps.
 #' @param project.area.spdf Spatial polygons data frame. Used in plotting maps.
 #' @param points.benchmarked Data frame. The output from \code{benchmark()}.
+#' @param dd.points Spatial points data frame or list of spatial points data frames. This should be the \code{pts} list in the output from \code{read.dd()}.
 #' @param projection  Optional \code{sp::CRS()} argument. Used to convert \code{points.benchmarked} into a spatial points data frame. Only specify if \code{points.benchmarked} has coordinates not from the same projection as TerrADat. Defaults to \code{sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")}.
 #' @export
 
@@ -21,22 +21,14 @@ report <- function(out.path,
                    benchmarks = NULL,
                    analysis = NULL,
                    cats.to.suppress = c("Not Meeting"),
-                   point.weights,
                    strata.weights,
                    reporting.units.spdf = NULL,
                    sample.frame.spdf,
                    project.area.spdf = NULL,
                    points.benchmarked = NULL,
+                   dd.points,
                    projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
                    extension = "html") {
-
-  fates <- read.csv(paste0(path.package("aim.analysis"), "/inst/defaults/fates.csv"), stringsAsFactors = FALSE)
-  point.weights <- merge(point.weights,
-                         fates,
-                         by.x = "FINAL_DESIG",
-                         by.y = "fate.value")
-  point.weights$FINAL_DESIG <- point.weights$fate
-  point.weights$fate <- NULL
 
   conf.level <- names(analysis) %>% paste(collapse = "") %>%
     stringr::str_extract(pattern = "[0-9]{2}") %>% as.numeric()
@@ -91,15 +83,26 @@ report <- function(out.path,
   }
 
   ## Get the design points info from the analysis script output files
-  point.fates <- point.weights %>%
-    merge(x = .,
-          y = dplyr::distinct(dplyr::select(.data = points.benchmarked,
-                                            PRIMARYKEY,
-                                            DATE.VISITED)),
-          by = "PRIMARYKEY") %>%
-    dplyr::mutate(YEAR = lubridate::year(DATE.VISITED)) %>%
-    dplyr::group_by(WEIGHT.ID, FINAL_DESIG, YEAR) %>% dplyr::summarize(n = n())
-  names(point.fates)[names(point.fates) == "FINAL_DESIG"] <- "variable"
+  if (length(dd.points) == 1){
+    dd.points <- dd.points[[1]]@data
+  } else {
+    dd.points <- purrr::map_df(dd.points, ~ as.data.frame(x = .x))
+  }
+  names(dd.points) <- toupper(names(dd.points))
+  names(dd.points)[names(dd.points) == "PLOT_NM"] <- "PLOTID"
+  dd.points$YEAR <- year.add(pts = dd.points, date.field = "DT_VST", source.field = "PANEL")[["YEAR"]]
+  point.fates <- dd.points %>% dplyr::select(.data = .,
+                                             PLOTID,
+                                             FINAL_DESIG,
+                                             YEAR) %>%
+    dplyr::group_by(FINAL_DESIG, YEAR) %>%
+    dplyr::summarize(n = n())
+  fates <- read.csv(paste0(path.package("aim.analysis"), "/inst/defaults/fates.csv"), stringsAsFactors = FALSE)
+  point.fates <- merge(point.fates,
+                       fates,
+                       by.x = "FINAL_DESIG",
+                       by.y = "fate.value")
+  point.fates$variable <- point.fates$fate
 
   rmarkdown::render(input = "C:/Users/Nelson/Documents/Projects/aim.analysis/inst/markdown/report.Rmd",
                     #input = paste0(path.package("aim.analysis"), "/markdown/report.Rmd"),

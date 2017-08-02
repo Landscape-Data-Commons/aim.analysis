@@ -13,6 +13,7 @@
 #' @param points.benchmarked Data frame. The output from \code{benchmark()}.
 #' @param dd.points Spatial points data frame or list of spatial points data frames. This should be the \code{pts} list in the output from \code{read.dd()}.
 #' @param projection  Optional \code{sp::CRS()} argument. Used to convert \code{points.benchmarked} into a spatial points data frame. Only specify if \code{points.benchmarked} has coordinates not from the same projection as TerrADat. Defaults to \code{sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")}.
+#' @param extension Character string. The file extension to write the report to. Defaults to \code{"html"}.
 #' @export
 
 report <- function(out.path,

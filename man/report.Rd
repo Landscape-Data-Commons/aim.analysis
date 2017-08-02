@@ -4,10 +4,10 @@
 \alias{report}
 \title{Generating summary reports.}
 \usage{
-report(out.path, project.name, conf.level = 80, indicator.lut = NULL,
-  benchmarks = NULL, analysis = NULL, cats.to.suppress = c("Not Meeting"),
-  strata.stats, strata.weights, reporting.units.spdf = NULL,
-  sample.frame.spdf, project.area.spdf = NULL, points.benchmarked = NULL,
+report(out.path, project.name, indicator.lut = NULL, benchmarks = NULL,
+  analysis = NULL, cats.to.suppress = c("Not Meeting"), strata.weights,
+  reporting.units.spdf = NULL, sample.frame.spdf, project.area.spdf = NULL,
+  points.benchmarked = NULL, dd.points,
   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
   extension = "html")
 }
@@ -15,8 +15,6 @@ report(out.path, project.name, conf.level = 80, indicator.lut = NULL,
 \item{out.path}{Character string. The folder path to write the output reports into.}
 
 \item{project.name}{Character string. The name of the project to be used in the title of the report and the filenames it's written to.}
-
-\item{conf.level}{Numeric. The confidence level expressed as an integer value, e.g. \code{80} if the confidence level is 80\%. Defaults to \code{80}.}
 
 \item{indicator.lut}{Data frame. The lookup table between the indicator names in TerrADat and the human readable indicator names.}
 
@@ -26,7 +24,7 @@ report(out.path, project.name, conf.level = 80, indicator.lut = NULL,
 
 \item{cats.to.suppress}{Character vector. One or more categories to suppress in tables. Defaults to \code{c("Not Meeting")}.}
 
-\item{strata.stats}{Data frame. The data frame \code{strata.stats} from the output of \code{weight()}.}
+\item{strata.weights}{Data frame. The data frame \code{strata.weights} from the output of \code{weight()}.}
 
 \item{reporting.units.spdf}{Spatial polygons data frame. Used in plotting maps. This MUST have a field named exactly "Type" containing the type of reporting unit (e.g. "Watershed" or "Study Area") and a field named exactly "Subpopulation" which contains the identity of the reporting unit[s] (e.g. the watersheds "Dickshooter Creek" and "Headwaters Deep Creek").}
 
@@ -36,7 +34,11 @@ report(out.path, project.name, conf.level = 80, indicator.lut = NULL,
 
 \item{points.benchmarked}{Data frame. The output from \code{benchmark()}.}
 
+\item{dd.points}{Spatial points data frame or list of spatial points data frames. This should be the \code{pts} list in the output from \code{read.dd()}.}
+
 \item{projection}{Optional \code{sp::CRS()} argument. Used to convert \code{points.benchmarked} into a spatial points data frame. Only specify if \code{points.benchmarked} has coordinates not from the same projection as TerrADat. Defaults to \code{sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")}.}
+
+\item{extension}{Character string. The file extension to write the report to. Defaults to \code{"html"}.}
 }
 \description{
 Generate both a .PDF and .HTML report with \code{RMarkdown}.

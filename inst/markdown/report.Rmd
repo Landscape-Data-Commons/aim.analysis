@@ -386,12 +386,12 @@ for (level in reporting.unit.levels) { # by reporting unit level
         }
         
         plot <- indicatorPlot(df = analysis,
-                           reporting.unit.level = level,
-                           reporting.unit.name = reporting.unit,
-                           indicator = indicator,
-                           indicator.lut = indicator.lut,
-                           mq = mq,
-                           threshold = req.prop)
+                              reporting.unit.level = level,
+                              reporting.unit.name = reporting.unit,
+                              indicator = indicator,
+                              indicator.lut = indicator.lut,
+                              mq = mq,
+                              threshold = req.prop)
         
         map <- indicatorMap(reporting.unit.level = level,
                          reporting.unit.name = reporting.unit,

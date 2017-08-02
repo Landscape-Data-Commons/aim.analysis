@@ -45,6 +45,33 @@ report <- function(out.path,
     )
   }
 
+  ## Wrangle dd.points into a single SPDF
+  if (length(dd.points) == 1) {
+    dd.points <- dd.points[[1]] %>%
+      dplyr::select(dplyr::matches("TERRA_PLOT_ID"),
+                    dplyr::matches("PLOT_NM"),
+                    dplyr::matches("DT_VST"),
+                    dplyr::matches("FINAL_DESIG"),
+                    dplyr::matches("PANEL")) %>%
+      setNames(c("PRIMARYKEY", "PLOTID", "DATE.VISITED", "FINAL_DESIG", "PANEL"))
+  } else if (length(dd.points) > 1) {
+    dd.points.list <- lapply(dd.points, function(X) {
+      X %>%
+      dplyr::select(dplyr::matches("TERRA_PLOT_ID"),
+                    dplyr::matches("PLOT_NM"),
+                    dplyr::matches("DT_VST"),
+                    dplyr::matches("FINAL_DESIG"),
+                    dplyr::matches("PANEL")) %>%
+        setNames(c("PRIMARYKEY", "PLOTID", "DATE.VISITED", "FINAL_DESIG", "PANEL"))
+    })
+    dd.points <- dd.points.list[[1]]
+    for (dd in 2:length(dd.points.list)) {
+      dd.points <- rbind(dd.points, dd.points.list[[2]])
+    }
+  }
+  dd.points@data$YEAR <- year.add(pts = dd.points, date.field = "DATE.VISITED", source.field = "PANEL")[["YEAR"]]
+  dd.points@data$DATE.VISITED <- lubridate::as_date(dd.points@data$DATE.VISITED)
+
   ## Turn the benchmarked points into an spdf
   points.benchmarked.spdf <- sp::SpatialPointsDataFrame(coords = points.benchmarked[, c("LONGITUDE", "LATITUDE")],
                                                         data = points.benchmarked,
@@ -84,20 +111,13 @@ report <- function(out.path,
   }
 
   ## Get the design points info from the analysis script output files
-  if (length(dd.points) == 1){
-    dd.points <- dd.points[[1]]@data
-  } else {
-    dd.points <- purrr::map_df(dd.points, ~ as.data.frame(x = .x))
-  }
-  names(dd.points) <- toupper(names(dd.points))
-  names(dd.points)[names(dd.points) == "PLOT_NM"] <- "PLOTID"
-  dd.points$YEAR <- year.add(pts = dd.points, date.field = "DT_VST", source.field = "PANEL")[["YEAR"]]
-  point.fates <- dd.points %>% dplyr::select(.data = .,
+  point.fates <- dd.points@data %>% dplyr::select(.data = .,
                                              PLOTID,
                                              FINAL_DESIG,
                                              YEAR) %>%
     dplyr::group_by(FINAL_DESIG, YEAR) %>%
     dplyr::summarize(n = n())
+
   fates <- read.csv(paste0(path.package("aim.analysis"), "/inst/defaults/fates.csv"), stringsAsFactors = FALSE)
   point.fates <- merge(point.fates,
                        fates,

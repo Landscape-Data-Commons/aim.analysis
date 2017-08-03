@@ -77,7 +77,7 @@ Importing data is straightforward, so long as the data are correctly formatted. 
 
 `read.tdat()` will read in whichever of the feature classes `SV_IND_TERRESTRIALAIM` and `SV_IND_REMOTESENSING` it finds in the `.gdb` it's directed to. These are combined into a single, wide-format spatial points data frame.
 `read.benchmarks()` will read in the benchmark information from a DataExplorer workbook as stored in the sheet "Management Objectives" into a data frame. This process is actually why the requirements for populating that particular sheet are so stringent.
-`read.dd()` will read in one or more sample design database and produce a list of lists of their contents as spatial points/polygons data frames. The sub-lists are `'sf'` containing whatever sample frame feature classes were found, `'pts'` containing whatever point feature classes were found, an `'strata'` containing any stratification polygon feeature classes that were found. If a design database was missing any feature class, a `NULL` value is inserted into the relevant list as a placeholder.
+`read.dd()` will read in one or more sample design database and produce a list of lists of their contents as spatial points/polygons data frames. The sub-lists are `'sf'` containing whatever sample frame feature classes were found, `'pts'` containing whatever point feature classes were found, and `'strata'` containing any stratification polygon feeature classes that were found. If a design database was missing any feature class, a `NULL` value is inserted into the relevant list as a placeholder.
 
 There is not an AIM-specific function for importing shapefiles containing evaluation groups or reporting units, so those need to be imported using something like `rgdal::readOGR()`. The shapefile you use should not have polygons included that don't have values in the attribute field containing the evaluation group identities. If they do, then another step to filter the resulting spatial polygons data frame to remove the unattributed polygons is necessary.
 
@@ -108,7 +108,7 @@ This is also an excellent place to check to make sure that the imported data are
 
 ## Setting Up Relationships and Prepping Data
 
-The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using `attribute.shapefile()` to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).
+The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using `attribute.shapefile()` to add values from an attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).
 ```
 ###############################################################
 ## Manipulating and prepping data

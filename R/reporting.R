@@ -112,9 +112,9 @@ report <- function(out.path,
 
   ## Get the design points info from the analysis script output files
   point.fates <- dd.points@data %>% dplyr::select(.data = .,
-                                             PLOTID,
-                                             FINAL_DESIG,
-                                             YEAR) %>%
+                                                  PLOTID,
+                                                  FINAL_DESIG,
+                                                  YEAR) %>%
     dplyr::group_by(FINAL_DESIG, YEAR) %>%
     dplyr::summarize(n = n())
 

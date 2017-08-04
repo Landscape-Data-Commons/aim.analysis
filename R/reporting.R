@@ -12,6 +12,8 @@
 #' @param project.area.spdf Spatial polygons data frame. Used in plotting maps.
 #' @param points.benchmarked Data frame. The output from \code{benchmark()}.
 #' @param dd.points Spatial points data frame or list of spatial points data frames. This should be the \code{pts} list in the output from \code{read.dd()}.
+#' @param daterange.max Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited before this date will be considered. Currently only restricts to year.
+#' @param daterange.min Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited after this date will be considered. Currently only restricts to year.
 #' @param projection  Optional \code{sp::CRS()} argument. Used to convert \code{points.benchmarked} into a spatial points data frame. Only specify if \code{points.benchmarked} has coordinates not from the same projection as TerrADat. Defaults to \code{sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")}.
 #' @param extension Character string. The file extension to write the report to. Defaults to \code{"html"}.
 #' @export
@@ -28,6 +30,8 @@ report <- function(out.path,
                    project.area.spdf = NULL,
                    points.benchmarked = NULL,
                    dd.points,
+                   daterange.max = NULL,
+                   daterange.min = NULL,
                    projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
                    extension = "html") {
 
@@ -108,6 +112,14 @@ report <- function(out.path,
     project.area.spdf$dissolve <- 1
     project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
                                             id = project.area.spdf@data$dissolve)
+  }
+
+  ## Filter out the forbidden date ranges!
+  if (!is.null(daterange.max)) {
+    dd.points <- dd.points[dd.points$YEAR <= lubridate::year(lubridate::as_date(daterange.max)),]
+  }
+  if (!is.null(daterange.min)) {
+    dd.points <- dd.points[dd.points$YEAR >= lubridate::year(lubridate::as_date(daterange.min)),]
   }
 
   ## Get the design points info from the analysis script output files

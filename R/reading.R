@@ -55,6 +55,7 @@ read.benchmarks <- function(data.path = "",
   benchmarks$eval.string.lower[is.na(benchmarks$Lower.Limit) & is.na(benchmarks$LL.Relation) & !is.na(benchmarks$UL.Relation) & !is.na(benchmarks$Upper.Limit)] <- "-Inf <"
 
   ## Create an evaluation string for future use with the required proportion and its relationship
+  benchmarks$eval.string.proportion <- ""
   benchmarks$eval.string.proportion[!is.na(benchmarks$Required.Proportion)] <- paste(benchmarks$Proportion.Relation[!is.na(benchmarks$Required.Proportion)], benchmarks$Required.Proportion[!is.na(benchmarks$Required.Proportion)])
 
   ## For each benchmark add in the name of the field in TerrADat that corresponds

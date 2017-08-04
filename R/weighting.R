@@ -223,6 +223,8 @@ weight.gen <- function(pts,
 #' @param nontarget.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
 #' @param inaccessible.values Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
 #' @param unneeded.values Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.
+#' @param daterange.max Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited before this date will be considered. Currently only restricts to year.
+#' @param daterange.min Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited after this date will be considered. Currently only restricts to year.
 #' @param fatefieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to \code{"final_desig"}.
 #' @param pointstratumfieldname Character string defining the field name in the points SPDF[s] in dd.import that contains the design stratum. Defaults to \code{"dsgn_strtm_nm"}.
 #' @param designstratumfield Character string defining the field name in the strata SPDF[s] in dd.import that contains the design stratum. Defaults to \code{"dmnt_strtm"}.
@@ -251,6 +253,8 @@ weight <- function(dd.import,
                    inaccessible.values = c("Inaccessible",
                                            "IA"),
                    unneeded.values = c("Not Needed"),
+                   daterange.max = NULL,
+                   daterange.min = NULL,
                    ## These shouldn't need to be changed from these defaults, but better to add that functionality now than regret not having it later
                    fatefieldname = "final_desig",
                    pointstratumfieldname = "dsgn_strtm_nm",
@@ -515,9 +519,15 @@ weight <- function(dd.import,
       ## Sanitize
       pts.spdf@data$YEAR <- year.add(pts = pts.spdf@data, date.field = "DT_VST", source.field = "PANEL")[["YEAR"]]
       #### MAKE SURE TO FILTER OUT POINTS FROM THE FUTURE
+      working.pts <- pts.spdf@data[!(pts.spdf@data$YEAR > as.numeric(format(Sys.Date(), "%Y"))), ]
 
-      #working.pts <- pts.spdf@data[!(pts.spdf@data$YEAR > as.numeric(format(Sys.Date(), "%Y"))), ]
-
+      ## Filter out the forbidden date ranges!
+      if (!is.null(daterange.max)) {
+        working.pts <- working.pts[working.pts$YEAR <= lubridate::year(lubridate::as_date(daterange.max)),]
+      }
+      if (!is.null(daterange.min)) {
+        pts.spdf <- pts.spdf[working.pts$YEAR >= lubridate::year(lubridate::as_date(daterange.min)),]
+      }
 
       ## Now that the clipping and reassigning is all completed, we can start calculating weights
       ## The objects are used in the event that there are no strata in SPDFs that we can use and resort to using the sample frame

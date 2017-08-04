@@ -315,7 +315,7 @@ addLSProp <- function(prop.table,
                                                  dplyr::matches(match = "^LCB[0-9]{1,2}Pct\\.P$"),
                                                  dplyr::matches(match = "^UCB[0-9]{1,2}Pct\\.P$")),
                                  by = c("Indicator" = "Indicator",
-                                        "EVALUATION.CATEGORY" = "Category"))
+                                        "EVALUATION.CATEGORY" = "Category")) %>% dplyr::distinct()
 
   # Calc whether or not objective is met
   prop.table$Objective.Met <- ""

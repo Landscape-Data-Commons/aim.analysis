@@ -40,16 +40,18 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
     message("All of these are being dropped from consideration and the remaining indicators are being used.")
   }
   ## Making a tall version of the TerrADat data frame
-  tdat.tall <- tidyr::gather(data = tdat, key = Indicator, value = Value,
-                                        !!!rlang::quos(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)])
-                                        )
+  tdat.tall <- tidyr::gather(data = tdat,
+                             key = Indicator,
+                             value = Value,
+                             !!!rlang::quos(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)])
+  )
 
   ## This shouldn't be needed except in weird scenarios, but occasionally you end up with the string <Null> where you shouldn't.
   ## This is likely the result of exporting an attribute table from a geodatabase to a spreadsheet, converting that to a .csv, then reading it in and converting it to an SPDF
   tdat.tall$Value[tdat.tall$Value == "<Null>"] <- NA
 
   ## It's not clear what this column will be called, so we'll just get it now
-  eval.name.benchmarks <- names(benchmarks)[grep(x = names(benchmarks), pattern = "evaluation.group$|^evaluation.stratum", ignore.case = TRUE)]
+  eval.name.benchmarks <- names(benchmarks)[grep(x = names(benchmarks), pattern = "evaluation.group$|^evaluation.stratum|evaluation.area$", ignore.case = TRUE)]
 
   ## Strip down benchmarks to just the distinct ones that matter because sometimes the same benchmark appears for multiple reasons?
   benchmarks.distinct <- distinct(benchmarks[, c("MANAGEMENT.QUESTION", eval.name.benchmarks, "INDICATOR.TDAT", "EVALUATION.CATEGORY", "EVAL.STRING.LOWER", "EVAL.STRING.UPPER")])
@@ -58,7 +60,7 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   tdat.tall.benched <- merge(x = tdat.tall,
                              y = benchmarks.distinct,
                              by.x = c(names(tdat.tall)[grepl(x = names(tdat.tall), pattern = evalstratumfield, ignore.case = TRUE)], "Indicator"),
-                             by.y = c("EVALUATION.STRATUM", "INDICATOR.TDAT"))
+                             by.y = c(eval.name.benchmarks, "INDICATOR.TDAT"))
 
   ## Create parseable evaluation strings
   tdat.tall.benched$EVAL.STRING.LOWER <- paste0(tdat.tall.benched$EVAL.STRING.LOWER, tdat.tall.benched$Value)

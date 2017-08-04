@@ -334,9 +334,9 @@ addLSProp <- function(prop.table,
   for (row in 1:nrow(prop.table)) {
     if (!(is.na(prop.table$Required.Proportion[row]) | prop.table$Required.Proportion[row] == "") &
         !is.na(prop.table[row, names(prop.table)[grepl(names(prop.table), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])) {
-      prop.table$Objective.Met[row] <- objectiveMet(prop.base = prop.table$Required.Proportion[row],
+      prop.table$Objective.Met[row] <- objectiveMet(proportion.required = prop.table$Required.Proportion[row],
                                                     relation = prop.table$Proportion.Relation[row],
-                                                    est.prop = prop.table$Estimate.P[row],
+                                                    estimated.proportion = prop.table$Estimate.P[row]/100,
                                                     n = prop.table$NResp[row],
                                                     std.err = prop.table$StdError.P[row],
                                                     conf.level = conf.level)
@@ -348,23 +348,23 @@ addLSProp <- function(prop.table,
 
 
 ## Function for logic comparing estimated proportions for an indicator to its required landscape proportion.
-objectiveMet <- function(prop.base,
+objectiveMet <- function(proportion.required,
                          relation,
-                         est.prop,
+                         estimated.proportion,
                          n,
                          std.err,
                          conf.level) {
-  # Calc the t statistic for comparison of prop.base to est.prop
+  # Calc the t statistic for comparison of proportion.required to estimated.proportion
   # and determine the probability of a greater t value
   if (n-1>0) {
-    p.val <- stats::pt(q = (est.prop/100 - prop.base)/std.err,
+    p.val <- stats::pt(q = (estimated.proportion - proportion.required)*100/std.err,
                        df = n - 1)
   } else { # Trap for bad sample size input.
     p.val <- 999
   }
 
   ## Does the relationship evaluate to true?
-  result <- if (eval(parse(text = paste(est.prop, relation, prop.base, "* 100")))) {"yes"} else {"no"}
+  result <- if (eval(parse(text = paste(estimated.proportion, relation, proportion.required)))) {"yes"} else {"no"}
 
   # Set up significance level ratings
   # If p.val is less than 1-(conf.level/100) - i.e., alpha -, then conclude different from threshold

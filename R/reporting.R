@@ -342,27 +342,21 @@ objectiveMet <- function(prop.base,
                          n,
                          std.err,
                          conf.level) {
-
-  # run comparisons first
-  if (eval(parse(text = paste(est.prop, "<", prop.base*100)))) { # Is the estimated proportion less than the threshold?
-    comp <- "below"
-  } else if (eval(parse(text = paste(prop.base*100, "<", est.prop)))) { # Is the estimated prop greater than the threshold?
-    comp <- "above"
-  } else { # otherwise must be equal
-    comp <- "equal"
-  }
-
   # Calc the t statistic for comparison of prop.base to est.prop
-  t <- (est.prop - prop.base*100)/std.err
-  # determine the probability of a greater t value
+  # and determine the probability of a greater t value
   if (n-1>0) {
-    p.val <- stats::pt(t, n-1)
+    p.val <- stats::pt(q = (est.prop/100 - prop.base)/std.err,
+                       df = n - 1)
   } else { # Trap for bad sample size input.
     p.val <- 999
   }
 
-  #Set up significance level ratings
-  if (p.val <= 1-(conf.level/100)) { # If p.val is less than 1-(conf.level/100) - i.e., alpha -, then conclude different from threshold
+  ## Does the relationship evaluate to true?
+  result <- if (eval(parse(text = paste(est.prop, relation, prop.base, "* 100")))) {"yes"} else {"no"}
+
+  # Set up significance level ratings
+  # If p.val is less than 1-(conf.level/100) - i.e., alpha -, then conclude different from threshold
+  if (p.val <= 1-(conf.level/100)) {
     sig <- ""
   } else if (p.val < (1-(conf.level/100))*1.5) { # if p.val less than half of alpha, likely different
     sig <- "Likely "
@@ -372,23 +366,16 @@ objectiveMet <- function(prop.base,
     sig <- "At threshold" # else conclude not different than threshold value
   }
 
-  # Compile the result and return
+  # Get rid of the yes/no if at the threshold
   if (sig == "At threshold") {
     result <- ""
-  } else if (relation == ">=") {
-    if (comp == "below") {
-      result <- "No"
-    } else {
-      result <- "Yes"
-    }
-  } else {
-    if (comp == "below") {
-      result <- "Yes"
-    } else {
-      result <- "No"
-    }
   }
-  return(paste0(sig,result))
+
+  # Compile the result and return
+  output <- paste0(sig,result)
+  substr(output, 1, 1) <- toupper(substr(output, 1, 1))
+
+  return(output)
 }
 
 num2nom <- function(number,

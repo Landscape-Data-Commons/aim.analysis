@@ -207,11 +207,9 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
 
 
   ## Create a single field to serve as a unique identifier to dissolve the polygons by.
-  for (n in 1:nrow(intersect.spdf.attribute@data)) {
-    intersect.spdf.attribute@data$UNIQUE.IDENTIFIER[n] <- digest::sha1(x = paste0(intersect.spdf.attribute@data[n, paste0(spdf1.attributefieldname, ".spdf1")],
-                                                                                  intersect.spdf.attribute@data[n, paste0(spdf2.attributefieldname, ".spdf2")]),
-                                                                       digits = 14)
-  }
+  intersect.spdf.attribute@data$UNIQUE.IDENTIFIER <- runif(n = nrow(intersect.spdf.attribute@data),
+                                                           min = 10000000000,
+                                                           max = 99999999999)
 
   ## Remove those two columns we made that were just duplicates of existing columns but with .spdf1 or .spdf2 appended
   intersect.spdf.attribute@data <- intersect.spdf.attribute@data[, names(intersect.spdf.attribute@data)[!(intersect.spdf.attribute@data %in% c(paste0(spdf1.attributefieldname, ".spdf1"), paste0(spdf2.attributefieldname, ".spdf2")))]]

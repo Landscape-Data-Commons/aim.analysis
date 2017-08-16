@@ -1,5 +1,5 @@
 Package: aim.analysis
-Date: 2017-08-01
+Date: 2017-08-17
 Type: Package
 Title: Analysis and Reporting of Terrestrial AIM Data Using TerrADat and Sample Design Documentation
 Version: 0.5.1
@@ -19,7 +19,6 @@ Imports:
   spsurvey,
   rgdal,
   rgeos,
-  digest,
   readxl,
   spdplyr,
   ggplot2,

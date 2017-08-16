@@ -188,27 +188,6 @@ for (level in reporting.unit.levels) {
 
 ### Benchmarks
 ```{r objectivesSummary, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
-bm.table <- dplyr::select(.data = benchmarks,
-                          MANAGEMENT.QUESTION,
-                          INDICATOR,
-                          BENCHMARK.SOURCE,
-                          EVALUATION.STRATUM,
-                          EVALUATION.CATEGORY,
-                          EVAL.STRING.LOWER,
-                          EVAL.STRING.UPPER,
-                          INDICATOR.TDAT)
-bm.table$BENCHMARK <- paste(bm.table$EVAL.STRING.LOWER,
-                            bm.table$INDICATOR.TDAT,
-                            bm.table$EVAL.STRING.UPPER)
-bm.table <- dplyr::select(.data = bm.table,
-                          -dplyr::starts_with("eval.string"),
-                          -INDICATOR.TDAT) %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # Drop the unneeded fields and sort by mgt question
-names(bm.table) <- c("Goal/Management Question",
-                     "Indicator",
-                     "Benchmark Source",
-                     "Evaluation Group",
-                     "Evaluation Category",
-                     "Evaluation Benchmark")
 knitr::kable(bm.table)
 
 ```

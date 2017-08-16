@@ -35,11 +35,18 @@ report <- function(out.path,
                    projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
                    extension = "html") {
 
+  # Step one: Grab the confidence level from the analysis variable names
+  # We used to ask the user to provide this, but asking for less is better (and more trustworthy)
   conf.level <- names(analysis) %>% paste(collapse = "") %>%
     stringr::str_extract(pattern = "[0-9]{2}") %>% as.numeric()
 
-  names(benchmarks) <- stringr::str_to_upper(names(benchmarks))
+  # Get the reporting unit levels/types from the analysis data frame
+  reporting.unit.levels <- unique(analysis$Type)
 
+  # Just sanitizing the names of things
+  names(benchmarks) <- toupper(names(benchmarks))
+
+  # Use the default indicator lookup table if none is provided
   if (is.null(indicator.lut)) {
     message("Using default indicator.lut because no alternative was provided.")
     indicator.lut <- data.frame(

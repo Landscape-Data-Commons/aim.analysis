@@ -61,11 +61,11 @@ report <- function(out.path,
   } else if (length(dd.points) > 1) {
     dd.points.list <- lapply(dd.points, function(X) {
       X %>%
-      dplyr::select(dplyr::matches("TERRA_PLOT_ID"),
-                    dplyr::matches("PLOT_NM"),
-                    dplyr::matches("DT_VST"),
-                    dplyr::matches("FINAL_DESIG"),
-                    dplyr::matches("PANEL")) %>%
+        dplyr::select(dplyr::matches("TERRA_PLOT_ID"),
+                      dplyr::matches("PLOT_NM"),
+                      dplyr::matches("DT_VST"),
+                      dplyr::matches("FINAL_DESIG"),
+                      dplyr::matches("PANEL")) %>%
         setNames(c("PRIMARYKEY", "PLOTID", "DATE.VISITED", "FINAL_DESIG", "PANEL"))
     })
     dd.points <- dd.points.list[[1]]

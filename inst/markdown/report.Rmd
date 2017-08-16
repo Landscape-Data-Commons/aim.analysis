@@ -87,47 +87,8 @@ The following tabs contain tables and graphs describing the information in this 
 The map below is provided for general reference only. It was created from the spatial data stored in the project's Sample Design Database, the reporting units provided for this analysis, and the actual monitoring site locations recorded in TerrADat. The map is dynamic - you can pan and zoom it. Layers may also be toggled on/off to view specific features.
 
 ```{r studyMap, echo=FALSE}
-## Create the study area map - project boundary, sample frame, points sampled (from TerrADat)
-## Use leaflet.
-bounds <- sp::bbox(project.area.spdf)
-m <- leaflet::leaflet(sample.frame.spdf) %>% leaflet::addTiles() %>%
-  leaflet::fitBounds(lng1 = bounds[1,1],
-                     lat1 = bounds[2,1],
-                     lng2 = bounds[1,2],
-                     lat2 = bounds[2,2]) %>%
-  leaflet::addPolygons(data = sample.frame.spdf,
-                       fill = TRUE,
-                       stroke = TRUE,
-                       color = "tan",
-                       fillOpacity = 0.6,
-                       weight = 2,
-                       group = "BLM Lands") %>%
-  leaflet::addPolygons(data = project.area.spdf,
-                       fill = FALSE,
-                       stroke = TRUE,
-                       color = "#222",
-                       weight = 3,
-                       group = "Study Area") %>%
-  leaflet::addPolygons(data = reporting.units.spdf,
-                       fill = FALSE,
-                       stroke = TRUE,
-                       color = "#000",
-                       weight = 2,
-                       fillOpacity = 0.6,
-                       group = "Reporting Units") %>%
-  leaflet::addCircleMarkers(data = points.benchmarked.spdf,
-                            radius = 4,
-                            color = "navy",
-                            stroke = FALSE,
-                            fillOpacity = 0.8,
-                            group = "Monitoring Sites") %>%
-  leaflet::addLegend(position = "bottomright",
-                     colors = c("#222", "tan", "navy", "#000"),
-                     labels = c("Study Area Boundary", "BLM Lands", "Monitoring Sites", "Reporting Units")) %>%
-  leaflet::addLayersControl(overlayGroups = c("Monitoring Sites", "BLM Lands", "Reporting Units", "Study Area"),
-                            options = leaflet::layersControlOptions(collapsed = FALSE)
-  )
-m
+# The overview map
+map.overview
 
 ```
 
@@ -145,52 +106,18 @@ The following indicators were specified in the AIM Terrestrial Benchmarks Tool a
 This report covers data collected between __`r format(points.benchmarked$DATE.VISITED[order(points.benchmarked$DATE.VISITED)[1]], "%d-%m-%Y")`__ and __`r format(points.benchmarked$DATE.VISITED[order(points.benchmarked$DATE.VISITED)[length(unlist(na.omit(points.benchmarked$DATE.VISITED)))]], "%d-%m-%Y")`__. Timing of the data collection in each year is shown below.
 
 ```{r plotDates, echo=FALSE, message=FALSE, warning=FALSE}
-  mstartdays <- c(0, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336)
-  mnames = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec")
-  ggplot2::ggplot(data = dplyr::distinct(dplyr::select(.data = points.benchmarked, PRIMARYKEY, yday, year)),
-                       ggplot2::aes(x = yday, fill = factor(year))) +
-    ggplot2::geom_histogram(binwidth = 7) +
-    ggplot2::xlim(0, 365) +
-    ggplot2::geom_vline(xintercept = mstartdays,
-                        color = "white",
-                        size = 0.75) +
-    ggplot2::scale_x_continuous(breaks = mstartdays,
-                                labels = mnames) +
-    ggplot2::ggtitle("Number of monitoring sites where data was collected by week") +
-    ggplot2::theme(panel.grid.major.x = element_blank(),
-                   panel.grid.minor.x = element_blank()) +
-    ggplot2::xlab("Week of the year") +
-    ggplot2::ylab("Number of Plots") +
-    ggplot2::labs(fill = "Year")
+# The figure of sampling dates
+dates.plot
+
 ```
 
 ## Data Collection Summary
-Some sites originally selected as part of a monitoring design will not undergo data collection. For example, selected sites may not be accessible to field crews, or safety concerns may prevent data from being collected. The [Rejection Criteria page on the AIM Landscape Toolbox website](http://aim.landscapetoolbox.org/office-sample-point-evaluation/) describes the rejection criteria and process for evaluating sites. To ensure unbiased estimates of the proportion of the landscape achieving desired conditions, it is important to know the fate of each of the originally-selected sites. The graph below summarizes the fates for every location in the sample design(s) considered in this report.
+Some sites originally selected as part of a monitoring design will not undergo data collection. For example, selected sites may not be accessible to field crews, or safety concerns may prevent data from being collected. The [Rejection Criteria page on the AIM Landscape Toolbox website](http://aim.landscapetoolbox.org/office-sample-point-evaluation/) describes the rejection criteria and process for evaluating sites. To ensure unbiased estimates of the proportion of the landscape achieving desired conditions, it is important to know the fate of each of the originally-selected sites. The graph below summarizes the fates for every location in the sample design(s) considered in this report. Note that this includes every point that was part of a Sample Design Database used in creating the report, so the counts may be higher than might be initially expected.
 
 **Target sampled** sites are locations on BLM lands where monitoring data were collected. **Inaccessible** sites are on BLM lands, but the data collectors could not physically access the site (e.g., needed to cross private land and access was denied, road was washed out). **Non-target** sites are locations that upon further review were determined to not be on BLM-managed lands. **Unknown** sites are those for which their fate was not recorded. If the necessary information was gained (e.g., condition estimate with desired confidence) without sampling all of the selected points, then any extra points could be marked as **Unneeded** (this is not common).
 
 ```{r samplingSummary, error=FALSE, message=FALSE, echo=FALSE}
-ggplot2::ggplot(data = as.data.frame(point.fates),
-                ggplot2::aes(x = factor(YEAR),
-                             y = n,
-                             fill = as.factor(variable),
-                             label = n)) +
-  ggplot2::geom_bar(stat = "identity",
-                    width = 0.5) +
-  ggplot2::coord_flip() +
-  scale_fill_manual(values = c("Unneeded" = "#2c7bb6",
-                               "Unknown" = "#abd9e9",
-                               "Non-target" = "#ffffbf",
-                               "Inaccessible" = "#fdae61",
-                               "Target Sampled" = "#d7191c")) +
-  ggplot2::geom_text(data = subset(as.data.frame(point.fates),
-                                   n != 0),
-                     ggplot2::aes(label = n, y = n),
-                     position = ggplot2::position_stack(vjust = 0.5)) +
-  ggplot2::ylab("Number of Original Sample Points") +
-  ggplot2::xlab("Year") +
-  ggplot2::ggtitle("Summary of Point Fate by Year") +
-  ggplot2::labs(fill = "Final Point\nDesignation")
+fates.plot
 
 ```
 
@@ -201,23 +128,8 @@ The monitoring designs related to this report used stratification as a way to sp
 The table below summarizes the total area of each stratum in the monitoring design and the estimated area sampled during data collectionfor the study area. Looking at the **study area** overall gives a general idea of whether or not there were issues with how the sample data represents the different strata. Proportion of design sites sampled is ideally close to one.  If there are strata with very low sampled proportions (less than 0.5), this may affect the ability to draw inferences beyond the sample data in these strata, which should be more thoroughly evaluated.
 
 ```{r stratumSampling, error=FALSE, message=FALSE, echo=FALSE, results='asis'}
-strat.sampling.table <- dplyr::select(.data = strata.weights,
-                                      Stratum,
-                                      Total.pts,
-                                      Observed.pts,
-                                      Prop.dsgn.pts.obsrvd,
-                                      Area.HA,
-                                      Sampled.area.HA,
-                                      Weight)
-names(strat.sampling.table) <- c("Design Stratum (Type of Land)",
-                                 "# Design Points",
-                                 "# Sampled Points",
-                                 "Prop. Design Points Sampled",
-                                 "Estimated Stratum Area (ha)",
-                                 "Stratum Area Sampled",
-                                 "Calculated Point Weight (ha/pt)")
-
-print(xtable::xtable(strat.sampling.table),
+# Table of strata summarization
+print(xtable::xtable(strata.sampling.table),
       type = 'html',
       include.rownames = FALSE,
       html.table.attributes = list("border='0' cellpadding='5', class='bordered_table' "))
@@ -236,53 +148,10 @@ The Results Summary provides a high level overview. Goals, Objectives, Benchmark
 These tables summarize land management goals and whether related monitoring objectives were achieved based on available monitoring data for the reporting units of interest.  Results are separated into two categories: monitoring objectives which are being achieved ("at threshold"), and those that aren't ("no"). Supporting information including the monitoring objectives themselves and estimated area meeting desired condition are in the next section (Goals, Objectives, Results and Benchmarks by Reporting Unit).
 
 ```{r lsPropsTables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
-prop.table <- benchmarks.sum[,c(1, 7, 3, 2, 4, 5)]
-prop.table$LS.Prop <- paste(prop.table$Proportion.Relation,
-                            prop.table$Required.Proportion*100,
-                            "%",
-                            sep=" ")
-prop.table[prop.table$LS.Prop == "NA NA %", "LS.Prop"] <- ""
-
-tables.hold <- c()
-summary.table <- data.frame()
-for (level in reporting.unit.levels) { # by reporting unit level
-  data.reporting.unit.level <- analysis %>% dplyr::filter(Type == level)
-  # by specific reporting unit
-  for (reporting.unit in unique(data.reporting.unit.level$Subpopulation)) {
-    prop.table.reporting.unit <- addLSProp(prop.table = prop.table,
-                                           analysis.table = analysis,
-                                           reporting.unit = reporting.unit,
-                                           indicator.lut = indicator.lut)
-    prop.table.reporting.unit <-  prop.table.reporting.unit[,-c(2, 5, 6, 8)] %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # sort by mgt question and category
-    prop.table.reporting.unit <- prop.table.reporting.unit %>% dplyr::select(-StdError.P)
-    names(prop.table.reporting.unit) <- c("Goal/Management Objective",
-                              "Indicator",
-                              "Category",
-                              "Required Percent",
-                              "n",
-                              "Estimated Percent",
-                              "Lower CI",
-                              "Upper CI",
-                              "Objective Met?")
-    prop.table.reporting.unit.strip <- prop.table.reporting.unit[!(prop.table.reporting.unit$Category %in% cats.to.suppress),] # Strip out the categories to suppress
-    
-    ## Dump these into a list so we can print them out later. Need to first generate the summary table
-    tables.hold[[reporting.unit]] <- xtable::xtable(prop.table.reporting.unit.strip,
-                                       align = c("l","l","l","l","c","c","c","c","c","c"))
-    
-    prop.table.reporting.unit$level <- level
-    prop.table.reporting.unit$reporting.unit <- reporting.unit
-    summary.table <- rbind(summary.table,
-                           as.data.frame(prop.table.reporting.unit))
-  }
-}
-
 # print the summary tables by whether or not meeting objectives
-vals <- c("YES","NO","AT THRESHOLD")
-
-for (val in vals) {
-  d <- summary.table[grepl(paste(val,"$",sep=""),
-                           toupper(summary.table[, 9])),]
+for (val in c("YES","NO","AT THRESHOLD")) {
+  d <- reporting.unit.summary.df[grepl(paste(val,"$",sep=""),
+                           toupper(reporting.unit.summary.df[, 9])),]
   d <- d[, c(1, 2, 9, 11)]
   names(d) <- c("Goal/Managment Question",
                 "Indicator",
@@ -309,7 +178,7 @@ for (level in reporting.unit.levels) {
   # by specific reporting unit
   for (reporting.unit in unique(data.reporting.unit.level$Subpopulation)) {
     cat("\n### ",reporting.unit,"\n")
-    print(tables.hold[[reporting.unit]],
+    print(reporting.unit.summary.xtables[[reporting.unit]],
           type = 'html',
           include.rownames = FALSE,
           html.table.attributes = list("border='0' cellpadding='5' class='bordered_table' "))
@@ -369,7 +238,7 @@ for (level in reporting.unit.levels) { # by reporting unit level
     data.reporting.unit <- data.reporting.unit.level %>% dplyr::filter(Subpopulation == reporting.unit)
     mqs <- unique(data.reporting.unit$MANAGEMENT.QUESTION)
     for (mq in mqs) { # by specific reporting unit
-      cat("\n#### Goal/Management Question: ", mq, "\n")
+      cat("\n#### **Goal/Management Question: ", mq, "**\n")
       data.mq <- data.reporting.unit %>% dplyr::filter(MANAGEMENT.QUESTION == mq)
       Indicators <- unique(data.mq$Indicator)
       for (indicator in Indicators) {  # by indicator

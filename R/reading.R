@@ -268,3 +268,13 @@ read.tracking <- function(filename = "", path = "") {
 
   return(tracking)
 }
+
+# Read in the default indicator lookup table
+indicator.lookup <- function(){
+  return(read.csv(paste0(path.package("aim.analysis"), "/defaults/indicator_lut.csv"), stringsAsFactors = FALSE))
+}
+
+# Read in the default point fate lookup table
+fate.lookup <- function(){
+  return(read.csv(paste0(path.package("aim.analysis"), "/defaults/fates.csv"), stringsAsFactors = FALSE))
+}

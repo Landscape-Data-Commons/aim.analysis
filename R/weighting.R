@@ -243,16 +243,11 @@ weight <- function(dd.import,
                    reporting.units.spdf = NULL,
                    reportingunitfield = "REPORTING.UNIT",
                    ## Keywords for point fate—the values in the vectors unknown and nontarget are considered nonresponses.
-                   target.values = c("Target Sampled",
-                                     "TS"),
-                   unknown.values = c("Unknown",
-                                      "UNK"),
-                   nontarget.values = c("Non-Target",
-                                        "NT",
-                                        NA),
-                   inaccessible.values = c("Inaccessible",
-                                           "IA"),
-                   unneeded.values = c("Not Needed"),
+                   target.values = NULL,
+                   unknown.values = NULL,
+                   nontarget.values = NULL,
+                   inaccessible.values = NULL,
+                   unneeded.values = NULL,
                    daterange.max = NULL,
                    daterange.min = NULL,
                    ## These shouldn't need to be changed from these defaults, but better to add that functionality now than regret not having it later
@@ -287,23 +282,23 @@ weight <- function(dd.import,
   ## Initialize data frame for stratum info, specifically the point counts per year per stratum per project
   stats.df <- NULL
 
-  ## The fate values that we know about are hardcoded here.
+  ## The fate values that we know about are brought from defaults/fates.csv with fate.lookup()
+  fate.lut <- fate.lookup()
+  fate.list <- lapply(unique(fate.lut$fate), function(X, df){
+    df$fate.value[df$fate == X]
+  }, df = fate.lut) %>% setNames(unique(fate.lut$fate))
+
   ## Whatever values are provided in the function arguments get concatenated and then we keep only the unique values from that result
   target.values <- c(target.values,
-                     "Target Sampled",
-                     "TS") %>% unique() %>% stringr::str_to_upper()
+                     fate.list$'Target Sampled') %>% toupper() %>% unique()
   unknown.values <- c(unknown.values,
-                      "Unknown",
-                      "UNK") %>% unique() %>% stringr::str_to_upper()
+                      fate.list$'Unknown') %>% toupper() %>% unique()
   nontarget.values <- c(nontarget.values,
-                        "Non-Target",
-                        "NT",
-                        NA) %>% unique() %>% stringr::str_to_upper()
+                        fate.list$'Non-target') %>% toupper() %>% unique()
   inaccessible.values <- c(inaccessible.values,
-                           "Inaccessible",
-                           "IA") %>% unique() %>% stringr::str_to_upper()
+                           fate.list$'Inaccessible') %>% toupper() %>% unique()
   unneeded.values <- c(unneeded.values,
-                       "Not Needed") %>% unique() %>% stringr::str_to_upper()
+                       fate.list$'Unneeded') %>% toupper() %>% unique()
 
   ## In case the DDs are from different generations, we need to restrict them to only the shared fields
   if (length(dd.import$pts) > 1) {

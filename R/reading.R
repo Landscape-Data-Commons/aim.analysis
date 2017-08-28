@@ -240,6 +240,62 @@ read.tdat <- function(tdat.path, tdat.name){
   return(tdat.spdf)
 }
 
+#' Splitting apart sample design databases containing multiple designs
+dd.split <- function(dd.list) {
+  # Which design databases has multiple designs?
+  multiple.sf <- names(dd.list$sf)[lapply(dd.list$sf, nrow) > 1]
+
+  # For each of the databases that had more than one design
+  for (frame in multiple.sf) {
+    # Create a list of designs, each as a list of sf, pts, and strata
+    split.list <- lapply(X = unique(dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID),
+                         FUN = function(X, dd.list, frame) {
+                           sf <- dd.list$sf[[frame]][dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID == X,]
+                           pts <- dd.list$pts[[frame]][dd.list$pts[[frame]]$TERRA_SAMPLE_FRAME_ID == X,]
+                           strata <- dd.list$strata[[frame]]
+                           if (!is.null(strata)) {
+                             strata <- strata[strata$TERRA_STRTM_ID %in% pts$TERRA_STRTM_ID,]
+                           }
+
+                           output <- setNames(list(sf, pts, strata), c("sf", "pts", "strata"))
+                           return(output)
+                         },
+                         dd.list = dd.list,
+                         frame = frame)
+
+    # Where in the original imported data did that design database fall?
+    # We want to be able to keep the order consistent (in case the user cares)
+    frame.index <- grep(names(dd.list$sf), pattern = frame)
+
+    # For each of the data sets
+    for (df in c("sf", "pts", "strata")) {
+      # Get the data that came before the current database's stuff
+      if (frame.index > 1) {
+        head <- dd.list[[df]][1:(frame.index-1)]
+      } else {
+        head <- NULL
+      }
+      # and the data that came after
+      if (frame.index < length(dd.list[[df]])) {
+        tail <- dd.list[[df]][(frame.index+1):length(dd.list)]
+      } else {
+        tail <- NULL
+      }
+
+      # Get all of this database's stuff
+      subset <- lapply(X = split.list,
+                       FUN = function(X, df) {
+                         X[[df]]
+                       },
+                       df = df) %>% setNames(paste0(frame, "_", unique(dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID)))
+
+      # And mash it together!
+      dd.list[[df]] <- c(head, subset, tail)
+    }
+  }
+  return(dd.list)
+}
+
 #' Read in plot tracking Excel files
 #' @description Imports plot tracking Excel files.
 #' @param filename A character vector of the filename (including extension) of the project tracking Excel file to import. If not using the \code{path} argument, the filename should include the entire filepath.

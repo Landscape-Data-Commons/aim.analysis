@@ -216,12 +216,8 @@ read.dd <- function(src = "", ## A filepath as a string
 
   output <- list(sf = sf.list, pts = pts.list, strata = strata.list)
 
-  # if (validate.keys) {
-  #   key.errors.df <- validate.keys(output)
-  #
-  #   ## Append this to the output list
-  #   output <- list(output, "errors" = key.errors.df)
-  # }
+  ## In case there're databases involved that had more than one design in them, split them
+  output <- dd.split(output)
 
   return(output)
 }

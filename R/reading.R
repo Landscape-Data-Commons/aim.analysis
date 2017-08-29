@@ -237,6 +237,10 @@ read.tdat <- function(tdat.path, tdat.name){
 }
 
 #' Splitting apart sample design databases containing multiple designs
+#' @description When a sample design database contains more than one design, as indicated by multiple sample frames, this function will (after importing with \code{read.dd()}) split the SPDFs from every multiple-design database into one SPDF per design and insert them at the indices where the original SPDF was. The naming format for these new SPDFs is "geodatabase filename_sample frame ID".
+#' @param dd.list The output from \code{read.dd()}
+#' @return The list \code{dd.list} with one SPDF per design in each of the lists \code{"sf"}, \code{"pts"}, and \code{"strata"}, maintaining the order of the data in those lists.
+#' @export
 dd.split <- function(dd.list) {
   # Which design databases has multiple designs?
   multiple.sf <- names(dd.list$sf)[lapply(dd.list$sf, nrow) > 1]
@@ -249,10 +253,12 @@ dd.split <- function(dd.list) {
                            sf <- dd.list$sf[[frame]][dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID == X,]
                            pts <- dd.list$pts[[frame]][dd.list$pts[[frame]]$TERRA_SAMPLE_FRAME_ID == X,]
                            strata <- dd.list$strata[[frame]]
+                           # Sometimes strata is NULL, so only try to slice if it isn't
                            if (!is.null(strata)) {
                              strata <- strata[strata$TERRA_STRTM_ID %in% pts$TERRA_STRTM_ID,]
                            }
 
+                           # Make the output list with the names of the data types
                            output <- setNames(list(sf, pts, strata), c("sf", "pts", "strata"))
                            return(output)
                          },

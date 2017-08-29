@@ -436,6 +436,130 @@ year.add <- function(pts,
   return(pts)
 }
 
+#' Filtering data frames by dates
+#' @description Given a date field and a lower date, an upper date, or both, filter data.
+#' @param data Data frame. So long as \code{[]} will work on it, it's fine so spatial data frames are valid.
+#' @param date.field Character string. The name of the column/variable in the data frame containing the date values. The date values must be interpretable by \code{lubridate::as_date()}.
+#' @param after Optional character string expressing a date in the format \code{YYYY-MM-DD} (or \code{MM-DD} if \code{ignore.year = TRUE}). The earliest date (inclusive) to return data from. Rows containing earlier dates will not be returned.
+#' @param before Optional character string expressing a date in the format \code{YYYY-MM-DD} (or \code{MM-DD} if \code{ignore.year = TRUE}). The latest date (inclusive) to return data from. Rows containing later dates will not be returned.
+#' @param ignore.year Logical. If \code{TRUE} then years will be ignored in comparisons, e.g. If \code{after = "1986-10-30"} or \code{after = "10-30"} then all rows containing dates from October 30 to December 31 would be returned, regardless of the year. Defaults to \code{FALSE}.
+#' @export
+filter.by.date <- function(data,
+                           date.field,
+                           after = NULL,
+                           before = NULL,
+                           ignore.year = FALSE){
+  # A few validity checks
+  if (is.null(after) & is.null(before)) {
+    stop("At least one bounding date must be provided.")
+  }
+
+  if (!ignore.year) {
+    if (!is.null(after)) {
+      if (grepl(after, pattern = "$[0-9]{4}-")) {
+        stop("If ignore.year is FALSE then the year must be included in the after date.")
+      }
+    }
+    if (!is.null(before)) {
+      if (grepl(before, pattern = "$[0-9]{4}-")) {
+        stop("If ignore.year is FALSE then the year must be included in the before date.")
+      }
+    }
+  } else {
+    if (!is.null(after)) {
+      if (grepl(after, pattern = "^[0-9]{4}-")) {
+        message("ignore.year is TRUE so the year will be ignored in the after date.")
+      }
+    }
+    if (!is.null(before)) {
+      if (grepl(before, pattern = "^[0-9]{4}-")) {
+        message("ignore.year is TRUE so the year will be ignored in the before date.")
+      }
+    }
+  }
+
+  if (any(is.na(data[[date.field]]))) {
+    message("Dropping all rows with NA in the date field.")
+    data <- data[!is.na(data[[date.field]]),]
+  }
+
+  # If no bounds were provided, just set them to dates long before and after any sampling could occur
+  if (is.null(after)) {
+    after <- "0000-01-01"
+  }
+  if (is.null(before)) {
+    before <- "9999-12-31"
+  }
+
+  # Whether years matter or not, we're doing this by year
+  years <- unique(lubridate::year(lubridate::as_date(data[[date.field]])))
+
+  # We only have to do it by year because those dang leap years changing the day number
+  data.filtered <- lapply(X = years,
+                          FUN = function(X,
+                                         df,
+                                         date.field,
+                                         after,
+                                         before,
+                                         ignore.year){
+                            # Get just this one year
+                            df <- df[lubridate::year(lubridate::as_date(df[[date.field]])) == X,]
+
+                            # If the year is ignored (e.g., we want the same date range from every year)
+                            if (ignore.year) {
+                              # Convert the after/before strings to the year being looked at
+                              after <- paste0(X,
+                                              "-",
+                                              stringr::str_extract(after, pattern = "[0-9]{2}-[0-9]{2}$"))
+                              before <- paste0(X,
+                                               "-",
+                                               stringr::str_extract(before, pattern = "[0-9]{2}-[0-9]{2}$"))
+                            } else {
+                              # Otherwise, filter the points from the wrong years
+                              df <- df[lubridate::year(lubridate::as_date(df[[date.field]])) >= lubridate::year(lubridate::as_date(after)) & lubridate::year(lubridate::as_date(df[[date.field]])) <= lubridate::year(lubridate::as_date(before)),]
+
+                              # If there's nothing left, then return the empty data frame
+                              if (nrow(df) < 1) {
+                                return(df)
+                              }
+                            }
+
+                            # Filter using the day number.
+                            # The check for the years matching is so that if ignore.year is FALSE and we have a situation where the year
+                            # being filtered isn't in the year of the boundary, we don't cut it out e.g., after is in 2013, before is in 2018, and df is from 2015
+                            if (lubridate::year(lubridate::as_date(df[[date.field]])) == lubridate::year(lubridate::as_date(after))) {
+                              df <- df[lubridate::yday(lubridate::as_date(df[[date.field]])) >= lubridate::yday(lubridate::as_date(after)),]
+                            }
+                            if (lubridate::year(lubridate::as_date(df[[date.field]])) == lubridate::year(lubridate::as_date(before))) {
+                              df <- df[lubridate::yday(lubridate::as_date(df[[date.field]])) <= lubridate::yday(lubridate::as_date(before)),]
+                            }
+
+
+                            return(df)
+                          },
+                          df = data,
+                          date.field = date.field,
+                          after = after,
+                          before = before,
+                          ignore.year = ignore.year)
+
+  # Create the output, which involves combining data frames if more than one was made
+  # Using rbind() instead of dplyr::bind_rows() in case these are SPDFs. Plus, a loop won't be terrible for so few data frames
+  if (length(data.filtered) > 1) {
+    output <- data.filtered[[1]]
+    for (n in 2:length(data.filtered)) {
+      if (nrow(data.filtered[[n]]) > 0) {
+        output <- rbind(output, data.filtered[[n]])
+      }
+    }
+  } else {
+    output <- data.filtered[[1]]
+  }
+
+  return(output)
+}
+
+
 #' Apply project tracking Excel files to imported Design Databases.
 #' @description Imports plot tracking worksheets used during an AIM project and uses them to assigns statuses to imported Design Databases.
 #' @return Returns \code{dd.list} with sampling dates and statuses added from the plot tracking Excel files.

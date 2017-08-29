@@ -153,7 +153,7 @@ report <- function(out.path,
     dplyr::group_by(FINAL_DESIG, YEAR) %>%
     dplyr::summarize(n = n())
 
-  fates <- read.csv(paste0(path.package("aim.analysis"), "/inst/defaults/fates.csv"), stringsAsFactors = FALSE)
+  fates <- fate.lookup()
   point.fates <- merge(point.fates,
                        fates,
                        by.x = "FINAL_DESIG",

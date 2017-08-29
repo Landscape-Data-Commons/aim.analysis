@@ -28,52 +28,54 @@ msgGrob <- "EXAMPLE\nESTIMATES\nDo not use!"
 
 # Introduction
 
-Information about the health of the landscapes we manage is essential to achieve the BLM mission (Federal Land Policy and Management Act of 1976).  It enables BLM to measure the benefits that these lands and waters provide, understand the effects of multiple uses, and thus create management plans to sustain these landscapes for future generations.
+Information about the health of the landscapes we manage is essential to achieve the BLM mission (Federal Land Policy and Management Act of 1976).  Land health information enables BLM to measure the benefits that these lands and waters provide, understand the effects of multiple uses, and thus create management plans to sustain these landscapes for future generations.
 
-This report provides information about the health of terrestrial and aquatic ecosystems.  This information was collected on-the-ground by field biologists who measure and assess important indicators related to ecosystem health.  In terrestrial ecosystems, they focus on cover and composition of plant species, plant height, gaps between plant canopies, and stability of soils.  In aquatic ecosystems, they focus on water quality, stream morphology, and biological characteristics.  These quantitative measurements and qualitative assessments were collected under the BLM Assessment, Inventory, and Monitoring (AIM) program.   For more information about AIM, see <http://aim.landscapetoolbox.org/learn-3/about/>.
+Achieving management goals and objectives on BLM lands requires a structured implementation process whereby management goals are refined into concrete monitoring objectives. These monitoring objectives identify the indicator of interest, acceptable range of values for this indicator (i.e., the benchmark), the desired percentage of the project area achieving this objective, the desired confidence level and the time period over which this indicator will be evaluated.  With monitoring data are evaluated to determine whether the monitoring objective is achieved and then the user can decide if a management goal is also achieved.
 
-This report also includes relevant standard geospatial datasets.  Some relate to ecosystem health, while others provide contextual information about landscapes such as the management activities occurring there.
+This report presents the monitoring objectives and goals and the results of applying them to field data with the intent to provide information about the health of terrestrial ecosystems. The management goals, monitoring objectives, benchmarks, and reporting units were defined by the user (i.e., field office, district office or state office) in the Terrestrial Benchmark Tool and with spatial data files and supplied to the BLM National Operations Center. Field data used in the analysis were collected on the ground by field biologists who measured and assessed important indicators related to ecosystem health with a focus on cover and composition of plant species, plant height, gaps between plant canopies, and stability of soils. These quantitative measurements and qualitative assessments were collected under the BLM Assessment, Inventory, and Monitoring (AIM) program and were selected because of their relationship to the Land Health Fundamentals (link to page on AIM and Land Health Fundamentals). For more information about AIM, including its probabilistic sampling framework, see: http://aim.landscapetoolbox.org/learn-3/about/.
+
+It should be noted that all data inputs—management goals, monitoring objectives, benchmarks, field data, reporting unit boundaries, and confidence intervals—are set by the user. For more information about the format and analysis of these inputs, see the Appendices at the end of this report. Additionally, the glossary (LINK) contains concise definitions of technical terminology used in this document.
 
 This report was generated through partnership among the BLM National Operations Center, USDA-ARS Jornada, and the BLM National Aquatic Monitoring Center.
 
 ## Report Purpose and use
 
-The purpose of this report is to describe key indicators of ecosystem health across an area of interest. This information can be used to evaluate whether or not goals, standards, and/or desired conditions are being achieved across BLM lands, an essential step in adaptive management (Figure). Specific management applications include but are not limited to: treatment effectiveness, Land Health Standards evaluation, sage-grouse habitat analysis and Resource Management Plan effectiveness. Tables, graphs, and other content from this report can be pasted into decision-making documents, or the entire report can be used as an appendix to such documents.
+The purpose of this report is to describe key indicators of ecosystem health across an area of interest. This information can be used to evaluate whether goals, standards, and/or desired conditions are being achieved across BLM lands, an essential step in adaptive management (Figure 1). Specific management applications include but are not limited to: treatment effectiveness, Land Health Standards evaluation, sage-grouse habitat site-scale analysis and Resource Management Plan effectiveness. Tables, graphs, and other content from this report can be copied into decision-making documents, or the entire report can be used as an appendix to such documents.
 
-The standard core indicators contained in this report are relevant to management questions across all BLM ecosystem types, as identified through the BLM AIM Strategy and related efforts (<BLM Tech Note 440>, <BLM Tech Ref 1735-1>).  This report also contains standard national geospatial datasets managed by the BLM National Operations Center and partners.  These geospatial datasets provide spatial and management context for the standard AIM core indicators.
+The standard core indicators contained in this report are relevant to management questions across all BLM ecosystem types, as identified through the BLM AIM Strategy and related efforts (<BLM Tech Note 440>, <BLM Tech Ref 1735-1>). This report also contains data from geospatial datasets managed by the BLM National Operations Center and partners.  These geospatial datasets provide spatial and management context for the standard AIM core indicators.
 
 ## Report Organization
 
-This report has five main sections.  The **introduction** sets the stage.  The **data summary** provides contextual information that is helpful for interpreting the results, including the list of indicators, time period, timing of data collection, and maps.
+This report has four main sections.
+1. The **introduction** sets the stage.
+2. The **data summary** provides contextual information that is helpful for interpreting the results, including the list of indicators, time period, timing of data collection, and maps.
+3. The **goals, monitoring objectives, benchmarks, and results summary** section is where results begin. This contains tables of which indicators met specified objectives by reporting unit, and a summary of the stated objectives.  These table can be used by BLM land managers to evaluate whether goals or management objectives were achieved. These tables summarize results for all indicators.
+4. The **indicator estimates by reporting unit for monitoring objectives** section identifies the condition of each indicator for each area of interest or reporting unit. Condition refers to the proportion of land or water resources that is achieving desired values known as benchmarks. This section provides further detail about each row of the table in the previous section and can be used as supporting information for the conclusions drawn from that table.
 
-Report results begin with the **goals, monitoring objectives, benchmarks, and results summary** section.  This contains tables of which indicators met specified objectdives by reporting unit, and a summary of the stated objectdives.  These table can be used by BLM land managers to evaluate whether goals or management objectives were achieved. These tables summarize results for all indicators.
-
-The **indicator estimates by reporting unit for monitoring objectives** section identifies the condition of each indicator for each area of interest or reporting unit.  Condition refers to the proportion of land or water resources that is achieving desired values known as benchmarks. This section provides further detail about each row of the table in the previous section and can be used as supporting information for the conclusions drawn from that table. This is followed by the **spatial distribution of core indicators** section which provides remote-sensing-derived maps of various core indicators for the study area.
-
-Finally, the **appendices** contain additional background information on AIM, the core indicators and methods, and the analysis approaches used to generate this reports.
+These are finally followed by the **appendices** contain additional background information on AIM, the core indicators and methods, and the analysis approaches used to generate this report.
 
 ## Information Sources
 
 This report summarizes and analyzes information collected from an AIM project. The following information sources were used in the analysis presented in this report:
 
-  * The Monitoring Design Worksheet summarizes the goals and objectives of the monitoring project.
-* AIM data from TerrADat are the quantitative monitoring data collected in the field for the project.
-* The AIM Terrestrial Benchmark Tool clearly states the monitoring objectives, including indicators, benchmarks, and required proportion of the landscape. It also contains tabular information defining evaluation strata  (i.e., categories assigned to each sample point for the purpose of evaluating an indicator against a benchmark that may change across a landscape). The tool also provides a count of the number of sites meeting and not meeting objectives.
-* The project's Sample Design Database captures all of the technical details of the project sample design (e.g., sample frame, stratification, initial site selections, fate of the monitoring sites, and design weights). This information is used to produce unbiased estimates by adjusting the sample point weights.
-* Spatial data files defining the different reporting units for which estimates will be generated from the AIM data.
+* AIM data from TerrADat were the quantitative monitoring data collected in the field for the project.
+* The AIM Terrestrial Benchmark Tool contained the monitoring objectives. Every monitoring objective for an indicator in a benchmark group was defined as a set of condition categories (e.g., "Suitable", "Marginal", and "Unsuitable"), each with benchmark values and—when available—the required percentage achieving desired conditions of the landscape. This was provided by the user.
+* The project's Sample Design Database captured all of the technical details of the project sample design (e.g., sample frame, stratification, initial site selections, fate of the monitoring sites, and design weights). This information was used to produce unbiased estimates by adjusting the sample point weights.
+* Spatial data files defining the reporting units for which estimates were generated from the AIM data. This was provided by the user.
 * (OPTIONAL) - Additional sample points from the BLM Landscape Monitoring Framework to supplement the AIM project data.
-* (OPTIONAL) - Remote sensing products such as the Grass/Shrub continuous variable predictions or the Landfire EVT map to supplement the quantitative field-derived estimates.
+
+The original, narrative description of the project design and monitoring objectives were captured in the project’s Monitoring Design Worksheet which was used to select or create the data sources listed above.
 
 ## Interpreting the Results
 
-Results in this report can be used to evaluate whether goals regarding ecosystem health are being achieved across a landscape. Success criteria for each goal are specified as measureable monitoring objectives that include a natural resource indicator of interest, a benchmark that identifies desired values of that indicator, and the proportion of the landscape that should meet the benchmark. This report provides statistical estimates of the proportion of the landscape achieving the monitoring objectives, in the form of tables, graphs and other information (see summary in objectives, benchmarks, and landscape thresholds or detailed info in condition estimates by objective). BLM land managers requesting the report supplied relevant goals, monitoring objectives and reporting units as part of the process of designing their monitoring effort (see <http://aim.landscapetoolbox.org/design>). Upon receipt, it will be the responsibility of BLM land managers to evaluate whether goals are achieved and make management recommendations.
+Results in this report can be used to evaluate whether goals regarding ecosystem health are being achieved across a reporting unit (Figure 1). Success criteria for each goal are specified as measureable monitoring objectives that include a natural resource indicator of interest, benchmarks that define condition categories for that indicator, and the proportion of a reporting unit that should fall in the condition categories. This report provides statistical estimates of the proportion of the landscape achieving or failing to achieve the monitoring objectives in the forms of tables and graphs. BLM land managers requesting the report supplied relevant goals, monitoring objectives and reporting units as part of the process of designing their monitoring effort (see <http://aim.landscapetoolbox.org/design>). Evaluating whether goals are achieved and make management recommendations is the responsibility of BLM land managers.
 
-Consider important contextual information when you evaluate whether goals are achieved:
+Important contextual information to consider when you evaluate whether goals are achieved:
 
-* Monitoring objectives: Are benchmarks well-justified and based on best available knowledge? Are required proportions informed by management goals and landscape context?
-* Reporting unit: Is this appropriate to evaluate whether goals are achieved?
-* Timing of data collection: Was data collected during an appropriate season for the ecosystem type as well as the goals and objectives for the reporting unit?  Does timing vary between years?  Does data collection timing affect your results?
-* Monitoring site spread: Are monitoring sites distributed across the area of interest?  Were some areas systematically missed, which could lead to bias?
+* **Monitoring objectives:** Are benchmarks well-justified and based on best available knowledge? Are required proportions informed by management goals and landscape context?
+* **Reporting unit:** Is this appropriate to evaluate whether goals are achieved?
+* **Timing of data collection:** Was data collected during an appropriate season for the ecosystem type as well as the goals and objectives for the reporting unit?  Does timing vary between years?  Does data collection timing affect your results?
+* **Monitoring site spread:** Are monitoring sites distributed across the area of interest?  Were some areas systematically missed, which could lead to bias?
 
 ## Additional Information
 

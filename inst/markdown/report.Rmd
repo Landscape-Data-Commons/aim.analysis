@@ -121,20 +121,6 @@ fates.plot
 
 ```
 
-## Stratum Sampling Info
-
-The monitoring designs related to this report used stratification as a way to spread monitoring effort across different types of land in the study area. The accuracy of estimates from monitoring data depends on whether or not the strata were adequately sampled. Some sites are not visited for various reasons (e.g., inaccessibility, time ran out; see [Rejection Criteria](http://aim.landscapetoolbox.org/wp-content/uploads/2016/12/RejectionCriteria_161228.pdf)). This does not affect accuracy of estimates as long as: 1) the missed sites do not account for a majority of the selected sites in the design and 2) sites were missed at random (i.e, there was no pattern to which sites had data collected and which were missed).
-
-The table below summarizes the total area of each stratum in the monitoring design and the estimated area sampled during data collectionfor the study area. Looking at the **study area** overall gives a general idea of whether or not there were issues with how the sample data represents the different strata. Proportion of design sites sampled is ideally close to one.  If there are strata with very low sampled proportions (less than 0.5), this may affect the ability to draw inferences beyond the sample data in these strata, which should be more thoroughly evaluated.
-
-```{r stratumSampling, error=FALSE, message=FALSE, echo=FALSE, results='asis'}
-# Table of strata summarization
-print(xtable::xtable(strata.sampling.table),
-      type = 'html',
-      include.rownames = FALSE,
-      html.table.attributes = list("border='0' cellpadding='5', class='bordered_table' "))
-```
-
 
 ***
 # Goals, Monitoring Objectives, Benchmarks, and Results Summary

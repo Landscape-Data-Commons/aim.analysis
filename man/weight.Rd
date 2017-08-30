@@ -6,12 +6,11 @@
 \usage{
 weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
   temp.path = getwd(), reporting.units.spdf = NULL,
-  reportingunitfield = "REPORTING.UNIT", target.values = c("Target Sampled",
-  "TS"), unknown.values = c("Unknown", "UNK"),
-  nontarget.values = c("Non-Target", "NT", NA),
-  inaccessible.values = c("Inaccessible", "IA"),
-  unneeded.values = c("Not Needed"), fatefieldname = "final_desig",
-  pointstratumfieldname = "dsgn_strtm_nm",
+  reportingunitfield = "REPORTING.UNIT", target.values = NULL,
+  unknown.values = NULL, nontarget.values = NULL,
+  inaccessible.values = NULL, unneeded.values = NULL,
+  daterange.max = NULL, daterange.min = NULL,
+  fatefieldname = "final_desig", pointstratumfieldname = "dsgn_strtm_nm",
   designstratumfield = "dmnnt_strtm",
   projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"),
   sliverdrop = TRUE, sliverwarn = TRUE, sliverthreshold = 0.01)
@@ -40,6 +39,10 @@ weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
 \item{inaccessible.values}{Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
 \item{unneeded.values}{Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
+
+\item{daterange.max}{Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited before this date will be considered. Currently only restricts to year.}
+
+\item{daterange.min}{Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited after this date will be considered. Currently only restricts to year.}
 
 \item{fatefieldname}{Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to \code{"final_desig"}.}
 

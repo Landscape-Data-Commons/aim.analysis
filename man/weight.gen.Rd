@@ -5,8 +5,9 @@
 \title{Calculate sample weights for points using design polygons}
 \usage{
 weight.gen(pts, pts.fatefield = NULL, pts.groupfield = NULL, frame.spdf,
-  frame.groupfield = NULL, target.values, unknown.values, nontarget.values,
-  inaccessible.values, unneeded.values, ...)
+  frame.groupfield = NULL, target.values = NULL, unknown.values = NULL,
+  nontarget.values = NULL, inaccessible.values = NULL,
+  unneeded.values = NULL, ...)
 }
 \arguments{
 \item{pts}{Data frame or spatial points data frame. This should be the points information. At minimum, it must contain a field matching the string \code{pts.fatefield} containing string values matching those in \code{target.values}, \code{unknown.values}, etc. If providing \code{pts.groupfield} it must also have a field matching that containing values matching values found in \code{frame.spdf$frame.groupfield}. If \code{date.field} or \code{year.source.field} is provided, then fields matching those must exist.}
@@ -29,10 +30,10 @@ weight.gen(pts, pts.fatefield = NULL, pts.groupfield = NULL, frame.spdf,
 
 \item{unneeded.values}{Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. When using AIM design databases, this should be at minimum \code{c("Not needed")}. This is case insensitive.}
 
-\item{...}{Optional character strings. These must exactly match the names of the field in \code{pts} and will be used to group the points beyond the identity/identities they share with the frame. When calculating \code{frame.stats} these will be passed to \code{dplyr::group_by_()}. They will have no impact on \code{frame.summary} or \code{point.weights}.}
+\item{...}{Optional character strings. These must exactly match the names of the field in \code{pts} and will be used to group the points beyond the identity/identities they share with the frame. When calculating \code{frame.stats} these will be passed to \code{dplyr::group_by_()}. They will have no impact on \code{frame.summary} or \code{point.weights}. \code{"YEAR"} would be a common string to pass here.}
 }
 \value{
-A list containing the named data frames \code{frame.stats}, \code{frame.summary} (if groupfield strings were provided), and \code{point.weights}. \code{"YEAR"} would be a common string to pass here.
+A list containing the named data frames \code{frame.stats}, \code{frame.summary} (if groupfield strings were provided), and \code{point.weights}.
 }
 \description{
 Calculate the weight for points in a sample design based on the sample frame or strata used to draw them and the point fate. The outputs are a data frame of the points and their weights, a data frame summary of the fates of the points (optionally by year), and a data frame summary of the strata (optionally by year) if strata were used. No spatial checks are done, so make sure that \code{pts} and \code{frame.spdf} are from the same design, limited to the extent of the original sample frame, and have complete overlap.

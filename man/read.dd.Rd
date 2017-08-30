@@ -20,7 +20,3 @@ read.dd(src = "", dd.src, func = "arcgisbinding",
 \description{
 This function imports one or more Sample Design Database[s] and returns a list of the named lists sf, pts, and strata. The named lists contain SpatialPoints/PolygonsDataFrames of the sample frame, points, and strata from each of the geodatabases. The SPDFs are named using the filename of the geodatabase source, so that each list has one SPDF named for each geodatabase imported and those names are identical between lists. If a Sample Design Database is missing any one of those features, a NULL value replaces the SPDF.
 }
-\examples{
-weighter()
-}
-\keyword{weights}

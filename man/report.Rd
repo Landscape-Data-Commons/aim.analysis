@@ -7,7 +7,8 @@
 report(out.path, project.name, indicator.lut = NULL, benchmarks = NULL,
   analysis = NULL, cats.to.suppress = c("Not Meeting"), strata.weights,
   reporting.units.spdf = NULL, sample.frame.spdf, project.area.spdf = NULL,
-  points.benchmarked = NULL, dd.points,
+  points.benchmarked = NULL, dd.points, daterange.max = NULL,
+  daterange.min = NULL,
   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
   extension = "html")
 }
@@ -35,6 +36,10 @@ report(out.path, project.name, indicator.lut = NULL, benchmarks = NULL,
 \item{points.benchmarked}{Data frame. The output from \code{benchmark()}.}
 
 \item{dd.points}{Spatial points data frame or list of spatial points data frames. This should be the \code{pts} list in the output from \code{read.dd()}.}
+
+\item{daterange.max}{Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited before this date will be considered. Currently only restricts to year.}
+
+\item{daterange.min}{Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited after this date will be considered. Currently only restricts to year.}
 
 \item{projection}{Optional \code{sp::CRS()} argument. Used to convert \code{points.benchmarked} into a spatial points data frame. Only specify if \code{points.benchmarked} has coordinates not from the same projection as TerrADat. Defaults to \code{sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")}.}
 

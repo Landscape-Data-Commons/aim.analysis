@@ -10,19 +10,19 @@
 #' @param nontarget.values Character string or character vector. This defines what values in the point fate field count as non-target points. When using AIM design databases, this should be at minimum \code{c("Non-Target", "NT", NA)}. This is case insensitive.
 #' @param inaccessible.values Character string or character vector. This defines what values in the point fate field count as non-target points. When using AIM design databases, this should be at minimum \code{c("Inaccessible")}. This is case insensitive.
 #' @param unneeded.values Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. When using AIM design databases, this should be at minimum \code{c("Not needed")}. This is case insensitive.
-#' @param ... Optional character strings. These must exactly match the names of the field in \code{pts} and will be used to group the points beyond the identity/identities they share with the frame. When calculating \code{frame.stats} these will be passed to \code{dplyr::group_by_()}. They will have no impact on \code{frame.summary} or \code{point.weights}.
-#' @return A list containing the named data frames \code{frame.stats}, \code{frame.summary} (if groupfield strings were provided), and \code{point.weights}. \code{"YEAR"} would be a common string to pass here.
+#' @param ... Optional character strings. These must exactly match the names of the field in \code{pts} and will be used to group the points beyond the identity/identities they share with the frame. When calculating \code{frame.stats} these will be passed to \code{dplyr::group_by_()}. They will have no impact on \code{frame.summary} or \code{point.weights}. \code{"YEAR"} would be a common string to pass here.
+#' @return A list containing the named data frames \code{frame.stats}, \code{frame.summary} (if groupfield strings were provided), and \code{point.weights}.
 #' @export
 weight.gen <- function(pts,
                        pts.fatefield = NULL, #pts.fatefield
                        pts.groupfield = NULL, #"WEIGHT.ID"
                        frame.spdf,
                        frame.groupfield = NULL, #designstratumfield
-                       target.values,
-                       unknown.values,
-                       nontarget.values,
-                       inaccessible.values,
-                       unneeded.values,
+                       target.values = NULL,
+                       unknown.values = NULL,
+                       nontarget.values = NULL,
+                       inaccessible.values = NULL,
+                       unneeded.values = NULL,
                        ...){
   ## Sanitize
   if (class(pts) == "SpatialPointsDataFrame") {

@@ -281,30 +281,31 @@ report <- function(out.path,
                                                                                     proportions.reporting.unit.df <- addLSProp(prop.table = proportions.df,
                                                                                                                                analysis.table = analysis.df,
                                                                                                                                reporting.unit = X,
-                                                                                                                               indicator.lut = indicator.lut) %>%
-                                                                                      # Get the fields in the right order and drop the ones we don't care about
-                                                                                      dplyr::select(MANAGEMENT.QUESTION,
-                                                                                                    indicator.name.alt,
-                                                                                                    EVALUATION.CATEGORY,
-                                                                                                    LS.Prop,
-                                                                                                    NResp,
-                                                                                                    Estimate.P,
-                                                                                                    # StdError.P,
-                                                                                                    dplyr::matches(match = "^LCB[0-9]{1,2}Pct\\.P$"),
-                                                                                                    dplyr::matches(match = "^UCB[0-9]{1,2}Pct\\.P$"),
-                                                                                                    Objective.Met) %>%
+                                                                                                                               indicator.lut = indicator.lut)
+
+                                                                                    proportions.reporting.unit.df$CI <- paste("±", (proportions.reporting.unit.df[[grep(names(proportions.reporting.unit.df), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]] - proportions.reporting.unit.df[[grep(names(proportions.reporting.unit.df), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])/2)
+
+                                                                                    # Get the fields in the right order and drop the ones we don't care about
+                                                                                    proportions.reporting.unit.df <- dplyr::select(.data= proportions.reporting.unit.df,
+                                                                                                                                   MANAGEMENT.QUESTION,
+                                                                                                                                   indicator.name.alt,
+                                                                                                                                   EVALUATION.CATEGORY,
+                                                                                                                                   LS.Prop,
+                                                                                                                                   NResp,
+                                                                                                                                   Estimate.P,
+                                                                                                                                   CI,
+                                                                                                                                   Objective.Met) %>%
                                                                                       # Sort
                                                                                       dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)
 
                                                                                     # Rename to friendly strings
-                                                                                    names(proportions.reporting.unit.df) <- c("Goal/Management Objective",
+                                                                                    names(proportions.reporting.unit.df) <- c("Monitoring Objective",
                                                                                                                               "Indicator",
-                                                                                                                              "Category",
+                                                                                                                              "Condition Category",
                                                                                                                               "Required Percent",
-                                                                                                                              "n",
+                                                                                                                              "Number of Plots",
                                                                                                                               "Estimated Percent",
-                                                                                                                              "Lower CI",
-                                                                                                                              "Upper CI",
+                                                                                                                              "Confidence Interval",
                                                                                                                               "Objective Met?")
 
                                                                                     # Add the reporting unit
@@ -456,19 +457,20 @@ indicatorTable <- function(df,
                               Subpopulation == reporting.unit.name,
                               Indicator == indicator,
                               MANAGEMENT.QUESTION == mq,
-                              Category != "Total") %>%
-    dplyr::select(Category,
-                  NResp,
-                  Estimate.P,
-                  StdError.P,
-                  dplyr::matches(match = "^LCB[0-9]{2}Pct\\.P$"),
-                  dplyr::matches(match = "^UCB[0-9]{2}Pct\\.P$"))
-  names(table.data) <- c("Category",
-                         "# Points",
-                         "% Area Estimate",
-                         "Std. Error",
-                         paste0("Lower ", conf.level, "% CI"),
-                         paste0("Upper ", conf.level, "% CI"))
+                              Category != "Total")
+
+  table.data$CI <- paste("±", (table.data[[grep(names(table.data), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]] - table.data[[grep(names(table.data), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])/2)
+
+  table.data <- dplyr::select(Category,
+                              NResp,
+                              Estimate.P,
+                              CI,
+                              StdError.P)
+  names(table.data) <- c("Condition Category",
+                         "Number of Points",
+                         "Estimated Percent\nof Surveyed Area",
+                         "Confidence Interval",
+                         "Standard Error")
   return(table.data)
 }
 

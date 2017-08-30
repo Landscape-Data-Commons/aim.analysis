@@ -72,13 +72,14 @@ weight.gen <- function(pts,
                                     value = count,
                                     fill = 0)
 
-  ## What kinds of points will be tackled
+  ## What kinds of points might be tackled
   point.types <- c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown")
 
-  ## We need to know which of the types of points (target, non-target, etc.) are represented
+  ## We need to know which of the types of points (target, non-target, etc.) are actually represented
   extant.counts <- point.types[point.types %in% names(pts.summary.wide)]
 
   ## Only asking for summarize() to operate on those columns that exist because if, for example, there's no Unsampled.pts.unneeded column and we call it here, the function will crash and burn
+  # This should probably be converted to use !!!rlang::quos() but it works right now so don't sweat it
   frame.stats <- eval(parse(text = paste0("pts.summary.wide %>% group_by(", paste(pts.summary.fields, collapse = ","),") %>%",
                                           "dplyr::summarize(sum(", paste0(extant.counts, collapse = "), sum("), "))")))
 

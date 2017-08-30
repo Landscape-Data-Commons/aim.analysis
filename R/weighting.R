@@ -122,19 +122,19 @@ weight.gen <- function(pts,
 
     ## Calculate the rest of the values
     frame.summary <- frame.summary %>% group_by(Stratum) %>%
-      ## The total points
-      mutate(Total.pts = sum(Observed.pts, Unsampled.pts.nontarget, Unsampled.pts.inaccessible, Unsampled.pts.unneeded, Unsampled.pts.unknown)) %>%
+      ## The total points, minus the unneeded so we don't penalize projects for them!
+      mutate(Total.pts = sum(Observed.pts, Unsampled.pts.nontarget, Unsampled.pts.inaccessible, Unsampled.pts.unknown)) %>%
       ## The proportion of the total points in the stratum that were "target"
       mutate(Prop.dsgn.pts.obsrvd = Observed.pts/Total.pts) %>%
       ## The effective "sampled area" based on the proportion of points that were surveyed
       mutate(Sampled.area.HA = unlist(Area.HA * Prop.dsgn.pts.obsrvd)) %>%
-      ## The weight for each point in the stratum is the effective sampled area divided by the number of points surveyed in the stratum
-      mutate(Weight = Sampled.area.HA/Observed.pts) %>% as.data.frame()
+      ## The weight for each point in the stratum is the effective sampled area divided by the number of points surveyed, unknown, and inaccessible in the stratum
+      mutate(Weight = Sampled.area.HA/sum(Observed.pts, Unsampled.pts.inaccessible, Unsampled.pts.unknown)) %>% as.data.frame()
 
     ## When there are NaNs in the calculated fields, replace them with 0
     frame.summary <- tidyr::replace_na(frame.summary, replace = list(Prop.dsgn.pts.obsrvd = 0, Sampled.area.HA = 0, Weight = 0))
 
-    ## Add the weights to the points
+    ## Add the weights to the points, but only the observed ones
     for (stratum in frame.summary$Stratum) {
       working.pts$WGT[(working.pts[[pts.fatefield]] %in% target.values) & working.pts[[pts.groupfield]] == stratum] <- frame.summary$Weight[frame.summary$Stratum == stratum]
     }
@@ -154,13 +154,13 @@ weight.gen <- function(pts,
     wgt <- 0 ## initialize wgt
     sample.area <- 0 ## initialize actual sampled area
     if (sum(frame.stats[, point.types]) > 0) {
-      proportion.observed <- sum(frame.stats$Observed.pts)/sum(frame.stats[, point.types]) ## realized proportion of the stratum that was sampled (observed/total no. of points)
+      proportion.observed <- sum(frame.stats$Observed.pts)/sum(frame.stats[, c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unknown")]) ## realized proportion of the stratum that was sampled (observed/total no. of points that weren't "unneeded")
     }
     if (sum(frame.stats$Observed.pts) > 0) {
       ## Record the actual area(ha) sampled - (proportional reduction * stratum area)
       sample.area <- proportion.observed*area
-      ## (The proportion of the total area that was sampled * total area [ha]) divided by the no. of observed points
-      wgt <- (sample.area)/sum(frame.stats$Observed.pts)
+      ## (The proportion of the total area that was sampled * total area [ha]) divided by the number of observed, inaccessible, and unknown points
+      wgt <- (sample.area)/sum(frame.stats$Observed.pts, frame.stats$Inaccessible.pts, frame.stats$Unknown.pts)
 
     }
 

@@ -43,6 +43,12 @@ report <- function(out.path,
   # Get the reporting unit levels/types from the analysis data frame
   reporting.unit.levels <- unique(analysis$Type)
 
+  # Get the default indicators lookup table if none is provided
+  if (is.null(indicator.lut)) {
+    indicator.lut <- indicator.lookup()
+    names(indicator.lut) <- toupper(names(indicator.lut))
+  }
+
   # Just sanitizing the names of things
   names(benchmarks) <- toupper(names(benchmarks))
 

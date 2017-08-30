@@ -369,9 +369,9 @@ report <- function(out.path,
   names(bm.table) <- c("Goal/Management Question",
                        "Indicator",
                        "Benchmark Source",
-                       "Evaluation Group",
-                       "Evaluation Category",
-                       "Evaluation Benchmark")
+                       "Benchmark Group",
+                       "Condition Category",
+                       "Benchmark Definition")
 
 
 
@@ -432,7 +432,7 @@ indicatorPlot <- function(df,
     ggplot2::scale_fill_brewer(type = "div",
                                palette = "RdYlBu") +
     ggplot2::ylim(0, 100) +
-    ggplot2::ggtitle(paste0("Percentage of Reporting Unit by Category: \n", ind.realname)) +
+    ggplot2::ggtitle(paste0("Percentage of Reporting Unit by Condition Category: \n", ind.realname)) +
     ggplot2::ylab("Estimated Percent of Reporting Unit Area")
 
   if (threshold > 0) {

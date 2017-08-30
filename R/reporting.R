@@ -616,11 +616,11 @@ objectiveMet <- function(proportion.required,
   } else if (p.val < (1-(conf.level/100))*2) { # if p.val less than 1/4 of alpha, likely different
     sig <- "Possibly "
   } else {
-    sig <- "At threshold" # else conclude not different than threshold value
+    sig <- "Yes" # else conclude not different than threshold value
   }
 
   # Get rid of the yes/no if at the threshold
-  if (sig == "At threshold") {
+  if (sig == "Yes") {
     result <- ""
   }
 

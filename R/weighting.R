@@ -276,12 +276,12 @@ weight <- function(dd.import,
   reportingunitfield <- stringr::str_to_upper(reportingunitfield)
 
   ## Initialize data frame for stratum info. The results from each loop end up bound to this
-  master.df <- NULL
+  strata.weights <- NULL
   ## Initialize data frame for point weight info. The results from each loop end up added to this
   ## In the end, these will all be joined to TerrADat and stripped down to the bare essentials to report out
-  pointweights.df <- NULL
+  point.weights <- NULL
   ## Initialize data frame for stratum info, specifically the point counts per year per stratum per project
-  stats.df <- NULL
+  strata.stats <- NULL
 
   ## The fate values that we know about are brought from defaults/fates.csv with fate.lookup()
   fate.lut <- fate.lookup()
@@ -522,226 +522,35 @@ weight <- function(dd.import,
         working.pts <- working.pts[working.pts$YEAR <= lubridate::year(lubridate::as_date(daterange.max)),]
       }
       if (!is.null(daterange.min)) {
-        pts.spdf <- pts.spdf[working.pts$YEAR >= lubridate::year(lubridate::as_date(daterange.min)),]
+        working.pts <- working.pts[working.pts$YEAR >= lubridate::year(lubridate::as_date(daterange.min)),]
       }
 
-      ## Now that the clipping and reassigning is all completed, we can start calculating weights
-      ## The objects are used in the event that there are no strata in SPDFs that we can use and resort to using the sample frame
-      target.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% target.values,])
-      unknown.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% unknown.values,])
-      nontarget.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% nontarget.values,])
-      inaccessible.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% inaccessible.values,])
-      unneeded.count <- nrow(pts.spdf@data[pts.spdf@data[, fatefieldname] %in% unneeded.values,])
-      ## How many points had fate values that were found in fate vectors?
-      sum <- sum(target.count, unknown.count, nontarget.count, inaccessible.count, unneeded.count)
+      # Generate the weight information
+      weight.info <- weight.gen(pts = working.pts,
+                                pts.fatefield = fatefieldname,
+                                pts.groupfield = "WEIGHT.ID",
+                                frame.spdf = frame.spdf,
+                                frame.groupfield = "designstratumfield",
+                                target.values = target.values,
+                                unknown.values = unknown.values,
+                                nontarget.values = nontarget.values,
+                                inaccessible.values = inaccessible.values,
+                                unneeded.values = unneeded.values)
 
-      ## Let the user know what the 'bad fates' are that need to be added
-      if (sum != nrow(pts.spdf)) {
-        message("The following fate[s] need to be added to the appropriate fate argument[s] in your function call:")
-        ## Take the vector of all the unique values in pts.spdf$final_desig (or another fate field) that aren't found in the fate vectors and collapse it into a single string, separated by ", "
-        message(paste(unique(pts.spdf@data[, fatefieldname])[!(unique(pts.spdf@data[, fatefieldname]) %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))], collapse = ", "))
+      if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
+        weight.info$point.weights <- weight.adjust(points = weight.info$point.weights,
+                                               wgtcat.spdf = frame.spdf,
+                                               spdf.area.field = "AREA.HA.UNIT.SUM",
+                                               spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
+        weight.info$point.weights <- tidyr::replace_na(weight.info$point.weights, replace = list(ADJWGT = 0))
+      } else {
+        ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame
+        weight.info$point.weights$ADJWGT <- 0
       }
 
-      ## TODO: Needs to handle a polygon OR a raster df
-      ## If the value for the current DD in the list strata is not NULL, then we have a strata SPDF
-      if (!is.null(dd.import$strata[[s]])) {
-        ## Because we have strata, use the design stratum attribute
-
-        ## Create a data frame to store the area values in hectares for strata. The as.data.frame() is because it was a tibble for some reason
-        area.df <- group_by_(frame.spdf@data, designstratumfield) %>% dplyr::summarize(AREA.HA.SUM = sum(AREA.HA)) %>% as.data.frame()
-
-        ## Working points. This is a holdover, but it saves refactoring later code
-        working.pts <- pts.spdf@data
-
-        ## Creating a table of the point counts by point type within each stratum by year by project area ID
-        working.pts$key[working.pts$FINAL_DESIG %in% target.values] <- "Observed.pts"
-        working.pts$key[working.pts$FINAL_DESIG %in% nontarget.values] <- "Unsampled.pts.nontarget"
-        working.pts$key[working.pts$FINAL_DESIG %in% inaccessible.values] <- "Unsampled.pts.inaccessible"
-        working.pts$key[working.pts$FINAL_DESIG %in% unneeded.values] <- "Unsampled.pts.unneeded"
-        working.pts$key[working.pts$FINAL_DESIG %in% unknown.values] <- "Unsampled.pts.unknown"
-
-        ## Filter out points from THE FUTURE
-        working.pts <- working.pts %>% filter(!(YEAR > as.numeric(stringr::str_extract(string = base::date(), pattern = "\\d{4}"))))
-
-        ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
-        # "TERRA_PRJCT_AREA_ID",
-        pts.summary <- working.pts %>% ungroup() %>% group_by(key, WEIGHT.ID, YEAR) %>%
-          dplyr::summarize(count = n())
-
-        pts.summary$DD <- s
-
-        ## Spreading that
-        pts.summary.wide <- tidyr::spread(data = pts.summary,
-                                          key = key,
-                                          value = count,
-                                          fill = 0)
-
-        ## We need to know which of the types of points (target, non-target, etc.) are represented
-        extant.counts <- names(pts.summary.wide)[grepl(x = names(pts.summary.wide), pattern = ".pts")]
-
-        ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
-        # "TERRA_PRJCT_AREA_ID",
-        ## Only asking for summarize() to operate on those columns that exist because if, for example, there's no Unsampled.pts.unneeded column and we call it here, the function will crash and burn
-        stratum.summary <- eval(parse(text = paste0("pts.summary.wide %>% group_by(DD,", "WEIGHT.ID", ", YEAR) %>% dplyr::summarize(sum(", paste0(extant.counts, collapse = "), sum("), "))")))
-        ## Fix the naming becaue it's easier to do it after the fact than write paste() so that it builds names in in the line above
-        names(stratum.summary) <- stringr::str_replace_all(string = names(stratum.summary), pattern = "^sum\\(", replacement = "")
-        names(stratum.summary) <- stringr::str_replace_all(string = names(stratum.summary), pattern = "\\)$", replacement = "")
-
-        ## Add in the missing columns if some point categories weren't represented
-        for (name in c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown")[!(c("Observed.pts", "Unsampled.pts.nontarget", "Unsampled.pts.inaccessible", "Unsampled.pts.unneeded", "Unsampled.pts.unknown") %in% names(stratum.summary))]) {
-          stratum.summary[, name] <- 0
-        }
-
-        ## This is where this particular version of the data frame leaves the loop to be returned at the end of the function
-        stats.df <- rbind(stats.df, stratum.summary)
-
-        ## N.B. I removed the references to the project area because that should be determined by now and not relevant, but you can add this if you need to
-        # "TERRA_PRJCT_AREA_ID",
-        stratum.summary <- stratum.summary %>% group_by_("DD", "WEIGHT.ID") %>%
-          dplyr::summarize(Observed.pts = sum(Observed.pts),
-                           Unsampled.pts.nontarget = sum(Unsampled.pts.nontarget),
-                           Unsampled.pts.inaccessible = sum(Unsampled.pts.inaccessible),
-                           Unsampled.pts.unneeded = sum(Unsampled.pts.unneeded),
-                           Unsampled.pts.unknown = sum(Unsampled.pts.unknown))
-
-        ## Add in the areas of the strata
-        stratum.summary <- merge(x = stratum.summary,
-                                 y = area.df,
-                                 by.x = "WEIGHT.ID",
-                                 by.y = designstratumfield)
-
-        ## Renaming is causing dplyr and tidyr to freak out, so we'll just copy the values into the fieldnames we want
-        stratum.summary$Stratum <- stratum.summary$WEIGHT.ID
-        stratum.summary$Area.HA <- stratum.summary$AREA.HA.SUM
-
-        ## Calculate the rest of the values
-        stratum.summary <- stratum.summary %>% group_by(Stratum) %>%
-          ## The total points
-          mutate(Total.pts = sum(Observed.pts, Unsampled.pts.nontarget, Unsampled.pts.inaccessible, Unsampled.pts.unneeded, Unsampled.pts.unknown)) %>%
-          ## The proportion of the total points in the stratum that were "target"
-          mutate(Prop.dsgn.pts.obsrvd = Observed.pts/Total.pts) %>%
-          ## The effective "sampled area" based on the proportion of points that were surveyed
-          mutate(Sampled.area.HA = unlist(Area.HA * Prop.dsgn.pts.obsrvd)) %>%
-          ## The weight for each point in the stratum is the effective sampled area divided by the number of points surveyed in the stratum
-          mutate(Weight = Sampled.area.HA/Observed.pts) %>% as.data.frame()
-
-        ## I'm not sure who requested this feature, but it's here now
-        if (!is.null(reporting.units.spdf)) {
-          stratum.summary$Reporting.Unit.Restricted <- TRUE
-        } else {
-          stratum.summary$Reporting.Unit.Restricted <- FALSE
-        }
-
-        ## Getting just the columns we want in the order we want them
-        stratum.summary <- stratum.summary[, c("DD",
-                                               "Stratum",
-                                               "Total.pts",
-                                               "Observed.pts",
-                                               "Unsampled.pts.nontarget",
-                                               "Unsampled.pts.inaccessible",
-                                               "Unsampled.pts.unneeded",
-                                               "Unsampled.pts.unknown",
-                                               "Area.HA",
-                                               "Prop.dsgn.pts.obsrvd",
-                                               "Sampled.area.HA",
-                                               "Weight",
-                                               "Reporting.Unit.Restricted")]
-
-        ## When there are NaNs in the calculated fields, replace them with 0
-        stratum.summary <- replace_na(stratum.summary, replace = list(Prop.dsgn.pts.obsrvd = 0, Sampled.area.HA = 0, Weight = 0))
-
-        ## rbind() to the master.df so we can spring it out of the loop and return it from the function
-        master.df <- rbind(master.df, stratum.summary)
-
-        ## Add the weights to the points
-        for (stratum in stratum.summary$Stratum) {
-          working.pts$WGT[(working.pts$FINAL_DESIG %in% target.values) & working.pts[, "WEIGHT.ID"] == stratum] <- stratum.summary$Weight[stratum.summary$Stratum == stratum]
-        }
-
-        ## All the unassigned weights get converted to 0
-        working.pts <- replace_na(working.pts, replace = list(WGT = 0))
-
-        pointsweights.current <- working.pts[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE")]
-
-        ## OKAY. So, when reporting units were used to restrict the design[s], we need to adjust the weights appropriately by weight categories.
-        ## Luckily, the frame.spdf that we made waaaaay back when the reporting units were applied already represents those and frame.spdf will have the field UNIQUE.IDENTIFIER only if it went through that process
-        ## If the field UNIQUE.IDENTIFIER is present, we know that we can use frame.spdf to adjust the weights on the points
-        if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
-          pointsweights.current <- weight.adjust(points = pointsweights.current,
-                                                 wgtcat.spdf = frame.spdf,
-                                                 spdf.area.field = "AREA.HA.UNIT.SUM",
-                                                 spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
-          pointsweights.current <- replace_na(pointsweights.current, replace = list(ADJWGT = 0))
-        } else {
-          ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame
-          pointsweights.current$ADJWGT <- NA
-        }
-        ## Add the point SPDF now that it's gotten the extra fields to the list of point SPDFs so we can use it after the loop
-        pointweights.df <- rbind(pointweights.df, pointsweights.current[, names(pointsweights.current)[names(pointsweights.current) != "PLOTKEY"]])
-      } else if (!is.null(frame.spdf)) {
-        ## If there aren't strata available to us in a useful format in the DD, we'll just weight by the sample frame
-        ## since we lack stratification, use the sample frame to derive spatial extent in hectares
-        area <- sum(frame.spdf@data$AREA.HA)
-
-        ## derive weights
-        Pprop <- 1 ## initialize - proportion of 1.0 means there were no nonresponses
-        wgt <- 0 ## initialize wgt
-        Sarea <- 0 ## initialize actual sampled area
-        if (sum > 0) {
-          Pprop <- target.count/sum ## realized proportion of the stratum that was sampled (observed/total no. of points)
-        }
-        if (target.count > 0) {
-          wgt   <- (Pprop*area)/target.count  ## (The proportion of the total area that was sampled * total area [ha]) divided by the no. of observed points
-          Sarea <-  Pprop*area	      ## Record the actual area(ha) sampled - (proportional reduction * stratum area)
-        }
-
-        ##Tabulate key information for this DD
-        temp.df <- data.frame(DD = s,
-                              Stratum = "Sample Frame",
-                              Total.pts = sum,
-                              Observed.pts = target.count,
-                              Unsampled.pts.nontarget = nontarget.count,
-                              Unsampled.pts.inaccessible = inaccessible.count,
-                              Unsampled.pts.unneeded = unneeded.count,
-                              Unsampled.pts.unknown = unknown.count,
-                              Area.HA = area,
-                              Prop.dsgn.pts.obsrvd = Pprop,
-                              Sampled.area.HA = Sarea,
-                              Weight = wgt,
-                              Reporting.Unit.Restricted = FALSE,
-                              stringsAsFactors = FALSE)
-        if (!is.null(reporting.units.spdf)) {
-          temp.df$Reporting.Unit.Restricted <- TRUE
-        }
-
-        ## Bind this stratum's information to the master.df initialized outside and before the loop started
-        master.df <- rbind(master.df, temp.df)
-
-        pointsweights.current <- pts.spdf@data
-
-        ## If there are points to work with, do this
-        if (nrow(pointsweights.current) > 0) {
-          ## If a point had a target fate, assign the calculates weight
-          pointsweights.current$WGT[pointsweights.current[, fatefieldname] %in% target.values] <- wgt
-          ## If a point had a non-target or unknown designation, assign 0 as the weight
-          pointsweights.current$WGT[pointsweights.current[, fatefieldname] %in% c(nontarget.values, unknown.values, inaccessible.values, unneeded.values)] <- 0
-
-          if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
-            pointsweights.current <- weight.adjust(points = pointsweights.current,
-                                                   wgtcat.spdf = frame.spdf,
-                                                   spdf.area.field = "AREA.HA.UNIT.SUM",
-                                                   spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
-            pointsweights.current <- replace_na(pointsweights.current, replace = list(ADJWGT = 0))
-          } else {
-            ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame
-            pointsweights.current$ADJWGT <- NA
-          }
-
-          ## Add the point SPDF now that it's gotten the extra fields to the list of point SPDFs so we can use it after the loop
-          pointweights.df <- rbind(pointweights.df, pointsweights.current[, c("TERRA_TERRADAT_ID", "PLOT_NM", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "LONGITUDE", "LATITUDE", "ADJWGT")])
-        }
-      }
-      #########################################
+      strata.weights <- rbind(strata.weights, weight.info$frame.summary)
+      point.weights <- rbind(point.weights, weight.info$point.weights[, c("PRIMARYKEY", "PLOTID", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "ADJWGT", "LONGITUDE", "LATITUDE")])
+      strata.stats <- rbind(strata.stats, weight.info$frame.stats)
     }
     ## Add this DD to the vector that we use to screen out points from consideration above
   }
@@ -753,13 +562,13 @@ weight <- function(dd.import,
   # }
 
   ## Rename the fields to what we want them to be in the output
-  names(pointweights.df)[names(pointweights.df) == "TERRA_TERRADAT_ID"] <- "PRIMARYKEY"
-  names(pointweights.df)[names(pointweights.df) == "PLOT_NM"] <- "PLOTID"
+  names(point.weights)[names(point.weights) == "TERRA_TERRADAT_ID"] <- "PRIMARYKEY"
+  names(point.weights)[names(point.weights) == "PLOT_NM"] <- "PLOTID"
 
   ## Output is a named list with three data frames: information about the strata, strata weights, and information about the points
-  return(list(strata.weights = master.df,
-              point.weights = pointweights.df[, c("PRIMARYKEY", "PLOTID", "REPORTING.UNIT", "FINAL_DESIG", "WEIGHT.ID", "WGT", "ADJWGT", "LONGITUDE", "LATITUDE")],
-              strata.stats = stats.df
+  return(list(strata.weights,
+              point.weights,
+              strata.stats
   ))
 }
 

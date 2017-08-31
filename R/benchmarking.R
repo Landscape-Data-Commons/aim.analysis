@@ -19,20 +19,9 @@ benchmark <- function(benchmarks, ## The data frame imported with read.benchmark
   if (class(tdat)[1] == "SpatialPointsDataFrame") {
     tdat <- tdat@data
   }
-  tdat.fields.indicators.expected <- c("BareSoilCover_FH", "TotalFoliarCover_FH",
-                                       "GapPct_25_50", "GapPct_51_100", "GapPct_101_200", "GapPct_200_plus", "GapPct_25_plus",
-                                       "NonInvPerenForbCover_AH", "NonInvAnnForbCover_AH", "NonInvPerenGrassCover_AH", "NonInvAnnGrassCover_AH", "NonInvAnnForbGrassCover_AH", "NonInvPerenForbGrassCover_AH", "NonInvSucculentCover_AH", "NonInvShrubCover_AH", "NonInvSubShrubCover_AH", "NonInvTreeCover_AH",
-                                       "InvPerenForbCover_AH", "InvAnnForbCover_AH", "InvPerenGrassCover_AH", "InvAnnGrassCover_AH", "InvAnnForbGrassCover_AH", "InvPerenForbGrassCover_AH", "InvSucculentCover_AH", "InvShrubCover_AH", "InvSubShrubCover_AH", "InvTreeCover_AH",
-                                       "SagebrushCover_AH",
-                                       "WoodyHgt_Avg", "HerbaceousHgt_Avg", "SagebrushHgt_Avg", "OtherShrubHgt_Avg",
-                                       "NonInvPerenGrassHgt_Avg", "InvPerenGrassHgt_Avg",
-                                       "InvPlantCover_AH", "InvPlant_NumSp",
-                                       "SoilStability_All", "SoilStability_Protected", "SoilStability_Unprotected",
-                                       ## Remote sensing values
-                                       "HerbLitterCover_FH", "WoodyLitterCover_FH", "EmbLitterCover_FH", "TotalLitterCover_FH", "RockCover_FH", "BiologicalCrustCover_FH", "VagrLichenCover_FH", "LichenMossCover_FH", "DepSoilCover_FH", "WaterCover_FH",
-                                       "NonInvPerenForbCover_FH", "NonInvAnnForbCover_FH", "NonInvPerenGrassCover_FH", "NonInvAnnGrassCover_FH", "NonInvSucculentCover_FH", "NonInvShrubCover_FH", "NonInvSubShrubCover_FH", "NonInvTreeCover_FH",
-                                       "InvPerenForbCover_FH", "InvAnnForbCover_FH", "InvPerenGrassCover_FH", "InvAnnGrassCover_FH", "InvSucculentCover_FH", "InvShrubCover_FH", "InvSubShrubCover_FH", "InvTreeCover_FH",
-                                       "SageBrushCover_FH")
+
+  # Get the list of indicators from the lookup table
+  tdat.fields.indicators.expected <- indicator.lookup()[["indicator.tdat"]]
 
   if (length(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)]) != length(tdat.fields.indicators.expected)) {
     message("These expected indicators weren't found in the tdat data frame:")

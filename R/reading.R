@@ -279,7 +279,7 @@ dd.split <- function(dd.list) {
       }
       # and the data that came after
       if (frame.index < length(dd.list[[df]])) {
-        tail <- dd.list[[df]][(frame.index+1):length(dd.list)]
+        tail <- dd.list[[df]][(frame.index+1):length(dd.list[[df]])]
       } else {
         tail <- NULL
       }
@@ -293,6 +293,11 @@ dd.split <- function(dd.list) {
 
       # And mash it together!
       dd.list[[df]] <- c(head, subset, tail)
+
+      # I don't know why the naming only works for the sample frames, so we'll just name everything else from that list
+      if (df != "sf") {
+        names(dd.list[[df]]) <- names(dd.list[["sf"]])
+      }
     }
   }
   return(dd.list)

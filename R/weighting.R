@@ -22,8 +22,9 @@ weight.gen <- function(pts,
                        unknown.values = NULL,
                        nontarget.values = NULL,
                        inaccessible.values = NULL,
-                       unneeded.values = NULL,
-                       ...){
+                       unneeded.values = NULL#,
+                       # ...
+                       ){
   ## Sanitize
   if (class(pts) == "SpatialPointsDataFrame") {
     working.pts <- pts.spdf@data
@@ -41,11 +42,12 @@ weight.gen <- function(pts,
     stop(paste(unique(working.pts[[pts.fatefield]][!(working.pts[[pts.fatefield]] %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))]), collapse = ", "))
   }
 
-  additional.point.groups <- list(...)
-  if (!any(additional.point.groups %in% names(working.pts))) {
-    message("The following additional grouping fields were not found in pts:")
-    stop(paste(additional.point.groups[!(additional.point.groups %in% names(working.pts))], collapse = ", "))
-  }
+  # additional.point.groups <- list(...)
+  # if (!any(additional.point.groups %in% names(working.pts))) {
+  #   message("The following additional grouping fields were not found in pts:")
+  #   stop(paste(additional.point.groups[!(additional.point.groups %in% names(working.pts))], collapse = ", "))
+  # }
+  # additional.point.groups <- rlang::quos(...)
 
   ## Add areas in hectares to the frame if they're not there already
   if (!("AREA.HA" %in% names(frame.spdf@data))) {
@@ -62,9 +64,10 @@ weight.gen <- function(pts,
 
 
   ## Here's the summary by key and pts.groupfield and year.field as appropriate
-  pts.summary.fields <- c(pts.groupfield[!is.null(pts.groupfield)], additional.point.groups)
-  pts.summary <- eval(parse(text = paste0("working.pts %>% ungroup() %>% group_by(key,", paste(pts.summary.fields, collapse = ","), ") %>%
-                                          dplyr::summarize(count = n())")))
+  pts.summary.fields <- c(pts.groupfield[!is.null(pts.groupfield)])#, additional.point.groups)
+  # pts.summary <- eval(parse(text = paste0("working.pts %>% ungroup() %>% group_by(key,", paste(pts.summary.fields, collapse = ","), ") %>%
+  #                                         dplyr::summarize(count = n())")))
+  pts.summary <- eval(parse(text = paste0("dplyr::summarize(.data = group_by(.data = ungroup(working.pts), key, ", paste(pts.summary.fields, collapse = ", "),"), count = n())")))
 
   ## Spreading that
   pts.summary.wide <- tidyr::spread(data = pts.summary,

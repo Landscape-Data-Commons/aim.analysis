@@ -568,20 +568,10 @@ weight <- function(dd.import,
     ## Add this DD to the vector that we use to screen out points from consideration above
   }
 
-  ## Diagnostics in case something goes pear-shaped
-  # if (length(pointweights.df.merged$PLOTID[!(unique(pointweights.df.merged$PLOTID) %in% unique(pointweights.df.merged$PLOTID))]) > 0) {
-  #   print("Somehow the following points were in the DD and weighted, but had no counterpart in the provided TerrADAT")
-  #   print(paste(pointweights.df.merged$PLOTID[!(unique(pointweights.df.merged$PLOTID) %in% unique(pointweights.df.merged$PLOTID))], collapse = ", "))
-  # }
-
-  ## Rename the fields to what we want them to be in the output
-  names(point.weights)[names(point.weights) == "TERRA_TERRADAT_ID"] <- "PRIMARYKEY"
-  names(point.weights)[names(point.weights) == "PLOT_NM"] <- "PLOTID"
-
   ## Output is a named list with three data frames: information about the strata, strata weights, and information about the points
-  return(list(strata.weights,
-              point.weights,
-              strata.stats
+  return(list("strata.weights" = strata.weights,
+              "point.weights" = point.weights,
+              "strata.stats" = strata.stats
   ))
 }
 

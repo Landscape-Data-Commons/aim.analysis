@@ -540,11 +540,15 @@ weight <- function(dd.import,
                                 inaccessible.values = inaccessible.values,
                                 unneeded.values = unneeded.values)
 
-      return(weight.info)
-
-      # Renaming to match the schema here
-      names(weight.info$point.weights)[names(weight.info$point.weights) == "PLOT_NM"] <- "PLOTID"
+      ## Rename the fields to what we want them to be in the output
       names(weight.info$point.weights)[names(weight.info$point.weights) == "TERRA_TERRADAT_ID"] <- "PRIMARYKEY"
+      names(weight.info$point.weights)[names(weight.info$point.weights) == "PLOT_NM"] <- "PLOTID"
+
+      ## Add in the REPORTING.UNITS field with the value "Unspecified" if it's not there already.
+      ## The only way it'd already be there is if the points were restricted coming in, which is currently impossible
+      if (!("REPORTING.UNIT" %in% names(weight.info$point.weights))) {
+        weight.info$point.weights$REPORTING.UNIT <- "Unspecified"
+      }
 
       if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
         weight.info$point.weights <- weight.adjust(points = weight.info$point.weights,

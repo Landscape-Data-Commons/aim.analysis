@@ -22,8 +22,8 @@ analyze <- function(evaluated.points,
 ){
 
   ## Sanitization
-  names(evaluated.points) <- stringr::str_to_upper(names(evaluated.points))
-  names(point.weights) <- stringr::str_to_upper(names(point.weights))
+  names(evaluated.points) <- toupper(names(evaluated.points))
+  names(point.weights) <- toupper(names(point.weights))
   ## Limiting to points that have valid PrimaryKey values
   point.weights <- point.weights %>% dplyr::filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
   evaluated.points <- evaluated.points %>% dplyr::filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))

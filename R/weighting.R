@@ -540,6 +540,12 @@ weight <- function(dd.import,
                                 inaccessible.values = inaccessible.values,
                                 unneeded.values = unneeded.values)
 
+      return(weight.info)
+
+      # Renaming to match the schema here
+      names(weight.info$point.weights)[names(weight.info$point.weights) == "PLOT_NM"] <- "PLOTID"
+      names(weight.info$point.weights)[names(weight.info$point.weights) == "TERRA_TERRADAT_ID"] <- "PRIMARYKEY"
+
       if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
         weight.info$point.weights <- weight.adjust(points = weight.info$point.weights,
                                                wgtcat.spdf = frame.spdf,

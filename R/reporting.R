@@ -24,6 +24,7 @@ report <- function(out.path,
                    benchmarks = NULL,
                    analysis = NULL,
                    cats.to.suppress = c("Not Meeting"),
+                   point.weights,
                    strata.weights,
                    reporting.units.spdf = NULL,
                    sample.frame.spdf,
@@ -226,28 +227,63 @@ report <- function(out.path,
     ggplot2::labs(fill = "Year")
 
   ####################
-  ### Figure of point fates
-  fates.plot <- ggplot2::ggplot(data = as.data.frame(point.fates),
-                                ggplot2::aes(x = factor(YEAR),
-                                             y = n,
-                                             fill = as.factor(variable),
-                                             label = n)) +
-    ggplot2::geom_bar(stat = "identity",
-                      width = 0.5) +
-    ggplot2::coord_flip() +
-    scale_fill_manual(values = c("Unneeded" = "#2c7bb6",
-                                 "Unknown" = "#abd9e9",
-                                 "Non-target" = "#ffffbf",
-                                 "Inaccessible" = "#fdae61",
-                                 "Target Sampled" = "#d7191c")) +
-    ggplot2::geom_text(data = subset(as.data.frame(point.fates),
-                                     n != 0),
-                       ggplot2::aes(label = n, y = n),
-                       position = ggplot2::position_stack(vjust = 0.5)) +
-    ggplot2::ylab("Number of Original Sample Points") +
-    ggplot2::xlab("Year") +
-    ggplot2::ggtitle("Summary of Point Fate by Year") +
-    ggplot2::labs(fill = "Final Point\nDesignation")
+  ### List of figures of point fates
+  fates.plots <- lapply(X = split(point.weights, "REPORTING.UNIT"),
+                       FUN = function(X) {
+                         point.weights <- X
+
+                         # Filter out unneeded and nonsense values
+                         data <- point.weights[toupper(point.weights$FINAL_DESIG) %in% toupper(fates$fate.value[fates$fate != "Unneeded"]),]
+
+                         # Replace the values with the names
+                         for (f in unique(data$FINAL_DESIG)) {
+                           data$FINAL_DESIG[data$FINAL_DESIG == f] <- fates$fate[toupper(fates$fate.value) %in% toupper(f)]
+                         }
+
+                         # Just get a sum
+                         total <- dplyr::summarize(.data = dplyr::group_by(.data = data,
+                                                                           REPORTING.UNIT),
+                                                   total = n())[["total"]]
+
+                         # Calculate percent composition by fate
+                         summary <- dplyr::summarize(.data = dplyr::group_by(.data = data,
+                                                                             REPORTING.UNIT,
+                                                                             FINAL_DESIG),
+                                                     pct = n()*100/total)
+
+                         # Sort that to get the fates in the order we want
+                         summary <- summary[match(c("Target Sampled", "Non-target", "Inaccessible", "Unknown"), summary$FINAL_DESIG),]
+
+                         # Plot!
+                         plot <- ggplot2::ggplot(summary,
+                                                 aes(x = REPORTING.UNIT,
+                                                     y = pct,
+                                                     fill = FINAL_DESIG)) +
+                           ggplot2::geom_col(position = "stack") +
+                           ggplot2::coord_flip() +
+                           ggplot2::scale_fill_manual(name= "Final Point\nDesignation",
+                                                      values = c("Unknown" = "#abd9e9",
+                                                                 "Non-target" = "#ffffbf",
+                                                                 "Inaccessible" = "#fdae61",
+                                                                 "Target Sampled" = "#d7191c"),
+                                                      breaks = c("Target Sampled", "Non-target", "Inaccessible", "Unknown"),
+                                                      drop = FALSE) +
+                           ggplot2::geom_text(data = subset(summary,
+                                                            pct != 0),
+                                              ggplot2::aes(label = pct,
+                                                           y = pct),
+                                              position = ggplot2::position_stack(vjust = 0.5)) +
+                           ggplot2::ylab("Percent of Plots") +
+                           ggplot2::xlab("Reporting Unit") +
+                           ggplot2::ggtitle(label = "Percentages of Final Point Designations\nWithin Reporting Unit") +
+                           ggplot2::theme(aspect.ratio = 1/4,
+                                          axis.title.y = element_blank(),
+                                          axis.text.y = element_blank(),
+                                          axis.ticks.y = element_blank(),
+                                          panel.background = element_blank())
+
+                         return(plot)
+                       }) %>% setNames(unique(point.weights$REPORTING.UNIT))
 
   ##############
   ### Summary table of objectives

@@ -342,7 +342,7 @@ report <- function(out.path,
                                                                                                                               "Number of Plots",
                                                                                                                               "Estimated Percent",
                                                                                                                               "Confidence Interval",
-                                                                                                                              "Objective Met?")
+                                                                                                                              "Objective Met")
 
                                                                                     # Add the reporting unit
                                                                                     proportions.reporting.unit.df$reporting.unit <- X

@@ -135,10 +135,10 @@ These tables summarize land management goals and whether related monitoring obje
 
 ```{r lsPropsTables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
 # print the summary tables by whether or not meeting objectives
-for (val in c("YES","NO","AT THRESHOLD")) {
+for (val in c("YES", "NO", "UNCERTAIN")) {
   d <- reporting.unit.summary.df[grepl(paste(val,"$",sep=""),
-                           toupper(reporting.unit.summary.df[, 9])),]
-  d <- d[, c(1, 2, 9, 11)]
+                           toupper(reporting.unit.summary.df$Objective.Met)),]
+  d <- d[, c("Monitoring.Objective", "Indicator", "Objective.Met", "reporting.unit")]
   names(d) <- c("Goal/Managment Question",
                 "Indicator",
                 "Objective Met?",

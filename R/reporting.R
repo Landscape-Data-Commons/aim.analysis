@@ -369,7 +369,7 @@ report <- function(out.path,
 
   # Create a list of xtables to display these summaries later
   reporting.unit.summary.xtables <- dplyr::filter(.data = reporting.unit.summary.df,
-                                                  !(Category %in% cats.to.suppress)) %>%
+                                                  !(Condition.Category %in% cats.to.suppress)) %>%
     split(x = ., f = list(.$reporting.unit, .$level)) %>%
     lapply(X = .,
            FUN = function(X){
@@ -377,7 +377,7 @@ report <- function(out.path,
                                      -level,
                                      -reporting.unit) %>%
                xtable::xtable(x = .,
-                              align = c("l","l","l","l","c","c","c","c","c","c"))
+                              align = c("l","l","l","l","c","c","c","c", "c"))
 
              return(output)
            })

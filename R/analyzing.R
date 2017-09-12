@@ -87,6 +87,9 @@ analyze <- function(evaluated.points,
     ## All the sites are active? Sure! Why not?
     data.wide.current$Active <- TRUE
 
+    ## All weights need to be positive values, so drop any 0s that have found their way in
+    data.wide.current <- data.wide.current[data.wide.current$wgt > 0,]
+
     ## First, the sites. This is a data frame with the siteIDs and whether they're active or not
     aim.sites <- data.wide.current[, c("siteID", "Active")] %>% distinct()
 

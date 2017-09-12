@@ -643,7 +643,8 @@ objectiveMet <- function(proportion.required,
   }
 
   ## Does the relationship evaluate to true?
-  result <- if (eval(parse(text = paste(estimated.proportion, relation, proportion.required)))) {"yes"} else {"no"}
+  result <- if (eval(parse(text = paste(estimated.proportion, relation, proportion.required)))) {"yes"}
+  else {"no"}
 
   # Set up significance level ratings
   # If p.val is less than 1-(conf.level/100) - i.e., alpha -, then conclude different from threshold
@@ -654,16 +655,16 @@ objectiveMet <- function(proportion.required,
   } else if (p.val < (1-(conf.level/100))*2) { # if p.val less than 1/4 of alpha, likely different
     sig <- "Possibly "
   } else {
-    sig <- "Yes" # else conclude not different than threshold value
+    sig <- "Uncertain" # else conclude not different than threshold value
   }
 
   # Get rid of the yes/no if at the threshold
-  if (sig == "Yes") {
+  if (sig == "Uncertain") {
     result <- ""
   }
 
   # Compile the result and return
-  output <- paste0(sig,result)
+  output <- trimws(paste0(sig,result))
   substr(output, 1, 1) <- toupper(substr(output, 1, 1))
 
   return(output)

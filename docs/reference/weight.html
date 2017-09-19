@@ -96,12 +96,11 @@
 
     <pre class="usage"><span class='fu'>weight</span>(<span class='no'>dd.import</span>, <span class='kw'>combine</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>reorder</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>erase</span> <span class='kw'>=</span> <span class='st'>"arcpy"</span>,
   <span class='kw'>temp.path</span> <span class='kw'>=</span> <span class='fu'>getwd</span>(), <span class='kw'>reporting.units.spdf</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>reportingunitfield</span> <span class='kw'>=</span> <span class='st'>"REPORTING.UNIT"</span>, <span class='kw'>target.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Target Sampled"</span>,
-  <span class='st'>"TS"</span>), <span class='kw'>unknown.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Unknown"</span>, <span class='st'>"UNK"</span>),
-  <span class='kw'>nontarget.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Non-Target"</span>, <span class='st'>"NT"</span>, <span class='fl'>NA</span>),
-  <span class='kw'>inaccessible.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Inaccessible"</span>, <span class='st'>"IA"</span>),
-  <span class='kw'>unneeded.values</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Not Needed"</span>), <span class='kw'>fatefieldname</span> <span class='kw'>=</span> <span class='st'>"final_desig"</span>,
-  <span class='kw'>pointstratumfieldname</span> <span class='kw'>=</span> <span class='st'>"dsgn_strtm_nm"</span>,
+  <span class='kw'>reportingunitfield</span> <span class='kw'>=</span> <span class='st'>"REPORTING.UNIT"</span>, <span class='kw'>target.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>unknown.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>nontarget.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>inaccessible.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>unneeded.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>daterange.max</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>daterange.min</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>fatefieldname</span> <span class='kw'>=</span> <span class='st'>"final_desig"</span>, <span class='kw'>pointstratumfieldname</span> <span class='kw'>=</span> <span class='st'>"dsgn_strtm_nm"</span>,
   <span class='kw'>designstratumfield</span> <span class='kw'>=</span> <span class='st'>"dmnnt_strtm"</span>,
   <span class='kw'>projection</span> <span class='kw'>=</span> <span class='kw pkg'>sp</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/sp/topics/CRS-class'>CRS</a></span>(<span class='st'>"+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"</span>),
   <span class='kw'>sliverdrop</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>sliverwarn</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>sliverthreshold</span> <span class='kw'>=</span> <span class='fl'>0.01</span>)</pre>
@@ -158,6 +157,14 @@
       <td><p>Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.</p></td>
     </tr>
     <tr>
+      <th>daterange.max</th>
+      <td><p>Optional character string. This must be interpretable by <code><a href='http://www.rdocumentation.org/packages/lubridate/topics/as_date'>lubridate::as_date()</a></code>, e.g. <code>"2016-04-20"</code>. Only sampling locations visited before this date will be considered. Currently only restricts to year.</p></td>
+    </tr>
+    <tr>
+      <th>daterange.min</th>
+      <td><p>Optional character string. This must be interpretable by <code><a href='http://www.rdocumentation.org/packages/lubridate/topics/as_date'>lubridate::as_date()</a></code>, e.g. <code>"2016-04-20"</code>. Only sampling locations visited after this date will be considered. Currently only restricts to year.</p></td>
+    </tr>
+    <tr>
       <th>fatefieldname</th>
       <td><p>Character string defining the field name in the points SPDF[s] in dd.import that contains the point fate. Defaults to <code>"final_desig"</code>.</p></td>
     </tr>
@@ -192,7 +199,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Nelson Stauffer, Steve Garman.</p>
+  <p>Developed by Nelson G. Stauffer, Steve Garman, Jason Karl.</p>
 </div>
 
 <div class="pkgdown">

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Adjusting Weights Calculated from AIM Sample Designs — weight.adjust â€¢ aim.analysis</title>
+<title>Splitting apart sample design databases containing multiple designs — dd.split â€¢ aim.analysis</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -87,53 +87,37 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Adjusting Weights Calculated from AIM Sample Designs</h1>
+    <h1>Splitting apart sample design databases containing multiple designs</h1>
     </div>
 
     
-    <p>This function takes the point weights data frame output from the function <code><a href='weight.html'>weight()</a></code> and a SpatialPolygonsDataFrame defining the weight categories. Returns the data frame supplied as points with the new column <code>ADJWGT</code> containing the adjusted weights.</p>
+    <p>When a sample design database contains more than one design, as indicated by multiple sample frames, this function will (after importing with <code><a href='read.dd.html'>read.dd()</a></code>) split the SPDFs from every multiple-design database into one SPDF per design and insert them at the indices where the original SPDF was. The naming format for these new SPDFs is "geodatabase filename_sample frame ID".</p>
     
 
-    <pre class="usage"><span class='fu'>weight.adjust</span>(<span class='no'>points</span>, <span class='no'>wgtcat.spdf</span>, <span class='kw'>spdf.area.field</span> <span class='kw'>=</span> <span class='st'>"AREA.HA.UNIT.SUM"</span>,
-  <span class='kw'>spdf.wgtcat.field</span> <span class='kw'>=</span> <span class='st'>"UNIQUE.IDENTIFIER"</span>,
-  <span class='kw'>projection</span> <span class='kw'>=</span> <span class='kw pkg'>sp</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/sp/topics/CRS-class'>CRS</a></span>(<span class='st'>"+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"</span>))</pre>
+    <pre class="usage"><span class='fu'>dd.split</span>(<span class='no'>dd.list</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>points</th>
-      <td><p>Data frame output from <code><a href='weight.html'>weight()</a></code>, equivalent to <code>weight()[["point.weights"]]</code> or <code>weight()[[2]]</code>.</p></td>
-    </tr>
-    <tr>
-      <th>wgtcat.spdf</th>
-      <td><p>SpatialPolygonsDataFrame describing the weight categories for adjusting the weights. Use the output from <code><a href='intersect.html'>intersect()</a></code>.</p></td>
-    </tr>
-    <tr>
-      <th>spdf.area.field</th>
-      <td><p>Character string defining the field name in <code>wgtcat@data</code> that contains the areas for the weight categories. Defaults to <code>"AREA.HA.UNIT.SUM"</code>.</p></td>
-    </tr>
-    <tr>
-      <th>spdf.wgtcat.field</th>
-      <td><p>Character string defining the field name in <code>wgtcat@data</code> that contains the unique identification for the weight categories. Defaults to <code>"UNIQUE.IDENTIFIER"</code>.</p></td>
-    </tr>
-    <tr>
-      <th>projection</th>
-      <td><p><code><a href='http://www.rdocumentation.org/packages/sp/topics/CRS-class'>sp::CRS()</a></code> argument. Defaults to NAD83 with <code><a href='http://www.rdocumentation.org/packages/sp/topics/CRS-class'>sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")</a></code>. Is used to reproject all SPDFs in order to perform spatial manipulations.</p></td>
+      <th>dd.list</th>
+      <td><p>The output from <code><a href='read.dd.html'>read.dd()</a></code></p></td>
     </tr>
     </table>
     
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>weight.adjuster</span>()</div><div class='output co'>#&gt; <span class='error'>Error in weight.adjuster(): could not find function "weight.adjuster"</span></div></pre>
+    <p>The list <code>dd.list</code> with one SPDF per design in each of the lists <code>"sf"</code>, <code>"pts"</code>, and <code>"strata"</code>, maintaining the order of the data in those lists.</p>
+    
+
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-            
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+      
+      <li><a href="#value">Value</a></li>
+          </ul>
 
   </div>
 </div>

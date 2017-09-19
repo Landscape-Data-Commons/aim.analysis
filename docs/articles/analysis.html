@@ -65,7 +65,7 @@
       <h1>A Basic Analysis Workflow For AIM</h1>
                         <h4 class="author">Nelson Stauffer</h4>
             
-            <h4 class="date">2017-07-14</h4>
+            <h4 class="date">2017-09-19</h4>
           </div>
 
     
@@ -140,7 +140,7 @@ designdatabases &lt;- c("Jornada_2014.gdb",
 <h2 class="hasAnchor">
 <a href="#importing-your-data" class="anchor"></a>Importing Your Data</h2>
 <p>Importing data is straightforward, so long as the data are correctly formatted. <code>aim.analysis::</code> has a family of functions written to import AIM-specific datasets: <code><a href="../reference/read.tdat.html">read.tdat()</a></code>, <code><a href="../reference/read.dd.html">read.dd()</a></code>, and <code><a href="../reference/read.benchmarks.html">read.benchmarks()</a></code>.</p>
-<p><code><a href="../reference/read.tdat.html">read.tdat()</a></code> will read in whichever of the feature classes <code>SV_IND_TERRESTRIALAIM</code> and <code>SV_IND_REMOTESENSING</code> it finds in the <code>.gdb</code> it’s directed to. These are combined into a single, wide-format spatial points data frame. <code><a href="../reference/read.benchmarks.html">read.benchmarks()</a></code> will read in the benchmark information from a DataExplorer workbook as stored in the sheet “Management Objectives” into a data frame. This process is actually why the requirements for populating that particular sheet are so stringent. <code><a href="../reference/read.dd.html">read.dd()</a></code> will read in one or more sample design database and produce a list of lists of their contents as spatial points/polygons data frames. The sub-lists are <code>'sf'</code> containing whatever sample frame feature classes were found, <code>'pts'</code> containing whatever point feature classes were found, an <code>'strata'</code> containing any stratification polygon feeature classes that were found. If a design database was missing any feature class, a <code>NULL</code> value is inserted into the relevant list as a placeholder.</p>
+<p><code><a href="../reference/read.tdat.html">read.tdat()</a></code> will read in whichever of the feature classes <code>SV_IND_TERRESTRIALAIM</code> and <code>SV_IND_REMOTESENSING</code> it finds in the <code>.gdb</code> it’s directed to. These are combined into a single, wide-format spatial points data frame. <code><a href="../reference/read.benchmarks.html">read.benchmarks()</a></code> will read in the benchmark information from a DataExplorer workbook as stored in the sheet “Management Objectives” into a data frame. This process is actually why the requirements for populating that particular sheet are so stringent. <code><a href="../reference/read.dd.html">read.dd()</a></code> will read in one or more sample design database and produce a list of lists of their contents as spatial points/polygons data frames. The sub-lists are <code>'sf'</code> containing whatever sample frame feature classes were found, <code>'pts'</code> containing whatever point feature classes were found, and <code>'strata'</code> containing any stratification polygon feeature classes that were found. If a design database was missing any feature class, a <code>NULL</code> value is inserted into the relevant list as a placeholder.</p>
 <p>There is not an AIM-specific function for importing shapefiles containing evaluation groups or reporting units, so those need to be imported using something like <code><a href="http://www.rdocumentation.org/packages/rgdal/topics/readOGR">rgdal::readOGR()</a></code>. The shapefile you use should not have polygons included that don’t have values in the attribute field containing the evaluation group identities. If they do, then another step to filter the resulting spatial polygons data frame to remove the unattributed polygons is necessary.</p>
 <p>For example:</p>
 <pre><code>###############################################################
@@ -167,7 +167,7 @@ dd.data &lt;- read.dd(src = data.source,
 <div id="setting-up-relationships-and-prepping-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#setting-up-relationships-and-prepping-data" class="anchor"></a>Setting Up Relationships and Prepping Data</h2>
-<p>The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using <code><a href="../reference/attribute.shapefile.html">attribute.shapefile()</a></code> to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).</p>
+<p>The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using <code><a href="../reference/attribute.shapefile.html">attribute.shapefile()</a></code> to add values from an attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).</p>
 <pre><code>###############################################################
 ## Manipulating and prepping data
 ###############################################################
@@ -353,7 +353,7 @@ write.shapefile(spdf = reportingunits.spdf,
 
 
       <footer><div class="copyright">
-  <p>Developed by Nelson Stauffer, Steve Garman.</p>
+  <p>Developed by Nelson G. Stauffer, Steve Garman, Jason Karl.</p>
 </div>
 
 <div class="pkgdown">

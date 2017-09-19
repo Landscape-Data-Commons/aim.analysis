@@ -95,8 +95,9 @@
     
 
     <pre class="usage"><span class='fu'>weight.gen</span>(<span class='no'>pts</span>, <span class='kw'>pts.fatefield</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pts.groupfield</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>frame.spdf</span>,
-  <span class='kw'>frame.groupfield</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>target.values</span>, <span class='no'>unknown.values</span>, <span class='no'>nontarget.values</span>,
-  <span class='no'>inaccessible.values</span>, <span class='no'>unneeded.values</span>, <span class='no'>...</span>)</pre>
+  <span class='kw'>frame.groupfield</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>target.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>unknown.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>nontarget.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>inaccessible.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>unneeded.values</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -143,13 +144,13 @@
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Optional character strings. These must exactly match the names of the field in <code>pts</code> and will be used to group the points beyond the identity/identities they share with the frame. When calculating <code>frame.stats</code> these will be passed to <code><a href='http://dplyr.tidyverse.org/reference/se-deprecated.html'>dplyr::group_by_()</a></code>. They will have no impact on <code>frame.summary</code> or <code>point.weights</code>.</p></td>
+      <td><p>Optional character strings. These must exactly match the names of the field in <code>pts</code> and will be used to group the points beyond the identity/identities they share with the frame. When calculating <code>frame.stats</code> these will be passed to <code><a href='http://dplyr.tidyverse.org/reference/se-deprecated.html'>dplyr::group_by_()</a></code>. They will have no impact on <code>frame.summary</code> or <code>point.weights</code>. <code>"YEAR"</code> would be a common string to pass here.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A list containing the named data frames <code>frame.stats</code>, <code>frame.summary</code> (if groupfield strings were provided), and <code>point.weights</code>. <code>"YEAR"</code> would be a common string to pass here.</p>
+    <p>A list containing the named data frames <code>frame.stats</code>, <code>frame.summary</code> (if groupfield strings were provided), and <code>point.weights</code>.</p>
     
 
   </div>
@@ -166,7 +167,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Nelson Stauffer, Steve Garman.</p>
+  <p>Developed by Nelson G. Stauffer, Steve Garman, Jason Karl.</p>
 </div>
 
 <div class="pkgdown">

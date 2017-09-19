@@ -96,7 +96,7 @@
 
     <pre class="usage"><span class='fu'>analyze</span>(<span class='no'>evaluated.points</span>, <span class='no'>point.weights</span>,
   <span class='kw'>default.reportingunit</span> <span class='kw'>=</span> <span class='st'>"No reporting unit"</span>, <span class='kw'>reportingunit.type</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>adjustedweights</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+  <span class='kw'>adjustedweights</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>conf</span> <span class='kw'>=</span> <span class='fl'>80</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -121,6 +121,10 @@
       <th>adjustedweights</th>
       <td><p>Logical. If <code>TRUE</code>, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to <code>FALSE</code>.</p></td>
     </tr>
+    <tr>
+      <th>conf</th>
+      <td><p>Numeric. The confidence level. Defaults to <code>80</code>.</p></td>
+    </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -129,7 +133,7 @@
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>analyze</span>()</div><div class='output co'>#&gt; <span class='error'>Error in stri_trans_toupper(string, locale = locale): argument "evaluated.points" is missing, with no default</span></div></pre>
+    <pre class="examples"><div class='input'><span class='fu'>analyze</span>()</div><div class='output co'>#&gt; <span class='error'>Error in toupper(names(evaluated.points)): argument "evaluated.points" is missing, with no default</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -146,7 +150,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Nelson Stauffer, Steve Garman.</p>
+  <p>Developed by Nelson G. Stauffer, Steve Garman, Jason Karl.</p>
 </div>
 
 <div class="pkgdown">

@@ -6,6 +6,7 @@
 #' @param benchmarks Data frame. The output from \code{read.benchmarks()}.
 #' @param analysis Data frame. The data frame \code{"analyses"} from the output of \code{analyze()}.
 #' @param cats.to.suppress Character vector. One or more categories to suppress in tables. Defaults to \code{c("Not Meeting")}.
+#' @param point.weights Data frame. The data frame \code{point.weights} from the output of \code{weight()}.
 #' @param strata.weights Data frame. The data frame \code{strata.weights} from the output of \code{weight()}.
 #' @param reporting.units.spdf Spatial polygons data frame. Used in plotting maps. This MUST have a field named exactly "Type" containing the type of reporting unit (e.g. "Watershed" or "Study Area") and a field named exactly "Subpopulation" which contains the identity of the reporting unit[s] (e.g. the watersheds "Dickshooter Creek" and "Headwaters Deep Creek").
 #' @param sample.frame.spdf Spatial polygons data frame. Used in plotting maps.
@@ -270,20 +271,25 @@ report <- function(out.path,
                                                       drop = FALSE) +
                            ggplot2::geom_text(data = subset(summary,
                                                             pct != 0),
-                                              ggplot2::aes(label = pct,
+                                              ggplot2::aes(label = paste0(pct, "%"),
                                                            y = pct),
                                               position = ggplot2::position_stack(vjust = 0.5)) +
                            ggplot2::ylab("Percent of Plots") +
                            ggplot2::xlab("Reporting Unit") +
                            ggplot2::ggtitle(label = "Percentages of Final Point Designations\nWithin Reporting Unit") +
-                           ggplot2::theme(aspect.ratio = 1/4,
+                           ggplot2::theme(aspect.ratio = 1/6,
                                           axis.title.y = element_blank(),
                                           axis.text.y = element_blank(),
                                           axis.ticks.y = element_blank(),
-                                          panel.background = element_blank())
+                                          panel.background = element_blank(),
+                                          panel.grid = element_blank(),
+                                          plot.margin = unit(c(0, 0, 0, 0), "cm"),
+                                          strip.background = element_blank())
 
                          return(plot)
                        }) %>% setNames(unique(point.weights$REPORTING.UNIT))
+
+  message(names(fates.plots))
 
   ##############
   ### Summary table of objectives
@@ -497,7 +503,8 @@ indicatorTable <- function(df,
 
   table.data$CI <- paste("±", (table.data[[grep(names(table.data), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]] - table.data[[grep(names(table.data), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])/2)
 
-  table.data <- dplyr::select(Category,
+  table.data <- dplyr::select(.data = table.data,
+                              Category,
                               NResp,
                               Estimate.P,
                               CI,

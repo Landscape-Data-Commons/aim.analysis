@@ -5,10 +5,10 @@
 \title{Generating summary reports.}
 \usage{
 report(out.path, project.name, indicator.lut = NULL, benchmarks = NULL,
-  analysis = NULL, cats.to.suppress = c("Not Meeting"), strata.weights,
-  reporting.units.spdf = NULL, sample.frame.spdf, project.area.spdf = NULL,
-  points.benchmarked = NULL, dd.points, daterange.max = NULL,
-  daterange.min = NULL,
+  analysis = NULL, cats.to.suppress = c("Not Meeting"), point.weights,
+  strata.weights, reporting.units.spdf = NULL, sample.frame.spdf,
+  project.area.spdf = NULL, points.benchmarked = NULL, dd.points,
+  daterange.max = NULL, daterange.min = NULL,
   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
   extension = "html")
 }
@@ -24,6 +24,8 @@ report(out.path, project.name, indicator.lut = NULL, benchmarks = NULL,
 \item{analysis}{Data frame. The data frame \code{"analyses"} from the output of \code{analyze()}.}
 
 \item{cats.to.suppress}{Character vector. One or more categories to suppress in tables. Defaults to \code{c("Not Meeting")}.}
+
+\item{point.weights}{Data frame. The data frame \code{point.weights} from the output of \code{weight()}.}
 
 \item{strata.weights}{Data frame. The data frame \code{strata.weights} from the output of \code{weight()}.}
 

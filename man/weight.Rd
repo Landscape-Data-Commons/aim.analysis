@@ -30,15 +30,15 @@ weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
 
 \item{reportingunitfield}{Character string. If passing a reporting unit SPDF, what field in it defines the reporting unit[s]?}
 
-\item{target.values}{Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
+\item{target.values}{Optional character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{unknown.values}{Character string or character vector. This defines what values in the point fate field count as unknown points. The function always looks for "Unknown" and "Unk", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
+\item{unknown.values}{Optional character string or character vector. This defines what values in the point fate field count as unknown points. The function always looks for "Unknown" and "Unk", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{nontarget.values}{Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
+\item{nontarget.values}{Optional character or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Non-Target", "NT", and NA, so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{inaccessible.values}{Character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
+\item{inaccessible.values}{Optional character string or character vector. This defines what values in the point fate field count as non-target points. The function always looks for "Inaccessible", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
-\item{unneeded.values}{Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
+\item{unneeded.values}{Optional character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. The function always looks for "Not needed", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive.}
 
 \item{daterange.max}{Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited before this date will be considered. Currently only restricts to year.}
 

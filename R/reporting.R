@@ -88,7 +88,7 @@ report <- function(out.path,
       dd.points <- rbind(dd.points, dd.points.list[[2]])
     }
   }
-  dd.points@data$YEAR <- year.add(pts = dd.points, date.field = "DATE.VISITED", source.field = "PANEL")[["YEAR"]]
+  dd.points@data$YEAR <- add.year(pts = dd.points, date.field = "DATE.VISITED", source.field = "PANEL")[["YEAR"]]
   dd.points@data$DATE.VISITED <- lubridate::as_date(dd.points@data$DATE.VISITED)
 
   ## Turn the benchmarked points into an spdf

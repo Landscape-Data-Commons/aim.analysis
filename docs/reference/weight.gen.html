@@ -140,11 +140,8 @@
     </tr>
     <tr>
       <th>unneeded.values</th>
-      <td><p>Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. When using AIM design databases, this should be at minimum <code>c("Not needed")</code>. This is case insensitive.</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>Optional character strings. These must exactly match the names of the field in <code>pts</code> and will be used to group the points beyond the identity/identities they share with the frame. When calculating <code>frame.stats</code> these will be passed to <code><a href='http://dplyr.tidyverse.org/reference/se-deprecated.html'>dplyr::group_by_()</a></code>. They will have no impact on <code>frame.summary</code> or <code>point.weights</code>. <code>"YEAR"</code> would be a common string to pass here.</p></td>
+      <td><p>Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. When using AIM design databases, this should be at minimum <code>c("Not needed")</code>. This is case insensitive.
+#@param ... Optional character strings. These must exactly match the names of the field in <code>pts</code> and will be used to group the points beyond the identity/identities they share with the frame. When calculating <code>frame.stats</code> these will be passed to <code><a href='http://dplyr.tidyverse.org/reference/se-deprecated.html'>dplyr::group_by_()</a></code>. They will have no impact on <code>frame.summary</code> or <code>point.weights</code>. <code>"YEAR"</code> would be a common string to pass here.</p></td>
     </tr>
     </table>
     

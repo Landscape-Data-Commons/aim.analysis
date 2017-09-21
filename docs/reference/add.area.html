@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create a SpatialPolygonsDataFrame from the intersection of two SpatialPolygonsDataFrames — intersect â€¢ aim.analysis</title>
+<title>Add areas to a Spatial Polygons Data Frame — add.area â€¢ aim.analysis</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -87,49 +87,21 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create a SpatialPolygonsDataFrame from the intersection of two SpatialPolygonsDataFrames</h1>
+    <h1>Add areas to a Spatial Polygons Data Frame</h1>
     </div>
 
     
-    <p>Basically a wrapping of <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/topo-bin-gIntersection'>rgeos::gIntersection()</a></code> and <code><a href='http://www.rdocumentation.org/packages/raster/topics/intersect'>raster::intersect()</a></code> with additional opportunity to call add.area() and automatically added unique identifiers for each resultant polygon</p>
+    <p>This function takes a Spatial Polygons Data Frame and calculates and adds area fields to the data frame. Areas can be calculated either treating the whole SPDF as a unit or for each polygon individually.</p>
     
 
-    <pre class="usage"><span class='fu'>intersect</span>(<span class='no'>spdf1</span>, <span class='no'>spdf1.attributefieldname</span>,
-  <span class='kw'>spdf1.attributefieldname.output</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>spdf2</span>, <span class='no'>spdf2.attributefieldname</span>,
-  <span class='kw'>spdf2.attributefieldname.output</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"gintersection"</span>,
-  <span class='kw'>area.ha</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>area.sqkm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>projection</span> <span class='kw'>=</span> <span class='fu'>CRS</span>(<span class='st'>"+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"</span>))</pre>
+    <pre class="usage"><span class='fu'>add.area</span>(<span class='no'>spdf</span>, <span class='kw'>area.ha</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>area.sqkm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>byid</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>spdf1</th>
-      <td><p>A SpatialPolygonsDataFrame to be intersected</p></td>
-    </tr>
-    <tr>
-      <th>spdf1.attributefieldname</th>
-      <td><p>Name of the field in <code>spdf1</code> unique to the unit groups or units to take values from.</p></td>
-    </tr>
-    <tr>
-      <th>spdf1.attributefieldname.output</th>
-      <td><p>Optional string for the name of the field in the output SPDF to duplicate values from spdf1.attributefieldname into. If unspecified, then <code>spdf1.attributefieldname</code> will be used. Defaults to <code>NULL</code>.</p></td>
-    </tr>
-    <tr>
-      <th>spdf2</th>
-      <td><p>A SpatialPolygonsDataFrame to be intersected</p></td>
-    </tr>
-    <tr>
-      <th>spdf2.attributefieldname</th>
-      <td><p>Name of the field in <code>spdf2</code> unique to the unit groups or units to take values from.</p></td>
-    </tr>
-    <tr>
-      <th>spdf2.attributefieldname.output</th>
-      <td><p>Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then <code>spdf2.attributefieldname</code> will be used. Defaults to <code>NULL</code>.</p></td>
-    </tr>
-    <tr>
-      <th>method</th>
-      <td><p>A string specifying which function to use for the interscting step: either <code><a href='http://www.rdocumentation.org/packages/rgeos/topics/topo-bin-gIntersection'>rgeos::gIntersection()</a></code> or <code><a href='http://www.rdocumentation.org/packages/raster/topics/intersect'>raster::intersect()</a></code>. Valid options are <code>"gintersection"</code> and <code>"intersect"</code>. Defaults to <code>"gintersection"</code>.</p></td>
+      <th>spdf</th>
+      <td><p>Spatial Polygons Data Frame to calculate areas for.</p></td>
     </tr>
     <tr>
       <th>area.ha</th>
@@ -140,18 +112,18 @@
       <td><p>Logical. If <code>TRUE</code>, areas will be calculated and added in square kilometers. Default is <code>TRUE</code>.</p></td>
     </tr>
     <tr>
-      <th>projection</th>
-      <td><p>An <code><a href='http://www.rdocumentation.org/packages/sp/topics/CRS-class'>sp::CRS()</a></code> argument. The final output will be reprojected using this. Defaults to <code>CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")</code></p></td>
+      <th>byid</th>
+      <td><p>Logical. If <code>TRUE</code>, areas will be calculated and added for each polygon by ID. If <code>FALSE</code> the area of the whole SPDF will be calculated and added, so every value for that field will be the same, regardless of polygon ID. Default is <code>TRUE</code>.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A SpatialPolygonsDataFrame with the attributes inherited from <code>spdf1</code> and <code>spdf2</code>, areas as appropriate, and a unique identifier.</p>
+    <p>The original Spatial Polygons Data Frame with an additional field for each area unit calculated.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>intersect</span>()</div><div class='output co'>#&gt; <span class='error'>Error in intersect(): argument "spdf1" is missing, with no default</span></div></pre>
+    <pre class="examples"><div class='input'><span class='fu'>add.area</span>()</div><div class='output co'>#&gt; <span class='error'>Error in sp::spTransform(x = spdf, CRSobj = CRS("+proj=aea")): argument "spdf" is missing, with no default</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

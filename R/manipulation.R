@@ -105,7 +105,7 @@ attribute.shapefile <- function(spdf1,
 
 #' Create a SpatialPolygonsDataFrame from the intersection of two SpatialPolygonsDataFrames
 #'
-#' Basically a wrapping of \code{rgeos::gIntersection()} and \code{raster::intersect()} with additional opportunity to call area.add() and automatically added unique identifiers for each resultant polygon
+#' Basically a wrapping of \code{rgeos::gIntersection()} and \code{raster::intersect()} with additional opportunity to call add.area() and automatically added unique identifiers for each resultant polygon
 #' @param spdf1 A SpatialPolygonsDataFrame to be intersected
 #' @param spdf1.attributefieldname Name of the field in \code{spdf1} unique to the unit groups or units to take values from.
 #' @param spdf1.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf1.attributefieldname into. If unspecified, then \code{spdf1.attributefieldname} will be used. Defaults to \code{NULL}.
@@ -217,7 +217,7 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
   ## If we're adding areas then:
   if (area.ha | area.sqkm) {
     ## Add the areas in hectares and square kilometers for each as called for
-    intersect.spdf.attribute <- area.add(spdf = intersect.spdf.attribute,
+    intersect.spdf.attribute <- add.area(spdf = intersect.spdf.attribute,
                                          area.ha = area.ha,
                                          area.sqkm = area.sqkm)
     ## Now we summarize() the areas by unique identifier and then merge that with the original data frame and use it to overwrite the original data frame
@@ -267,10 +267,10 @@ intersect <- function(spdf1, ## A SpatialPolygonsShapefile
 #' @return The original Spatial Polygons Data Frame with an additional field for each area unit calculated.
 #' @keywords area
 #' @examples
-#' area.add()
+#' add.area()
 #' @export
 
-area.add <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
+add.area <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
                      area.ha = TRUE, ## Add area in hectares?
                      area.sqkm = TRUE, ## Add area in square kilometers?
                      byid = TRUE ## Do it for the whole SPDF or on a per-polygon basis? Generally don't want to toggle this
@@ -380,7 +380,7 @@ add.coords <- function(spdf,
 #' @return \code{pts} with the additional column \code{YEAR}.
 #' @export
 
-year.add <- function(pts,
+add.year <- function(pts,
                      date.field = NULL,
                      source.field = NULL){
   if (class(pts) != "data.frame" & !grepl(class(pts),  pattern = "^Spatial.{4,15}DataFrame$")) {

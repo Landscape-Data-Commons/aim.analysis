@@ -10,7 +10,7 @@
 #' @param nontarget.values Character string or character vector. This defines what values in the point fate field count as non-target points. When using AIM design databases, this should be at minimum \code{c("Non-Target", "NT", NA)}. This is case insensitive.
 #' @param inaccessible.values Character string or character vector. This defines what values in the point fate field count as non-target points. When using AIM design databases, this should be at minimum \code{c("Inaccessible")}. This is case insensitive.
 #' @param unneeded.values Character string or character vector. This defines what values in the point fate field count as not needed or unneeded points. When using AIM design databases, this should be at minimum \code{c("Not needed")}. This is case insensitive.
-#' @param ... Optional character strings. These must exactly match the names of the field in \code{pts} and will be used to group the points beyond the identity/identities they share with the frame. When calculating \code{frame.stats} these will be passed to \code{dplyr::group_by_()}. They will have no impact on \code{frame.summary} or \code{point.weights}. \code{"YEAR"} would be a common string to pass here.
+#' #@param ... Optional character strings. These must exactly match the names of the field in \code{pts} and will be used to group the points beyond the identity/identities they share with the frame. When calculating \code{frame.stats} these will be passed to \code{dplyr::group_by_()}. They will have no impact on \code{frame.summary} or \code{point.weights}. \code{"YEAR"} would be a common string to pass here.
 #' @return A list containing the named data frames \code{frame.stats}, \code{frame.summary} (if groupfield strings were provided), and \code{point.weights}.
 #' @export
 weight.gen <- function(pts,
@@ -51,7 +51,7 @@ weight.gen <- function(pts,
 
   ## Add areas in hectares to the frame if they're not there already
   if (!("AREA.HA" %in% names(frame.spdf@data))) {
-    frame.spdf <- area.add(frame.spdf)
+    frame.spdf <- add.area(frame.spdf)
   }
 
   ## Creating a table of the point counts by point type
@@ -373,7 +373,7 @@ weight <- function(dd.import,
     }
 
     ## Add the area to frame.spdf
-    frame.spdf <- area.add(frame.spdf, byid = TRUE)
+    frame.spdf <- add.area(frame.spdf, byid = TRUE)
 
     ## Add the size of this DD's frame to my list of them so I can use it
     ## We use sum() here because each polygon's area was calculated individually because that streamlines some future use of the area information
@@ -418,7 +418,7 @@ weight <- function(dd.import,
       if (!is.null(dd.completed) & !is.null(frame.spdf) > 0) {
         if (nrow(frame.spdf) > 0) {
           print("(Re)calculating areas for frame.spdf")
-          frame.spdf <- area.add(frame.spdf)
+          frame.spdf <- add.area(frame.spdf)
         }
       }
 
@@ -516,7 +516,7 @@ weight <- function(dd.import,
       #########################################
       ## RIPE FOR REPLACEMENT WITH A GENERALIZED WEIGHTING FUNCTION
       ## Sanitize
-      pts.spdf@data$YEAR <- year.add(pts = pts.spdf@data, date.field = "DT_VST", source.field = "PANEL")[["YEAR"]]
+      pts.spdf@data$YEAR <- add.year(pts = pts.spdf@data, date.field = "DT_VST", source.field = "PANEL")[["YEAR"]]
       #### MAKE SURE TO FILTER OUT POINTS FROM THE FUTURE
       working.pts <- pts.spdf@data[!(pts.spdf@data$YEAR > as.numeric(format(Sys.Date(), "%Y"))), ]
 

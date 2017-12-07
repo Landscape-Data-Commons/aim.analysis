@@ -92,7 +92,7 @@ The map below is provided for general reference only. It was created from the sp
 
 ```{r studyMap, echo=FALSE}
 # The overview map
-map.overview
+map.general
 
 ```
 

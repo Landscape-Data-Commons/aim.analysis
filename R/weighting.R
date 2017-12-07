@@ -550,12 +550,16 @@ weight <- function(dd.import,
         weight.info$point.weights$REPORTING.UNIT <- "Unspecified"
       }
 
-      if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data)) {
+      message(paste("pointweights this many rows", nrow(weight.info$point.weights)))
+
+      if ("UNIQUE.IDENTIFIER" %in% names(frame.spdf@data) & nrow(weight.info$point.weights > 0)) {
         weight.info$point.weights <- weight.adjust(points = weight.info$point.weights,
-                                               wgtcat.spdf = frame.spdf,
-                                               spdf.area.field = "AREA.HA.UNIT.SUM",
-                                               spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
-        weight.info$point.weights <- tidyr::replace_na(weight.info$point.weights, replace = list(ADJWGT = 0))
+                                                   wgtcat.spdf = frame.spdf,
+                                                   spdf.area.field = "AREA.HA.UNIT.SUM",
+                                                   spdf.wgtcat.field = "UNIQUE.IDENTIFIER")
+        if (!is.null(weight.info$point.weights)) {
+          weight.info$point.weights <- tidyr::replace_na(weight.info$point.weights, replace = list(ADJWGT = 0))
+        }
       } else {
         ## We're going to put in the field regardless of weight adjustment so that we output a consistent data frame
         weight.info$point.weights$ADJWGT <- 0
@@ -566,6 +570,7 @@ weight <- function(dd.import,
       strata.stats <- rbind(strata.stats, weight.info$frame.stats)
     }
     ## Add this DD to the vector that we use to screen out points from consideration above
+    dd.completed <- c(dd.completed, s)
   }
 
   ## Output is a named list with three data frames: information about the strata, strata weights, and information about the points

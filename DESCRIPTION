@@ -28,8 +28,7 @@ Imports:
   gridExtra,
   grid,
   xtable,
-  pander,
-  plotly
+  pander
 Suggests:
   arcgisbinding,
     knitr,

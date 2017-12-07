@@ -617,31 +617,36 @@ weight.adjust <- function(points,
                                      attributefield = spdf.wgtcat.field,
                                      newfield = spdf.wgtcat.field)
 
-  ## Add the areas in using the unique identifier
-  data.current <- merge(x = points.spdf@data,
-                        y = distinct(wgtcat.spdf@data[, c(spdf.wgtcat.field, spdf.area.field)]))
+  if (is.null(points.spdf)) {
+    message("There was no overlap between the points and the wgtcat polygons. Returning NULL.")
+    return(NULL)
+  } else {
+    ## Add the areas in using the unique identifier
+    data.current <- merge(x = points.spdf@data,
+                          y = distinct(wgtcat.spdf@data[, c(spdf.wgtcat.field, spdf.area.field)]))
 
-  ## The weighted points attributed by the combination of reporting units and strata
-  ## We first restrict to the points that inherited identities (this should've already happened in the previous step, but just to be safe)
-  # data.current <- data.attributed[!is.na(data.attributed[, points.wgtcat.field]),]
+    ## The weighted points attributed by the combination of reporting units and strata
+    ## We first restrict to the points that inherited identities (this should've already happened in the previous step, but just to be safe)
+    # data.current <- data.attributed[!is.na(data.attributed[, points.wgtcat.field]),]
 
-  ## We want to include all the points. So we make a logical vector of just T with a length equal to the number of plots
-  sites.current <- (rep(TRUE, nrow(data.current)))
+    ## We want to include all the points. So we make a logical vector of just T with a length equal to the number of plots
+    sites.current <- (rep(TRUE, nrow(data.current)))
 
-  ## Grab the current weights from those points as its own vector
-  wgt.current <- data.current$WGT
+    ## Grab the current weights from those points as its own vector
+    wgt.current <- data.current$WGT
 
-  ## NB: The identity inherited from the shapefile needs to match the field used for name in framesize
-  wtcat.current <- data.current[, spdf.wgtcat.field]
+    ## NB: The identity inherited from the shapefile needs to match the field used for name in framesize
+    wtcat.current <- data.current[, spdf.wgtcat.field]
 
-  ## The framesize information about each of the unique wgtcat identities
-  ## I currently have this as an area, but I think it needs to be the inverse of the proportion of the area of the reporting unit that each identity represents
-  ## so the framesize value for a particular wgtcat = [area of the whole spdf]/[area of particular wgtcat]
-  framesize.current <- wgtcat.spdf@data[, spdf.area.field]
-  names(framesize.current) <- wgtcat.spdf@data[, spdf.wgtcat.field]
+    ## The framesize information about each of the unique wgtcat identities
+    ## I currently have this as an area, but I think it needs to be the inverse of the proportion of the area of the reporting unit that each identity represents
+    ## so the framesize value for a particular wgtcat = [area of the whole spdf]/[area of particular wgtcat]
+    framesize.current <- wgtcat.spdf@data[, spdf.area.field]
+    names(framesize.current) <- wgtcat.spdf@data[, spdf.wgtcat.field]
 
-  ## Run the weight adjustment
-  data.current$ADJWGT <- spsurvey::adjwgt(sites.current, wgt.current, wtcat.current, framesize.current)
+    ## Run the weight adjustment
+    data.current$ADJWGT <- spsurvey::adjwgt(sites.current, wgt.current, wtcat.current, framesize.current)
 
-  return(data.current)
+    return(data.current)
+  }
 }

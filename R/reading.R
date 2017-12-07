@@ -228,7 +228,8 @@ read.dd <- function(src = "", ## A filepath as a string
 #' @param tdat.path A string of the folder path that contains the \code{.gdb}.
 #' @param tdat.name A string of the filename of the geodatabase to import from
 #' @export
-read.tdat <- function(tdat.path, tdat.name){
+read.tdat <- function(tdat.path,
+                      tdat.name){
   tdat.name <- sanitize(tdat.name, "gdb")
   tdat.terrestrial.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_TERRESTRIALAIM", stringsAsFactors = FALSE)
   tdat.remote.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_REMOTESENSING", stringsAsFactors = FALSE)
@@ -308,7 +309,8 @@ dd.split <- function(dd.list) {
 #' @param filename A character vector of the filename (including extension) of the project tracking Excel file to import. If not using the \code{path} argument, the filename should include the entire filepath.
 #' @param path Optional string specifying a the project tracking Excel file in \code{filename} to read in. This will be prepended to the value in \code{filename}. If the filepath is included in the string \code{filename}, do not provide this.
 #' @export
-read.tracking <- function(filename = "", path = "") {
+read.tracking <- function(filename = "",
+                          path = "") {
   if (path != "") {
     path <- paste0(path, "/")
   }
@@ -335,3 +337,4 @@ indicator.lookup <- function(){
 fate.lookup <- function(){
   return(read.csv(paste0(path.package("aim.analysis"), "/defaults/fates.csv"), stringsAsFactors = FALSE))
 }
+

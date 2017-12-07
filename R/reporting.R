@@ -1,433 +1,3 @@
-#' Generating summary reports.
-#' @description Generate both a .PDF and .HTML report with \code{RMarkdown}.
-#' @param out.path Character string. The folder path to write the output reports into.
-#' @param project.name Character string. The name of the project to be used in the title of the report and the filenames it's written to.
-#' @param indicator.lut Data frame. The lookup table between the indicator names in TerrADat and the human readable indicator names.
-#' @param benchmarks Data frame. The output from \code{read.benchmarks()}.
-#' @param analysis Data frame. The data frame \code{"analyses"} from the output of \code{analyze()}.
-#' @param cats.to.suppress Character vector. One or more categories to suppress in tables. Defaults to \code{c("Not Meeting")}.
-#' @param point.weights Data frame. The data frame \code{point.weights} from the output of \code{weight()}.
-#' @param strata.weights Data frame. The data frame \code{strata.weights} from the output of \code{weight()}.
-#' @param reporting.units.spdf Spatial polygons data frame. Used in plotting maps. This MUST have a field named exactly "Type" containing the type of reporting unit (e.g. "Watershed" or "Study Area") and a field named exactly "Subpopulation" which contains the identity of the reporting unit[s] (e.g. the watersheds "Dickshooter Creek" and "Headwaters Deep Creek").
-#' @param sample.frame.spdf Spatial polygons data frame. Used in plotting maps.
-#' @param project.area.spdf Spatial polygons data frame. Used in plotting maps.
-#' @param points.benchmarked Data frame. The output from \code{benchmark()}.
-#' @param dd.points Spatial points data frame or list of spatial points data frames. This should be the \code{pts} list in the output from \code{read.dd()}.
-#' @param daterange.max Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited before this date will be considered. Currently only restricts to year.
-#' @param daterange.min Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited after this date will be considered. Currently only restricts to year.
-#' @param projection  Optional \code{sp::CRS()} argument. Used to convert \code{points.benchmarked} into a spatial points data frame. Only specify if \code{points.benchmarked} has coordinates not from the same projection as TerrADat. Defaults to \code{sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")}.
-#' @param extension Character string. The file extension to write the report to. Defaults to \code{"html"}.
-#' @export
-
-report <- function(out.path,
-                   project.name,
-                   indicator.lut = NULL,
-                   benchmarks = NULL,
-                   analysis = NULL,
-                   cats.to.suppress = c("Not Meeting"),
-                   point.weights,
-                   strata.weights,
-                   reporting.units.spdf = NULL,
-                   sample.frame.spdf,
-                   project.area.spdf = NULL,
-                   points.benchmarked = NULL,
-                   dd.points,
-                   daterange.max = NULL,
-                   daterange.min = NULL,
-                   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
-                   extension = "html") {
-
-  # Step one: Grab the confidence level from the analysis variable names
-  # We used to ask the user to provide this, but asking for less is better (and more trustworthy)
-  conf.level <- names(analysis) %>% paste(collapse = "") %>%
-    stringr::str_extract(pattern = "[0-9]{2}") %>% as.numeric()
-
-  # Get the reporting unit levels/types from the analysis data frame
-  reporting.unit.levels <- unique(analysis$Type)
-
-  # Get the default indicators lookup table if none is provided
-  if (is.null(indicator.lut)) {
-    indicator.lut <- indicator.lookup()
-    names(indicator.lut) <- toupper(names(indicator.lut))
-  }
-
-  # Just sanitizing the names of things
-  names(benchmarks) <- toupper(names(benchmarks))
-
-  # Use the default indicator lookup table if none is provided
-  if (is.null(indicator.lut)) {
-    message("Using default indicator.lut because no alternative was provided.")
-    indicator.lut <- data.frame(
-      indicator.tdat = c('BareSoilCover_FH', 'TotalFoliarCover_FH', 'GapPct_25_50', 'GapPct_51_100', 'GapPct_101_200', 'GapPct_200_plus', 'GapPct_25_plus', 'NonInvPerenForbCover_AH', 'NonInvAnnForbCover_AH', 'NonInvPerenGrassCover_AH', 'NonInvAnnGrassCover_AH', 'NonInvAnnForbGrassCover_AH', 'NonInvPerenForbGrassCover_AH', 'NonInvSucculentCover_AH', 'NonInvShrubCover_AH', 'NonInvSubShrubCover_AH', 'NonInvTreeCover_AH', 'InvPerenForbCover_AH', 'InvAnnForbCover_AH', 'InvPerenGrassCover_AH', 'InvAnnGrassCover_AH', 'InvAnnForbGrassCover_AH', 'InvPerenForbGrassCover_AH', 'InvSucculentCover_AH', 'InvShrubCover_AH', 'InvSubShrubCover_AH', 'InvTreeCover_AH', 'SagebrushCover_AH', 'WoodyHgt_Avg', 'HerbaceousHgt_Avg', 'SagebrushHgt_Avg', 'OtherShrubHgt_Avg', 'NonInvPerenGrassHgt_Avg', 'InvPerenGrassHgt_Avg', 'InvPlantCover_AH', 'InvPlant_NumSp', 'SoilStability_All', 'SoilStability_Protected', 'SoilStability_Unprotected', 'HerbLitterCover_FH', 'WoodyLitterCover_FH', 'TotalLitterCover_FH', 'RockCover_FH', 'BiologicalCrustCover_FH', 'VagrLichenCover_FH', 'LichenMossCover_FH', 'DepSoilCover_FH', 'WaterCover_FH', 'NonInvPerenForbCover_FH', 'NonInvAnnForbCover_FH', 'NonInvPerenGrassCover_FH', 'NonInvAnnGrassCover_FH', 'NonInvSucculentCover_FH', 'NonInvShrubCover_FH', 'NonInvSubShrubCover_FH', 'NonInvTreeCover_FH', 'InvPerenForbCover_FH', 'InvAnnForbCover_FH', 'InvPerenGrassCover_FH', 'InvAnnGrassCover_FH', 'InvSucculentCover_FH', 'InvShrubCover_FH', 'InvSubShrubCover_FH', 'InvTreeCover_FH', 'SageBrushCover_FH'),
-      indicator.name = c('Bare Soil (%)', 'Foliar Cover (%)', 'Percent in Gaps 25-50 cm', 'Percent in Gaps 51-100 cm', 'Percent in Gaps 101-200 cm', 'Percent in Gaps > 200 cm', 'Percent in Gaps > 25 cm', 'Non-invasive Perennial Forb Cover (%, any hit)', 'Non-invasive Annual Forb Cover (%, any hit)', 'Non-invasive Perennial Grass Cover (%, any hit)', 'Non-invasive Annual Grass Cover (%, any hit)', 'Non-invasive Annual Forb/Grass Cover (%, any hit)', 'Non-invasive Perennial Forb/Grass Cover (%, any hit)', 'Non-invasive Succulent Cover (%, any hit)', 'Non-invasive Shrub Cover (%, any hit)', 'Non-invasive Sub-shrub Cover (%, any hit)', 'Non-invasive Tree Cover (%, any hit)', 'Invasive Perennial Forb Cover (%, any hit)', 'Invasive Annual Forb Cover (%, any hit)', 'Invasive Perennial Grass Cover (%, any hit)', 'Invasive Annual Grass Cover (%, any hit)', 'Invasive Annual Forb/Grass Cover (%, any hit)', 'Invasive Perennial Forb/Grass Cover (%, any hit)', 'Invasive Succulent Cover (%, any hit)', 'Invasive Shrub Cover (%, any hit)', 'Invasive Sub-shrub Cover (%, any hit)', 'Invasive Tree Cover (%, any hit)', 'Sagebrush Cover (%, any hit)', 'Average Woody Height (cm)', 'Average Herbaceous Height (cm)', 'Average Sagebrush Height (cm)', 'Averge Non-Sagebrush Shrub Height (cm)', 'Average Non-invasive Perennial Grass Height (cm)', 'Average Invasive Perennial Grass Height (cm)', 'Invasive Plant Cover (%, any hit)', 'Number of Invasive Plant Species', 'Overall Soil Stability Rating', 'Protected Surface Soil Stability Rating', 'Unprotected Surface Soil Stability Rating', 'Between-Canopy Herbaceous Litter Cover (%)', 'Between-Canopy Woody Litter (%)', 'Between-Canopy Herbaceous and Woody Litter (%)', 'Between-Canopy Rock Cover (%)', 'Between-Canopy Biological Crust Cover (%)', 'Between-Canopy Vagrant Lichen Cover (%)', 'Between-Canopy Lichen and Moss Cover (%)', 'Between-Canopy Deposited Soil Cover (%)', 'Between-Canopy Water Cover (%)', 'Non-invasive Perennial Forb Cover (%, first hit)', 'Non-invasive Annual Forb Cover (%, first hit)', 'Non-invasive Perennial Grass Cover (%, first hit)', 'Non-invasive Annual Grass Cover (%, first hit)', 'Non-invasive Succulent Cover (%, first hit)', 'Non-invasive Shrub Cover (%, first hit)', 'Non-invasive Sub-shrub Cover (%, first hit)', 'Non-invasive Tree Cover (%, first hit)', 'Invasive Perennial Forb Cover (%, first hit)', 'Invasive Annual Forb Cover (%, first hit)', 'Invasive Perennial Grass Cover (%, first hit)', 'Invasive Annual Grass Cover (%, first hit)', 'Invasive Succulent Cover (%, first hit)', 'Invasive Shrub Cover (%, first hit)', 'Invasive Sub-shrub Cover (%, first hit)', 'Invasive Tree Cover (%, first hit)', 'Sagebrush Cover (%, first hit)'),
-      stringsAsFactors = FALSE
-    )
-  }
-
-  ## Wrangle dd.points into a single SPDF
-  if (length(dd.points) == 1) {
-    dd.points <- dd.points[[1]] %>%
-      dplyr::select(dplyr::matches("TERRA_PLOT_ID"),
-                    dplyr::matches("PLOT_NM"),
-                    dplyr::matches("DT_VST"),
-                    dplyr::matches("FINAL_DESIG"),
-                    dplyr::matches("PANEL")) %>%
-      setNames(c("PRIMARYKEY", "PLOTID", "DATE.VISITED", "FINAL_DESIG", "PANEL"))
-  } else if (length(dd.points) > 1) {
-    dd.points.list <- lapply(dd.points, function(X) {
-      X %>%
-        dplyr::select(dplyr::matches("TERRA_PLOT_ID"),
-                      dplyr::matches("PLOT_NM"),
-                      dplyr::matches("DT_VST"),
-                      dplyr::matches("FINAL_DESIG"),
-                      dplyr::matches("PANEL")) %>%
-        setNames(c("PRIMARYKEY", "PLOTID", "DATE.VISITED", "FINAL_DESIG", "PANEL"))
-    })
-    dd.points <- dd.points.list[[1]]
-    for (dd in 2:length(dd.points.list)) {
-      dd.points <- rbind(dd.points, dd.points.list[[2]])
-    }
-  }
-  dd.points@data$YEAR <- add.year(pts = dd.points, date.field = "DATE.VISITED", source.field = "PANEL")[["YEAR"]]
-  dd.points@data$DATE.VISITED <- lubridate::as_date(dd.points@data$DATE.VISITED)
-
-  ## Turn the benchmarked points into an spdf
-  points.benchmarked.spdf <- sp::SpatialPointsDataFrame(coords = points.benchmarked[, c("LONGITUDE", "LATITUDE")],
-                                                        data = points.benchmarked,
-                                                        proj4string = projection)
-
-  # Getting the strata sampling table trimmed and renamed
-  strata.sampling.table <- dplyr::select(.data = strata.weights,
-                                         Stratum,
-                                         Total.pts,
-                                         Observed.pts,
-                                         Prop.dsgn.pts.obsrvd,
-                                         Area.HA,
-                                         Sampled.area.HA,
-                                         Weight)
-  names(strata.sampling.table) <- c("Design Stratum (Type of Land)",
-                                    "# Design Points",
-                                    "# Sampled Points",
-                                    "Prop. Design Points Sampled",
-                                    "Estimated Stratum Area (ha)",
-                                    "Stratum Area Sampled",
-                                    "Calculated Point Weight (ha/pt)")
-
-
-  #######
-  ## Objectives and benchmark information from the Excel template
-  points.benchmarked$year <- lubridate::year(points.benchmarked$DATE.VISITED)
-  points.benchmarked$yday <- lubridate::yday(points.benchmarked$DATE.VISITED)
-
-
-  # For each benchmark add in the name of the field in TerrADat that corresponds
-  benchmarks.sum <- dplyr::group_by(benchmarks, MANAGEMENT.QUESTION, EVALUATION.CATEGORY) %>% dplyr::summarise(
-    indicator.name.alt = dplyr::first(INDICATOR),
-    Required.Proportion = dplyr::first(REQUIRED.PROPORTION),
-    Proportion.Relation = dplyr::first(PROPORTION.RELATION),
-    indicator.tdat = dplyr::first(INDICATOR.TDAT),
-    Benchmark.Source = dplyr::first(BENCHMARK.SOURCE))
-
-  ######
-  ## Sample Design Information (point fate, stratification, study area bdy)
-  # Dissolve any additional polygons so we have a single boundary for the project area
-  if (!is.null(project.area.spdf)) {
-    project.area.spdf$dissolve <- 1
-    project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
-                                            id = project.area.spdf@data$dissolve)
-  }
-
-  ## Filter out the forbidden date ranges!
-  if (!is.null(daterange.max)) {
-    dd.points <- dd.points[dd.points$YEAR <= lubridate::year(lubridate::as_date(daterange.max)),]
-  }
-  if (!is.null(daterange.min)) {
-    dd.points <- dd.points[dd.points$YEAR >= lubridate::year(lubridate::as_date(daterange.min)),]
-  }
-
-  ## Get the design points info from the analysis script output files
-  point.fates <- dd.points@data %>% dplyr::select(.data = .,
-                                                  PLOTID,
-                                                  FINAL_DESIG,
-                                                  YEAR) %>%
-    dplyr::group_by(FINAL_DESIG, YEAR) %>%
-    dplyr::summarize(n = n())
-
-  fates <- fate.lookup()
-  point.fates <- merge(point.fates,
-                       fates,
-                       by.x = "FINAL_DESIG",
-                       by.y = "fate.value")
-  point.fates$variable <- point.fates$fate
-
-  ##########################
-  ### Making the overview map
-  ## Create the study area map - project boundary, sample frame, points sampled (from TerrADat)
-  ## Use leaflet.
-  bounds.overview <- sp::bbox(project.area.spdf)
-  map.overview <- leaflet::leaflet(sample.frame.spdf) %>%
-    leaflet::addTiles() %>%
-    leaflet::fitBounds(lng1 = bounds.overview[1,1],
-                       lat1 = bounds.overview[2,1],
-                       lng2 = bounds.overview[1,2],
-                       lat2 = bounds.overview[2,2]) %>%
-    leaflet::addPolygons(data = sample.frame.spdf,
-                         fill = TRUE,
-                         stroke = TRUE,
-                         color = "tan",
-                         fillOpacity = 0.6,
-                         weight = 2,
-                         group = "BLM Lands") %>%
-    leaflet::addPolygons(data = project.area.spdf,
-                         fill = FALSE,
-                         stroke = TRUE,
-                         color = "#222",
-                         weight = 3,
-                         group = "Study Area") %>%
-    leaflet::addPolygons(data = reporting.units.spdf,
-                         fill = FALSE,
-                         stroke = TRUE,
-                         color = "#000",
-                         weight = 2,
-                         fillOpacity = 0.6,
-                         group = "Reporting Units") %>%
-    leaflet::addCircleMarkers(data = points.benchmarked.spdf,
-                              radius = 4,
-                              color = "navy",
-                              stroke = FALSE,
-                              fillOpacity = 0.8,
-                              group = "Monitoring Sites") %>%
-    leaflet::addLegend(position = "bottomright",
-                       colors = c("#222", "tan", "navy", "#000"),
-                       labels = c("Study Area Boundary", "BLM Lands", "Monitoring Sites", "Reporting Units")) %>%
-    leaflet::addLayersControl(overlayGroups = c("Monitoring Sites", "BLM Lands", "Reporting Units", "Study Area"),
-                              options = leaflet::layersControlOptions(collapsed = FALSE)
-    )
-
-  ########################
-  ### Figure of sample dates
-  # Month start days and names
-  months.days <- c(0, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336)
-  months.names = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec")
-
-  # Figure itself
-  dates.plot <- ggplot2::ggplot(data = dplyr::distinct(dplyr::select(.data = points.benchmarked, PRIMARYKEY, yday, year)),
-                                ggplot2::aes(x = yday, fill = factor(year))) +
-    ggplot2::geom_histogram(binwidth = 7) +
-    ggplot2::xlim(0, 365) +
-    ggplot2::geom_vline(xintercept = months.days,
-                        color = "white",
-                        size = 0.75) +
-    ggplot2::scale_x_continuous(breaks = months.days,
-                                labels = months.names) +
-    ggplot2::ggtitle("Number of monitoring sites where data was collected by week") +
-    ggplot2::theme(panel.grid.major.x = element_blank(),
-                   panel.grid.minor.x = element_blank()) +
-    ggplot2::xlab("Week of the year") +
-    ggplot2::ylab("Number of Plots") +
-    ggplot2::labs(fill = "Year")
-
-  ####################
-  ### List of figures of point fates
-  fates.plots <- lapply(X = split(point.weights, "REPORTING.UNIT"),
-                       FUN = function(X) {
-                         point.weights <- X
-
-                         # Filter out unneeded and nonsense values
-                         data <- point.weights[toupper(point.weights$FINAL_DESIG) %in% toupper(fates$fate.value[fates$fate != "Unneeded"]),]
-
-                         # Replace the values with the names
-                         for (f in unique(data$FINAL_DESIG)) {
-                           data$FINAL_DESIG[data$FINAL_DESIG == f] <- fates$fate[toupper(fates$fate.value) %in% toupper(f)]
-                         }
-
-                         # Just get a sum
-                         total <- dplyr::summarize(.data = dplyr::group_by(.data = data,
-                                                                           REPORTING.UNIT),
-                                                   total = n())[["total"]]
-
-                         # Calculate percent composition by fate
-                         summary <- dplyr::summarize(.data = dplyr::group_by(.data = data,
-                                                                             REPORTING.UNIT,
-                                                                             FINAL_DESIG),
-                                                     pct = n()*100/total)
-
-                         # Sort that to get the fates in the order we want
-                         summary <- summary[match(c("Target Sampled", "Non-target", "Inaccessible", "Unknown"), summary$FINAL_DESIG),]
-
-                         # Plot!
-                         plot <- ggplot2::ggplot(summary,
-                                                 aes(x = REPORTING.UNIT,
-                                                     y = pct,
-                                                     fill = FINAL_DESIG)) +
-                           ggplot2::geom_col(position = "stack") +
-                           ggplot2::coord_flip() +
-                           ggplot2::scale_fill_manual(name= "Final Point\nDesignation",
-                                                      values = c("Unknown" = "#abd9e9",
-                                                                 "Non-target" = "#ffffbf",
-                                                                 "Inaccessible" = "#fdae61",
-                                                                 "Target Sampled" = "#d7191c"),
-                                                      breaks = c("Target Sampled", "Non-target", "Inaccessible", "Unknown"),
-                                                      drop = FALSE) +
-                           ggplot2::geom_text(data = subset(summary,
-                                                            pct != 0),
-                                              ggplot2::aes(label = paste0(pct, "%"),
-                                                           y = pct),
-                                              position = ggplot2::position_stack(vjust = 0.5)) +
-                           ggplot2::ylab("Percent of Plots") +
-                           ggplot2::xlab("Reporting Unit") +
-                           ggplot2::ggtitle(label = "Percentages of Final Point Designations\nWithin Reporting Unit") +
-                           ggplot2::theme(aspect.ratio = 1/6,
-                                          axis.title.y = element_blank(),
-                                          axis.text.y = element_blank(),
-                                          axis.ticks.y = element_blank(),
-                                          panel.background = element_blank(),
-                                          panel.grid = element_blank(),
-                                          plot.margin = unit(c(0, 0, 0, 0), "cm"),
-                                          strip.background = element_blank())
-
-                         return(plot)
-                       }) %>% setNames(unique(point.weights$REPORTING.UNIT))
-
-  message(names(fates.plots))
-
-  ##############
-  ### Summary table of objectives
-  # Get and reorder relevant variables from the benchmarks summary data frame
-  proportions.df <- dplyr::select(.data = benchmarks.sum,
-                                  MANAGEMENT.QUESTION,
-                                  Benchmark.Source,
-                                  indicator.name.alt,
-                                  EVALUATION.CATEGORY,
-                                  Required.Proportion,
-                                  Proportion.Relation)
-  # Add a variable with a string version of the required proportion expression
-  proportions.df$LS.Prop <- paste0(proportions.df$Proportion.Relation,
-                                   " ",
-                                   proportions.df$Required.Proportion*100,
-                                   "%")
-  # Anywhere that's made of just NA values, replace them with an empty string
-  proportions.df$LS.Prop[proportions.df$LS.Prop == "NA NA%"] <- ""
-
-  # Create a list of summary tables
-  # Do this by reporting unit within levels/type
-  reporting.unit.summary.list <- lapply(reporting.unit.levels,
-                                        FUN  = function(X, analysis.df, proportions.df, indicator.lut) {
-                                          analysis.level.df <- dplyr::filter(.data = analysis.df,
-                                                                             Type == X)
-
-                                          # For each reporting unit in the level
-                                          proportions.reporting.unit.df <- lapply(unique(analysis.level.df$Subpopulation),
-                                                                                  FUN = function(X, analysis.df, proportions.df, indicator.lut) {
-                                                                                    # Figure out if it's meeting
-                                                                                    proportions.reporting.unit.df <- addLSProp(prop.table = proportions.df,
-                                                                                                                               analysis.table = analysis.df,
-                                                                                                                               reporting.unit = X,
-                                                                                                                               indicator.lut = indicator.lut)
-
-                                                                                    proportions.reporting.unit.df$CI <- paste("±", (proportions.reporting.unit.df[[grep(names(proportions.reporting.unit.df), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]] - proportions.reporting.unit.df[[grep(names(proportions.reporting.unit.df), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])/2)
-
-                                                                                    # Get the fields in the right order and drop the ones we don't care about
-                                                                                    proportions.reporting.unit.df <- dplyr::select(.data= proportions.reporting.unit.df,
-                                                                                                                                   MANAGEMENT.QUESTION,
-                                                                                                                                   indicator.name.alt,
-                                                                                                                                   EVALUATION.CATEGORY,
-                                                                                                                                   LS.Prop,
-                                                                                                                                   NResp,
-                                                                                                                                   Estimate.P,
-                                                                                                                                   CI,
-                                                                                                                                   Objective.Met) %>%
-                                                                                      # Sort
-                                                                                      dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)
-
-                                                                                    # Rename to friendly strings
-                                                                                    names(proportions.reporting.unit.df) <- c("Monitoring Objective",
-                                                                                                                              "Indicator",
-                                                                                                                              "Condition Category",
-                                                                                                                              "Required Percent",
-                                                                                                                              "Number of Plots",
-                                                                                                                              "Estimated Percent",
-                                                                                                                              "Confidence Interval",
-                                                                                                                              "Objective Met")
-
-                                                                                    # Add the reporting unit
-                                                                                    proportions.reporting.unit.df$reporting.unit <- X
-
-                                                                                    return(proportions.reporting.unit.df)
-                                                                                  },
-                                                                                  analysis.df = analysis.df,
-                                                                                  proportions.df = proportions.df,
-                                                                                  indicator.lut = indicator.lut)
-
-                                          proportions.reporting.unit.df$level <- X
-
-                                          return(proportions.reporting.unit.df)
-                                        },
-                                        analysis.df = analysis,
-                                        proportions.df = proportions.df,
-                                        indicator.lut = indicator.lut)
-
-  if (length(reporting.unit.summary.list) > 1) {
-    reporting.unit.summary.df <- dplyr::bind_rows(reporting.unit.summary.list)
-  } else {
-    reporting.unit.summary.df <- as.data.frame(reporting.unit.summary.list[[1]])
-  }
-
-  # Create a list of xtables to display these summaries later
-  reporting.unit.summary.xtables <- dplyr::filter(.data = reporting.unit.summary.df,
-                                                  !(Condition.Category %in% cats.to.suppress)) %>%
-    split(x = ., f = list(.$reporting.unit, .$level)) %>%
-    lapply(X = .,
-           FUN = function(X){
-             output <- dplyr::select(.data = X,
-                                     -level,
-                                     -reporting.unit) %>%
-               xtable::xtable(x = .,
-                              align = c("l","l","l","l","c","c","c","c", "c"))
-
-             return(output)
-           })
-  # Name the list with the appropriate reporting units for future reference
-  names(reporting.unit.summary.xtables) <- dplyr::select(.data = reporting.unit.summary.df,
-                                                         reporting.unit,
-                                                         level) %>% dplyr::distinct() %>% .$reporting.unit
-
-  #################
-  ### Benchmark table
-  bm.table <- dplyr::select(.data = benchmarks,
-                            MANAGEMENT.QUESTION,
-                            INDICATOR,
-                            BENCHMARK.SOURCE,
-                            EVALUATION.STRATUM,
-                            EVALUATION.CATEGORY,
-                            EVAL.STRING.LOWER,
-                            EVAL.STRING.UPPER,
-                            INDICATOR.TDAT)
-  bm.table$BENCHMARK <- paste(bm.table$EVAL.STRING.LOWER,
-                              bm.table$INDICATOR.TDAT,
-                              bm.table$EVAL.STRING.UPPER)
-  bm.table <- dplyr::select(.data = bm.table,
-                            -dplyr::starts_with("eval.string"),
-                            -INDICATOR.TDAT) %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # Drop the unneeded fields and sort by mgt question
-  names(bm.table) <- c("Goal/Management Question",
-                       "Indicator",
-                       "Benchmark Source",
-                       "Benchmark Group",
-                       "Condition Category",
-                       "Benchmark Definition")
-
-
-
-  ###############
-  ### RENDER
-
-  rmarkdown::render(input = "C:/Users/Nelson/Documents/Projects/aim.analysis/inst/markdown/report.Rmd",
-                    #input = paste0(path.package("aim.analysis"), "/markdown/report.Rmd"),
-                    output_file = filename.aim(name = project.name, type = "report", extension = extension),
-                    output_dir = out.path)
-}
-
-
 ## Function to lookup terradat indicator values in a table and return a real name
 ## It's called vlookup because it works like that function in Excel.
 ##  value = the value to pass to the function to lookup
@@ -439,49 +9,6 @@ vlookup <- function(value,
                     lcol,
                     rcol) {
   return(table[table[[lcol]] == value, rcol])
-}
-
-## Function to programatically create output bar plots for a given indicator.
-## Requires the following inputs:
-##  df = data.frame of the cat.analysis results
-##  reporting.unit = desired level of reporting units for the graph
-##  subpop = desired specific reporting unit
-##  indicator = indicator to be graphed
-indicatorPlot <- function(df,
-                          reporting.unit.level,
-                          reporting.unit.name,
-                          indicator,
-                          indicator.lut = NULL,
-                          mq,
-                          threshold = 0.5) {
-  plot.data <- dplyr::filter(.data = df,
-                             Type == reporting.unit.level,
-                             Subpopulation == reporting.unit.name,
-                             Indicator == indicator,
-                             MANAGEMENT.QUESTION == mq,
-                             Category != "Total")
-  plot.data$UCB <- plot.data[[names(plot.data)[grepl(names(plot.data), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]]]
-  plot.data$LCB <- plot.data[[names(plot.data)[grepl(names(plot.data), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]]]
-  ind.realname <- vlookup(indicator, indicator.lut, 1, 2) ## Lookup the pretty name for the indicator
-  p <- ggplot2::ggplot(plot.data, ggplot2::aes(x = Category,
-                                               y = Estimate.P,
-                                               fill = Category)) +
-    ggplot2::geom_bar(stat = "identity",
-                      width = 0.5) +
-    ggplot2::coord_flip() +
-    ggplot2::geom_errorbar(ggplot2::aes(ymax = UCB,
-                                        ymin = LCB),
-                           width = 0.25) +
-    ggplot2::scale_fill_brewer(type = "div",
-                               palette = "RdYlBu") +
-    ggplot2::ylim(0, 100) +
-    ggplot2::ggtitle(paste0("Percentage of Reporting Unit by Condition Category: \n", ind.realname)) +
-    ggplot2::ylab("Estimated Percent of Reporting Unit Area")
-
-  if (threshold > 0) {
-    p <- p + ggplot2::geom_hline(yintercept = threshold, colour = "gold", size = 2)
-  }
-  return(p)
 }
 
 ## Function to display table of cat.analysis results. Takes same arguments as indicatorPlot function (minus the threshold argument)
@@ -677,6 +204,7 @@ objectiveMet <- function(proportion.required,
   return(output)
 }
 
+## Convert numeric to nominal
 num2nom <- function(number,
                     capitalize = FALSE) {
   ones <- c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
@@ -711,4 +239,688 @@ num2nom <- function(number,
   }
 
   return(output)
+}
+
+map.overview <- function(project.area.spdf = NULL,
+                         sample.frame.spdf = NULL,
+                         reporting.units.spdf = NULL,
+                         points.benchmarked = NULL){
+  if (class(points.benchmarked) != "SpatialPointsDataFrame") {
+    ## Turn the benchmarked points into an spdf
+    points.benchmarked.spdf <- sp::SpatialPointsDataFrame(coords = points.benchmarked[, c("LONGITUDE", "LATITUDE")],
+                                                          data = points.benchmarked,
+                                                          proj4string = projection)
+  } else {
+    points.benchmarked.spdf <- points.benchmarked
+  }
+
+  # Dissolve any additional polygons so we have a single boundary for the project area
+  if (!is.null(project.area.spdf)) {
+    project.area.spdf$dissolve <- 1
+    project.area.spdf <- rgeos::gUnaryUnion(project.area.spdf,
+                                            id = project.area.spdf@data$dissolve)
+  }
+
+  ## Create the study area map - project boundary, sample frame, points sampled (from TerrADat)
+  ## Use leaflet.
+  bounds.overview <- sp::bbox(project.area.spdf)
+  map <- leaflet::leaflet(sample.frame.spdf) %>%
+    leaflet::addTiles() %>%
+    leaflet::fitBounds(lng1 = bounds.overview[1,1],
+                       lat1 = bounds.overview[2,1],
+                       lng2 = bounds.overview[1,2],
+                       lat2 = bounds.overview[2,2]) %>%
+    leaflet::addPolygons(data = sample.frame.spdf,
+                         fill = TRUE,
+                         stroke = TRUE,
+                         color = "tan",
+                         fillOpacity = 0.6,
+                         weight = 2,
+                         group = "BLM Lands") %>%
+    leaflet::addPolygons(data = project.area.spdf,
+                         fill = FALSE,
+                         stroke = TRUE,
+                         color = "#222",
+                         weight = 3,
+                         group = "Study Area") %>%
+    leaflet::addPolygons(data = reporting.units.spdf,
+                         fill = FALSE,
+                         stroke = TRUE,
+                         color = "#000",
+                         weight = 2,
+                         fillOpacity = 0.6,
+                         group = "Reporting Units") %>%
+    leaflet::addCircleMarkers(data = points.benchmarked.spdf,
+                              radius = 4,
+                              color = "navy",
+                              stroke = FALSE,
+                              fillOpacity = 0.8,
+                              group = "Monitoring Sites") %>%
+    leaflet::addLegend(position = "bottomright",
+                       colors = c("#222", "tan", "navy", "#000"),
+                       labels = c("Study Area Boundary", "BLM Lands", "Monitoring Sites", "Reporting Units")) %>%
+    leaflet::addLayersControl(overlayGroups = c("Monitoring Sites", "BLM Lands", "Reporting Units", "Study Area"),
+                              options = leaflet::layersControlOptions(collapsed = FALSE)
+    )
+  return(map.overview)
+}
+
+#' Plotting Indicator Category Distributions
+#' @param analysis.df Data frame. The output from \code{spsurvey::cat.analysis()} sliced to a single combination of the values in Type, Subpopulation, MANAGEMENT.QUESTION, and Indicator.
+#' @param benchmarks Data frame. The output from \code{read.benchmarks()}.
+#' @param indicator.lut Optional data frame. Defaults to the output from \code{indicator.lookup()} which matches the indicators found in TerrADat.
+#' @return A \code{ggplot} point plot with confidence interval bars.
+#' @export
+plot.indicator.distribution <- function(analysis.df,
+                                        benchmarks,
+                                        indicator.lut = NULL) {
+  # Just get an easy to use name
+  current.data <- analysis.df
+  names(current.data) <- toupper(names(current.data))
+  # Just sanitizing the names of things
+  benchmarks.current <- benchmarks
+  names(benchmarks.current) <- toupper(names(benchmarks))
+  # Get the human-friendly name of the indicator
+  # If there isn't a lookup table already, use the default
+  if (is.null(indicator.lut)) {
+    indicator.lut <- indicator.lookup()
+  }
+  indicator.name <- indicator.lut$indicator.name[indicator.lut$indicator.tdat %in% current.data$INDICATOR]
+  # Figure out which categories need to exist for the benchmark
+  categories <- unique(dplyr::filter(.data = benchmarks.current,
+                                     benchmarks.current$MANAGEMENT.QUESTION %in% current.data$MANAGEMENT.QUESTION,
+                                     benchmarks.current$INDICATOR.TDAT %in% current.data$INDICATOR)$EVALUATION.CATEGORY)
+
+  # Make sure that if a category had no points, a row is added for it with the correct values and 0s
+  for (category in categories[!(categories %in% current.data$CATEGORY)]) {
+    rework <- current.data[1,]
+    rework$CATEGORY <- category
+    rework[1, 5:(ncol(rework)-1)] <- 0
+    current.data <- rbind(current.data, rework)
+  }
+
+  # Rename the variables so that we don't need to know the confidence level
+  names(current.data)[grepl(names(current.data), pattern = "^UCB[0-9]{2}Pct\\.P$", ignore.case = TRUE)] <- "UCB"
+  names(current.data)[grepl(names(current.data), pattern = "^LCB[0-9]{2}Pct\\.P$", ignore.case = TRUE)] <- "LCB"
+
+  # Make the plot!
+  current.plot <- ggplot2::ggplot(data = current.data,
+                                  ggplot2::aes(x = CATEGORY,
+                                               y = ESTIMATE.P,
+                                               color = CATEGORY)) +
+    # ggplot2::geom_bar(stat = "identity",
+    #                   width = 0.5) +
+    ggplot2::geom_pointrange(ggplot2::aes(ymax = UCB,
+                                          ymin = LCB),
+                             size = 1.5,
+                             shape = 18) +
+    ggplot2::coord_flip() +
+    # ggplot2::geom_errorbar(ggplot2::aes(ymax = UCB,
+    #                                     ymin = LCB),
+    #                        width = 0.25) +
+    ggplot2::scale_color_brewer(type = "div",
+                               palette = "RdYlBu") +
+    ggplot2::ylim(0, 100) +
+    ggplot2::ggtitle(paste0("Percentage of Reporting Unit by Condition Category: \n", indicator.name)) +
+    ggplot2::ylab("Estimated Percent of Reporting Unit Area")
+
+  # Figure out what the required proportion is
+  required.proportion <- unique(dplyr::filter(.data = benchmarks.current,
+                                              benchmarks.current$MANAGEMENT.QUESTION %in% current.data$MANAGEMENT.QUESTION,
+                                              benchmarks.current$INDICATOR.TDAT %in% current.data$INDICATOR)$REQUIRED.PROPORTION)
+  # Remove any NA values that have somehow made their way in and convert to percent
+  required.proportion <- required.proportion[!is.na(required.proportion)] * 100
+  # If it's empty, that will be assumed to be a 0
+  if (length(required.proportion) < 1) {
+    required.proportion <- 0
+  }
+
+  # Add the line for the required proportion if appropriate
+  if (required.proportion > 0) {
+    current.plot <- current.plot +
+      ggplot2::geom_hline(yintercept = required.proportion,
+                          colour = "gold",
+                          size = 2)
+  }
+  return(current.plot)
+}
+
+#' Plotting Indicator Category Distributions For Multiple Indicators/Benchmarks/Reporting Units
+#' A wrapper for plot.indicator.distribution to apply it across multiple combinations of values in Type, Subpopulation, MANAGEMENT.QUESTION, and Indicator simulataneously.
+#' @param analysis.df Data frame. The output from \code{spsurvey::cat.analysis()} sliced to a single combination of the values in Type, Subpopulation, MANAGEMENT.QUESTION, and Indicator.
+#' @param benchmarks Data frame. The output from \code{read.benchmarks()}.
+#' @param indicator.lut Optional data frame. Defaults to the output from \code{indicator.lookup()} which matches the indicators found in TerrADat.
+#' @export
+multiplot.indicator.distribution <- function(analysis.df,
+                                             benchmarks,
+                                             indicator.lut = NULL){
+  # Get the analysis output without the "Total" category entries
+  analysis.trim <- dplyr::filter(.data = analysis.df,
+                                 Category != "Total")
+
+  # Turn that into a list of data frames for unique combinations of Subpopulation, MO, and Indicator
+  analysis.split <- split(analysis.trim, interaction(analysis.trim$Type,
+                                                     analysis.trim$Subpopulation,
+                                                     analysis.trim$MANAGEMENT.QUESTION,
+                                                     analysis.trim$Indicator))
+
+  # For each of those data frames, create a data frame with the plot and the identifying fields
+  plots.list <- lapply(X = analysis.split,
+                       FUN = function(X,
+                                      benchmarks,
+                                      indicator.lut) {
+                         # Just get an easy to use name
+                         current.data <- X
+                         # Get the human-friendly name of the indicator
+                         indicator.name <- indicator.lut$indicator.name[indicator.lut$indicator.tdat %in% current.data$Indicator]
+                         # Figure out which categories need to exist for the benchmark
+                         categories <- unique(dplyr::filter(.data = benchmarks,
+                                                            benchmarks$Management.Question %in% current.data$MANAGEMENT.QUESTION,
+                                                            benchmarks$indicator.tdat %in% current.data$Indicator)$Evaluation.Category)
+
+                         # Make sure that if a category had no points, a row is added for it with the correct values and 0s
+                         for (category in categories[!(categories %in% current.data$Category)]) {
+                           rework <- current.data[1,]
+                           rework$Category <- category
+                           rework[1, 5:(ncol(rework)-1)] <- 0
+                           current.data <- rbind(current.data, rework)
+                         }
+
+                         # Rename the variables so that we don't need to know the confidence level
+                         names(current.data)[grepl(names(current.data), pattern = "^UCB[0-9]{2}Pct\\.P$")] <- "UCB"
+                         names(current.data)[grepl(names(current.data), pattern = "^LCB[0-9]{2}Pct\\.P$")] <- "LCB"
+
+                         # Make the plot!
+                         current.plot <- plot.indicator.distribution(current.data,
+                                                                     benchmarks)
+
+                         # Create the output data frame with the identifying variables. Just one row!
+                         output <- distinct(dplyr::select(.data = current.data,
+                                                          Type:Indicator, MANAGEMENT.QUESTION))
+
+                         # Stick the plot into a list and add that to the new variable "plot"
+                         # It needs to be in a list because a list is a single object but the plot is 9. Go figure
+                         if (nrow(output) == 1) {
+                           output[["plot"]] <- list(current.plot)
+                           return(output)
+                         } else {
+                           return(NULL)
+                         }
+
+                       }, benchmarks = benchmarks,
+                       indicator.lut = indicator.lut)
+  # Turn it all into a single data frame to pull the plots from!
+  if (length(plots.list) < 2) {
+    plots.df <- plots.list[[1]]
+  } else {
+    plots.df <- dplyr::bind_rows(plots.list)
+  }
+  return(plots.df)
+}
+
+#' Plotting Fate Distributions
+#' @param point.weights Data frame. The point weights output from \code{weight()} with a common reporting unit.
+#' @param fates Optional data frame. Defaults to the output from \code{fate.lookup()} which matches the plot fates found in sample design databases.
+#' @output A \code{ggplot} plot of the fate distribution as a histogram.
+#' @export
+plot.fate.distribution <- function(point.weights,
+                                   fates = NULL) {
+  # If there isn't a fate lookup table, use the default
+  if (is.null(fates)) {
+    fates <- fate.lookup()
+  }
+
+  # Filter out unneeded and nonsense values
+  data <- point.weights[toupper(point.weights$FINAL_DESIG) %in% toupper(fates$fate.value[fates$fate != "Unneeded"]),]
+
+  # Replace the values with the names
+  for (f in unique(data$FINAL_DESIG)) {
+    data$FINAL_DESIG[data$FINAL_DESIG == f] <- fates$fate[toupper(fates$fate.value) %in% toupper(f)]
+  }
+
+  # Just get a sum
+  total <- dplyr::summarize(.data = dplyr::group_by(.data = data,
+                                                    REPORTING.UNIT),
+                            total = n())[["total"]]
+
+  # Calculate percent composition by fate
+  summary <- dplyr::summarize(.data = dplyr::group_by(.data = data,
+                                                      REPORTING.UNIT,
+                                                      FINAL_DESIG),
+                              pct = n()*100/total)
+
+  # Sort that to get the fates in the order we want
+  summary <- summary[match(c("Target Sampled", "Non-target", "Inaccessible", "Unknown"), summary$FINAL_DESIG),]
+
+  # Plot!
+  plot <- ggplot2::ggplot(summary,
+                          aes(x = REPORTING.UNIT,
+                              y = pct,
+                              fill = FINAL_DESIG)) +
+    ggplot2::geom_col(position = "stack") +
+    ggplot2::coord_flip() +
+    ggplot2::scale_fill_manual(name= "Final Point\nDesignation",
+                               values = c("Unknown" = "#abd9e9",
+                                          "Non-target" = "#ffffbf",
+                                          "Inaccessible" = "#fdae61",
+                                          "Target Sampled" = "#d7191c"),
+                               breaks = c("Target Sampled", "Non-target", "Inaccessible", "Unknown"),
+                               drop = FALSE) +
+    # ggplot2::geom_text(data = subset(summary,
+    #                                  pct != 0),
+    #                    ggplot2::aes(label = paste0(round(pct, digits = 1), "%"),
+    #                                 y = pct),
+    #                    # position = ggplot2::position_jitter()) +
+    #                    position = ggplot2::position_stack(vjust = 0.5)) +
+    ggplot2::ylab("Percent of Plots") +
+    ggplot2::xlab("Reporting Unit") +
+    ggplot2::ggtitle(label = "Percentages of Final Point Designations\nWithin Reporting Unit") +
+    ggplot2::theme(aspect.ratio = 1/6,
+                   axis.title.y = element_blank(),
+                   axis.text.y = element_blank(),
+                   axis.ticks.y = element_blank(),
+                   panel.background = element_blank(),
+                   panel.grid = element_blank(),
+                   plot.margin = unit(c(0, 0, 0, 0), "cm"),
+                   strip.background = element_blank())
+
+  return(plot)
+}
+
+#' Plotting Fate Distributions For Multiple Reporting Units
+#' A wrapper for \code{plot.fate.distribution()} to apply that splits the input \code{point.weights} by the variable REPORTING.UNIT and returns a list
+#' @param point.weights Data frame. The point weights output from \code{weight()}.
+#' @param fates Optional data frame. Defaults to the output from \code{fate.lookup()} which matches the plot fates found in sample design databases.
+#' @output A list of \code{ggplot} plots of the fate distributions of the reporting units as histograms.
+#' @export
+mulitplot.fate.distribution <- function(point.weights,
+                                        fates = NULL){
+  plot.list <- lapply(X = split(point.weights, "REPORTING.UNIT"),
+         FUN = plot.fate.distribution,
+         fates = fates)
+  setNames(plot.list, unique(point.weights$REPORTING.UNIT))
+  return(plot.list)
+}
+
+#' Plotting Date Distributions
+#' @param points.benchmarked Data frame. The output from \code{benchmark()}.
+#' @return A \code{ggplot} plot of the date distribution as a histogram.
+#' @export
+plot.date.distribution <- function(points.benchmarked) {
+  ### Figure of sample dates
+  # Month start days and names
+  months.days <- c(0, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336)
+  months.names = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec")
+
+  # Figure itself
+  dates.plot <- ggplot2::ggplot(data = dplyr::distinct(dplyr::select(.data = points.benchmarked, PRIMARYKEY, yday, year)),
+                                ggplot2::aes(x = yday, fill = factor(year))) +
+    ggplot2::geom_histogram(binwidth = 7) +
+    ggplot2::xlim(0, 365) +
+    ggplot2::geom_vline(xintercept = months.days,
+                        color = "white",
+                        size = 0.75) +
+    ggplot2::scale_x_continuous(breaks = months.days,
+                                labels = months.names) +
+    ggplot2::ggtitle("Number of monitoring sites where data was collected by week") +
+    ggplot2::theme(panel.grid.major.x = element_blank(),
+                   panel.grid.minor.x = element_blank()) +
+    ggplot2::xlab("Week of the year") +
+    ggplot2::ylab("Number of Plots") +
+    ggplot2::labs(fill = "Year")
+  return(dates.plot)
+}
+
+#' Combine Multiple Design Database Point Data Frames
+#' Combines all the points data frames into a single data frame or if there's only one data frame in the list, returns that data frame. It restricts the results to only the fields for primary key, plot ID, date visited, point fate, and panel.
+#' @param dd.points List of data frames. The \code{pts} list from the output of \code{read.dd}.
+#' @return A single SPDF or data frame with the fields PRIMARYKEY, PLOTID, DATE.VISITED, FINAL_DESIG, and PANEL
+#' @export
+combine.ddpoints <- function(dd.points){
+  ## Wrangle dd.points into a single SPDF
+  if (length(dd.points) == 1) {
+    # If there's just one data farme, pull it out
+    output <- dplyr::select(.data = dd.points[[1]],
+                               dplyr::matches("TERRA_PLOT_ID"),
+                               dplyr::matches("PLOT_NM"),
+                               dplyr::matches("DT_VST"),
+                               dplyr::matches("FINAL_DESIG"),
+                               dplyr::matches("PANEL")) %>%
+      names(output) <- c("PRIMARYKEY", "PLOTID", "DATE.VISITED", "FINAL_DESIG", "PANEL")
+  } else if (length(dd.points) > 1) {
+    # If there's more than one, get a list of those, limited to the variables we want
+    dd.points.list <- lapply(dd.points, function(X) {
+      current.df <- dplyr::select(.data = X,
+                                  dplyr::matches("TERRA_PLOT_ID"),
+                                  dplyr::matches("PLOT_NM"),
+                                  dplyr::matches("DT_VST"),
+                                  dplyr::matches("FINAL_DESIG"),
+                                  dplyr::matches("PANEL")) %>%
+        names(current.df) <- c("PRIMARYKEY", "PLOTID", "DATE.VISITED", "FINAL_DESIG", "PANEL")
+        return(current.df)
+    })
+    # Then do a quick loop to rbind() them together
+    output <- dd.points.list[[1]]
+    for (dd in 2:length(dd.points.list)) {
+      output <- rbind(dd.points, dd.points.list[[2]])
+    }
+  }
+  return(output)
+}
+
+#' Creating tables of data
+#' @param benchmarks Data frame. The output from \code{read.benchmarks()}.
+#' @param analysis.df Data frame. The output from \code{spsurvey::cat.analysis()}
+#' @param indicator.lut Optional data frame. Defaults to the output from \code{indicator.lookup()} which matches the indicators found in TerrADat.
+#' @param output Character string. Determines the output type. The options are \code{"list"} which returns a list of data frames, \code{"dataframe"} which returns the same results, but as a single data frame, and \code{"xtables"} which returns a list of formatted tables using \code{xtable::xtable()}. Defaults to \code{"list"}
+#' @return A dataframe or a list of dataframes/xtables. Defaults to a list of dataframes.
+#' @export
+table.reportingunits <- function(benchmarks,
+                 analysis.df,
+                 indicator.lut = NULL,
+                 output = "list"){
+  ### Summary table of objectives
+  # Summarize the benchmark table
+  benchmarks.sum <- dplyr::summarise(.data = dplyr::group_by(benchmarks, MANAGEMENT.QUESTION, EVALUATION.CATEGORY),
+                                     indicator.name.alt = dplyr::first(INDICATOR),
+                                     Required.Proportion = dplyr::first(REQUIRED.PROPORTION),
+                                     Proportion.Relation = dplyr::first(PROPORTION.RELATION),
+                                     indicator.tdat = dplyr::first(INDICATOR.TDAT),
+                                     Benchmark.Source = dplyr::first(BENCHMARK.SOURCE))
+
+  # Get and reorder relevant variables from the benchmarks summary data frame
+  proportions.df <- dplyr::select(.data = benchmarks.sum,
+                                  MANAGEMENT.QUESTION,
+                                  Benchmark.Source,
+                                  indicator.name.alt,
+                                  EVALUATION.CATEGORY,
+                                  Required.Proportion,
+                                  Proportion.Relation)
+  # Add a variable with a string version of the required proportion expression
+  proportions.df$LS.Prop <- paste0(proportions.df$Proportion.Relation,
+                                   " ",
+                                   proportions.df$Required.Proportion*100,
+                                   "%")
+  # Anywhere that's made of just NA values, replace them with an empty string
+  proportions.df$LS.Prop[proportions.df$LS.Prop == "NA NA%"] <- ""
+
+  # Create a list of summary tables
+  # Do this by reporting unit within levels/type
+  reporting.unit.summary.list <- lapply(reporting.unit.levels,
+                                        FUN  = function(X, analysis.df, proportions.df, indicator.lut) {
+                                          analysis.level.df <- dplyr::filter(.data = analysis.df,
+                                                                             Type == X)
+
+                                          # For each reporting unit in the level
+                                          proportions.reporting.unit.df <- lapply(unique(analysis.level.df$Subpopulation),
+                                                                                  FUN = function(X, analysis.df, proportions.df, indicator.lut) {
+                                                                                    # Figure out if it's meeting
+                                                                                    proportions.reporting.unit.df <- addLSProp(prop.table = proportions.df,
+                                                                                                                               analysis.table = analysis.df,
+                                                                                                                               reporting.unit = X,
+                                                                                                                               indicator.lut = indicator.lut)
+
+                                                                                    proportions.reporting.unit.df$CI <- paste("+/-", (proportions.reporting.unit.df[[grep(names(proportions.reporting.unit.df), pattern = "^UCB[0-9]{1,2}Pct\\.P$")]] - proportions.reporting.unit.df[[grep(names(proportions.reporting.unit.df), pattern = "^LCB[0-9]{1,2}Pct\\.P$")]])/2)
+
+                                                                                    # Get the fields in the right order and drop the ones we don't care about
+                                                                                    proportions.reporting.unit.df <- dplyr::select(.data= proportions.reporting.unit.df,
+                                                                                                                                   MANAGEMENT.QUESTION,
+                                                                                                                                   indicator.name.alt,
+                                                                                                                                   EVALUATION.CATEGORY,
+                                                                                                                                   LS.Prop,
+                                                                                                                                   NResp,
+                                                                                                                                   Estimate.P,
+                                                                                                                                   CI,
+                                                                                                                                   Objective.Met) %>%
+                                                                                      # Sort
+                                                                                      dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)
+
+                                                                                    # Rename to friendly strings
+                                                                                    names(proportions.reporting.unit.df) <- c("Monitoring Objective",
+                                                                                                                              "Indicator",
+                                                                                                                              "Condition Category",
+                                                                                                                              "Required Percent",
+                                                                                                                              "Number of Plots",
+                                                                                                                              "Estimated Percent",
+                                                                                                                              "Confidence Interval",
+                                                                                                                              "Objective Met")
+
+                                                                                    # Add the reporting unit
+                                                                                    proportions.reporting.unit.df$reporting.unit <- X
+
+                                                                                    return(proportions.reporting.unit.df)
+                                                                                  },
+                                                                                  analysis.df = analysis.df,
+                                                                                  proportions.df = proportions.df,
+                                                                                  indicator.lut = indicator.lut)
+
+                                          proportions.reporting.unit.df$level <- X
+
+                                          return(proportions.reporting.unit.df)
+                                        },
+                                        analysis.df = analysis,
+                                        proportions.df = proportions.df,
+                                        indicator.lut = indicator.lut)
+
+  if (output == "list"){
+    return(reporting.unit.summary.list)
+  }
+
+  if (length(reporting.unit.summary.list) > 1) {
+    reporting.unit.summary.df <- dplyr::bind_rows(reporting.unit.summary.list)
+  } else {
+    reporting.unit.summary.df <- as.data.frame(reporting.unit.summary.list[[1]])
+  }
+
+  if (output == "dataframe"){
+    return(reporting.unit.summary.df)
+  }
+
+  # Create a list of xtables to display these summaries later
+  reporting.unit.summary.xtables <- dplyr::filter(.data = reporting.unit.summary.df,
+                                                  !(Condition.Category %in% cats.to.suppress)) %>%
+    split(x = ., f = list(.$reporting.unit, .$level)) %>%
+    lapply(X = .,
+           FUN = function(X){
+             output <- dplyr::select(.data = X,
+                                     -level,
+                                     -reporting.unit) %>%
+               xtable::xtable(x = .,
+                              align = c("l","l","l","l","c","c","c","c", "c"))
+
+             return(output)
+           })
+  # Name the list with the appropriate reporting units for future reference
+  names(reporting.unit.summary.xtables) <- dplyr::select(.data = reporting.unit.summary.df,
+                                                         reporting.unit,
+                                                         level) %>% dplyr::distinct() %>% .$reporting.unit
+  if (output == "xtables"){
+    return(reporting.unit.summary.xtables)
+  }
+}
+
+#' Generating summary reports.
+#' @description Generate both a .PDF and .HTML report with \code{RMarkdown}.
+#' @param out.path Character string. The folder path to write the output reports into.
+#' @param project.name Character string. The name of the project to be used in the title of the report and the filenames it's written to.
+#' @param indicator.lut Data frame. The lookup table between the indicator names in TerrADat and the human readable indicator names.
+#' @param benchmarks Data frame. The output from \code{read.benchmarks()}.
+#' @param analysis Data frame. The data frame \code{"analyses"} from the output of \code{analyze()}.
+#' @param cats.to.suppress Character vector. One or more categories to suppress in tables. Defaults to \code{c("Not Meeting")}.
+#' @param point.weights Data frame. The data frame \code{point.weights} from the output of \code{weight()}.
+#' @param strata.weights Data frame. The data frame \code{strata.weights} from the output of \code{weight()}.
+#' @param reporting.units.spdf Spatial polygons data frame. Used in plotting maps. This MUST have a field named exactly "Type" containing the type of reporting unit (e.g. "Watershed" or "Study Area") and a field named exactly "Subpopulation" which contains the identity of the reporting unit[s] (e.g. the watersheds "Dickshooter Creek" and "Headwaters Deep Creek").
+#' @param sample.frame.spdf Spatial polygons data frame. Used in plotting maps.
+#' @param project.area.spdf Spatial polygons data frame. Used in plotting maps.
+#' @param points.benchmarked Data frame. The output from \code{benchmark()}.
+#' @param dd.points Spatial points data frame or list of spatial points data frames. This should be the \code{pts} list in the output from \code{read.dd()}.
+#' @param daterange.max Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited before this date will be considered. Currently only restricts to year.
+#' @param daterange.min Optional character string. This must be interpretable by \code{lubridate::as_date()}, e.g. \code{"2016-04-20"}. Only sampling locations visited after this date will be considered. Currently only restricts to year.
+#' @param projection  Optional \code{sp::CRS()} argument. Used to convert \code{points.benchmarked} into a spatial points data frame. Only specify if \code{points.benchmarked} has coordinates not from the same projection as TerrADat. Defaults to \code{sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")}.
+#' @param extension Character string. The file extension to write the report to. Defaults to \code{"html"}.
+#' @export
+
+report <- function(out.path,
+                   project.name,
+                   indicator.lut = NULL,
+                   fates = NULL,
+                   benchmarks = NULL,
+                   analysis = NULL,
+                   cats.to.suppress = c("Not Meeting"),
+                   point.weights,
+                   strata.weights,
+                   reporting.units.spdf = NULL,
+                   sample.frame.spdf,
+                   project.area.spdf = NULL,
+                   points.benchmarked = NULL,
+                   dd.points,
+                   daterange.max = NULL,
+                   daterange.min = NULL,
+                   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
+                   extension = "html") {
+
+  # Step one: Grab the confidence level from the analysis variable names
+  # We used to ask the user to provide this, but asking for less is better (and more trustworthy)
+  conf.level <- names(analysis) %>% paste(collapse = "") %>%
+    stringr::str_extract(pattern = "[0-9]{2}") %>% as.numeric()
+
+  # Get the reporting unit levels/types from the analysis data frame
+  reporting.unit.levels <- unique(analysis$Type)
+
+  # Get the default indicators lookup table if none is provided
+  if (is.null(indicator.lut)) {
+    message("Using default indicator.lut because no alternative was provided.")
+    indicator.lut <- indicator.lookup()
+    names(indicator.lut) <- toupper(names(indicator.lut))
+  }
+
+  # Get the fates lookup table is none is provided
+  if (is.null(fates)) {
+    message("Using default fates lookup table because no alternative was provided.")
+    fates <- fate.lookup()
+  }
+
+
+  # Just sanitizing the names of things
+  names(benchmarks) <- toupper(names(benchmarks))
+
+  ## Wrangle dd.points into a single SPDF
+  dd.points <- combine.ddpoints(dd.points)
+
+  # Get YEAR and DATE.VISITED into a date format
+  dd.points@data$YEAR <- add.year(pts = dd.points, date.field = "DATE.VISITED", source.field = "PANEL")[["YEAR"]]
+  dd.points@data$DATE.VISITED <- lubridate::as_date(dd.points@data$DATE.VISITED)
+
+  ## Filter out the forbidden date ranges!
+  if (!is.null(daterange.max)) {
+    dd.points <- dd.points[dd.points$YEAR <= lubridate::year(lubridate::as_date(daterange.max)),]
+  }
+  if (!is.null(daterange.min)) {
+    dd.points <- dd.points[dd.points$YEAR >= lubridate::year(lubridate::as_date(daterange.min)),]
+  }
+
+
+  # Getting the strata sampling table trimmed and renamed
+  strata.sampling.table <- dplyr::select(.data = strata.weights,
+                                         Stratum,
+                                         Total.pts,
+                                         Observed.pts,
+                                         Prop.dsgn.pts.obsrvd,
+                                         Area.HA,
+                                         Sampled.area.HA,
+                                         Weight)
+  names(strata.sampling.table) <- c("Design Stratum (Type of Land)",
+                                    "# Design Points",
+                                    "# Sampled Points",
+                                    "Prop. Design Points Sampled",
+                                    "Estimated Stratum Area (ha)",
+                                    "Stratum Area Sampled",
+                                    "Calculated Point Weight (ha/pt)")
+
+
+  #######
+  ## Objectives and benchmark information from the Excel template
+  points.benchmarked$year <- lubridate::year(points.benchmarked$DATE.VISITED)
+  points.benchmarked$yday <- lubridate::yday(points.benchmarked$DATE.VISITED)
+
+  ######
+  ## Sample Design Information (point fate, stratification, study area bdy)
+  ## Get the design points info from the analysis script output files
+  point.fates <- dplyr::select(.data = dd.points@data,
+                               PLOTID,
+                               FINAL_DESIG,
+                               YEAR) %>%
+    dplyr::group_by(FINAL_DESIG, YEAR) %>%
+    dplyr::summarize(n = n())
+
+
+  point.fates <- merge(point.fates,
+                       fates,
+                       by.x = "FINAL_DESIG",
+                       by.y = "fate.value")
+  point.fates$variable <- point.fates$fate
+
+  ##########################
+  ### Making the overview map
+  map.general <- map.overview(project.area.spdf = project.area.spdf,
+                               sample.frame.spdf = sample.frame.spdf,
+                               reporting.units.spdf = reporting.units.spdf,
+                               points.benchmarked = points.benchmarked)
+
+  ########################
+
+  ####################
+  ### Plot of the distribution of dates surveyed
+  dates.plot <- plot.date.distribution(points.benchmarked)
+
+  ### List of figures of point fates
+  fates.plots <- multiplot.fate.distribution(point.weights)
+
+
+  ### Data frame of figures of estimated percentages of benchmark categories
+  # Get the analysis output without the "Total" category entries
+  plots.df <- multiplot.indicator.distribution(analysis.df = analysis,
+                                               benchmarks = benchmarks,
+                                               indicator.lut = indicator.lut)
+
+  ###################
+  ##############
+  ### Summary table of objectives
+  reporting.unit.summary.xtables <- table.reportingunits(benchmarks = benchmarks,
+                                                         analysis.df = analysis.df,
+                                                         indicator.lut = indicator.lut,
+                                                         output = "xtables")
+
+  #################
+  ### Benchmark table
+  bm.table <- dplyr::select(.data = benchmarks,
+                            MANAGEMENT.QUESTION,
+                            INDICATOR,
+                            BENCHMARK.SOURCE,
+                            EVALUATION.STRATUM,
+                            EVALUATION.CATEGORY,
+                            EVAL.STRING.LOWER,
+                            EVAL.STRING.UPPER,
+                            INDICATOR.TDAT)
+  bm.table$BENCHMARK <- paste(bm.table$EVAL.STRING.LOWER,
+                              bm.table$INDICATOR.TDAT,
+                              bm.table$EVAL.STRING.UPPER)
+  bm.table <- dplyr::select(.data = bm.table,
+                            -dplyr::starts_with("eval.string"),
+                            -INDICATOR.TDAT) %>% dplyr::arrange(MANAGEMENT.QUESTION, EVALUATION.CATEGORY)  # Drop the unneeded fields and sort by mgt question
+  names(bm.table) <- c("Goal/Management Question",
+                       "Indicator",
+                       "Benchmark Source",
+                       "Benchmark Group",
+                       "Condition Category",
+                       "Benchmark Definition")
+
+
+
+  ###############
+  ### RENDER
+
+  rmarkdown::render(input = paste0(path.package("aim.analysis"), "/markdown/report.Rmd"),
+                    output_file = filename.aim(name = project.name, type = "report", extension = extension),
+                    output_dir = out.path)
 }

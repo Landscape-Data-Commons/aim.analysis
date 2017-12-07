@@ -223,7 +223,7 @@ for (level in reporting.unit.levels) { # by reporting unit level
                               mq = mq,
                               threshold = req.prop)
 
-        map <- indicatorMap(reporting.unit.level = level,
+        map <- indicatorMap(reporting.unit.level = type,
                          reporting.unit.name = reporting.unit,
                          reporting.units.spdf = reporting.units.spdf,
                          prjarea.spdf = project.area.spdf,

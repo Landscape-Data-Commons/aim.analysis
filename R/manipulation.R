@@ -108,10 +108,10 @@ attribute.shapefile <- function(spdf1,
 #' Basically a wrapping of \code{rgeos::gIntersection()} and \code{raster::intersect()} with additional opportunity to call add.area() and automatically added unique identifiers for each resultant polygon
 #' @param spdf1 A SpatialPolygonsDataFrame to be intersected
 #' @param spdf1.attributefieldname Name of the field in \code{spdf1} unique to the unit groups or units to take values from.
-#' @param spdf1.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf1.attributefieldname into. If unspecified, then \code{spdf1.attributefieldname} will be used. Defaults to \code{NULL}.
+#' @param spdf1.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf1.attributefieldname into. If unspecified, then \code{spdf1.attributefieldname} will be used.
 #' @param spdf2 A SpatialPolygonsDataFrame to be intersected
 #' @param spdf2.attributefieldname Name of the field in \code{spdf2} unique to the unit groups or units to take values from.
-#' @param spdf2.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then \code{spdf2.attributefieldname} will be used. Defaults to \code{NULL}.
+#' @param spdf2.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then \code{spdf2.attributefieldname} will be used.
 #' @param method A string specifying which function to use for the interscting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.
 #' @param area.ha Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{TRUE}.
 #' @param area.sqkm Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{TRUE}.
@@ -121,21 +121,21 @@ attribute.shapefile <- function(spdf1,
 #' intersect()
 #' @export
 
-intersect <- function(spdf1, ## A SpatialPolygonsShapefile
-                      spdf1.attributefieldname, ## Name of the field in SPDF1 unique to the unit groups or units to take values from
-                      spdf1.attributefieldname.output = NULL, ## Optional name of the field in the output SPDF to duplicate values from spdf1.attributefieldname in.
-                      spdf2, ## A SpatialPolygonsShapefile
-                      spdf2.attributefieldname, ## Name of the field in SPDF2 unique to the unit groups or units to take values from
-                      spdf2.attributefieldname.output = NULL,  ## Optional name of the field in the output SPDF to duplicate values from spdf2.attributefieldname in
-                      method = "gintersection", ## Which function to use, gIntersection() or intersect()
-                      area.ha = TRUE, ## Add fields for area in hectares for individual polygons and the sum of those within unique combinations of the input attribute fields
-                      area.sqkm = TRUE, ## Add fields for area in square kilometers for individual polygons and the sum of those within unique combinations of the input attribute fields
-                      projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs") ## Standard NAD83
+intersect <- function(spdf1,
+                      spdf1.attributefieldname,
+                      spdf1.attributefieldname.output = NULL,
+                      spdf2,
+                      spdf2.attributefieldname,
+                      spdf2.attributefieldname.output = NULL,
+                      method = "gintersection",
+                      area.ha = TRUE,
+                      area.sqkm = TRUE,
+                      projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
 ){
   ## Sanitization
   if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
     ## Make sure that the points also adhere to the same projection
-    spdf2 <- spTransform(spdf2, CRSobj = spdf1@proj4string)
+    spdf2 <- sp::spTransform(spdf2, CRSobj = spdf1@proj4string)
   }
   if (!(stringr::str_to_upper(method) %in% c("GINTERSECTION", "INTERSECT"))) {
     stop(paste0("method must be either 'gintersection' or 'intersect' but is currently '", method, "'."))

@@ -137,19 +137,19 @@ intersect <- function(spdf1,
     ## Make sure that the points also adhere to the same projection
     spdf2 <- sp::spTransform(spdf2, CRSobj = spdf1@proj4string)
   }
-  if (!(stringr::str_to_upper(method) %in% c("GINTERSECTION", "INTERSECT"))) {
+  if (!(toupper(method) %in% c("GINTERSECTION", "INTERSECT"))) {
     stop(paste0("method must be either 'gintersection' or 'intersect' but is currently '", method, "'."))
   }
 
-  names(spdf1@data) <- stringr::str_to_upper(names(spdf1@data))
-  names(spdf2@data) <- stringr::str_to_upper(names(spdf2@data))
-  spdf1.attributefieldname <- stringr::str_to_upper(spdf1.attributefieldname)
-  spdf2.attributefieldname <- stringr::str_to_upper(spdf2.attributefieldname)
+  names(spdf1@data) <- toupper(names(spdf1@data))
+  names(spdf2@data) <- toupper(names(spdf2@data))
+  spdf1.attributefieldname <- toupper(spdf1.attributefieldname)
+  spdf2.attributefieldname <- toupper(spdf2.attributefieldname)
   ## Create new columns that we can drop later. This is in case the field names were the same in both SPDFs
   spdf1@data[, paste0(spdf1.attributefieldname, ".spdf1")] <- spdf1@data[, spdf1.attributefieldname]
   spdf2@data[, paste0(spdf2.attributefieldname, ".spdf2")] <- spdf2@data[, spdf2.attributefieldname]
 
-  switch(stringr::str_to_upper(method),
+  switch(toupper(method),
          "GINTERSECTION" = {
            intersect.sp.attribute <- rgeos::gIntersection(spdf1,
                                                           spdf2,
@@ -585,7 +585,7 @@ apply.tracking <- function(filenames,
   if (class(tdat) == "SpatialPointsDataFrame") {
     tdat <- tdat@data
   }
-  names(tdat) <- stringr::str_to_upper(names(tdat))
+  names(tdat) <- toupper(names(tdat))
 
   ## Add the ending / to a filepath if provided
   if (path != "") {
@@ -600,7 +600,7 @@ apply.tracking <- function(filenames,
   ## Sanitize and add the target values
   target.values <- c(target.values,
                      "Target Sampled",
-                     "TS") %>% stringr::str_to_upper() %>% unique()
+                     "TS") %>% toupper() %>% unique()
 
   ## Read in the plot tracking Excel files, renaming variables, and restricting to needed variables and combine them
   tracking <- lapply(filenames,
@@ -646,7 +646,7 @@ apply.tracking <- function(filenames,
   }
 
   ## Warn if there are target sampled plots that have no match by plot ID
-  if (tracking.tdat %>% filter(stringr::str_to_upper(PLOTSTATUS) %in% target.values, is.na(PLOTKEY)) %>% nrow() > 0) {
+  if (tracking.tdat %>% filter(toupper(PLOTSTATUS) %in% target.values, is.na(PLOTKEY)) %>% nrow() > 0) {
     message(paste0("The following plots in the plot tracking information are flagged as 'target sampled' but did not match a plot ID in TerrADat: ",
                    paste(tracking.tdat$PLOTID[is.na(tracking.tdat$PLOTKEY) & tracking.tdat$PLOTSTATUS %in% target.values],
                          collapse = ", ")
@@ -751,7 +751,7 @@ flex.erase <- function(spdf,
   if (class(spdf.erase) != "SpatialPolygonsDataFrame") {
     stop("spdf.erase must be a valid Spatial Polygons Data Frame")
   }
-  if (!(stringr::str_to_upper(method) %in% c("ARCPY", "RGEOS"))) {
+  if (!(toupper(method) %in% c("ARCPY", "RGEOS"))) {
     stop("method must be either 'arcpy' or 'rgeos'.")
   }
   if (!file.exists(python.search.path)) {
@@ -764,7 +764,7 @@ flex.erase <- function(spdf,
   if (spdf@proj4string@projargs != spdf.erase@proj4string@projargs) {
     spdf.erase <- sp::spTransform(spdf.erase, CRSobj = spdf@proj4string)
   }
-  switch(stringr::str_to_upper(method),
+  switch(toupper(method),
          "ARCPY" = {
            ## Create a temp directory
            temp.directory <- paste0(temp.path, "/arcpy_temp")

@@ -259,7 +259,7 @@ intersect <- function(spdf1,
   }
 
   ## Return the final SPDF, making sure to project it into NAD83 (or whatever projection was provided to override the default)
-  return(intersect.spdf.attribute %>% spTransform(projection))
+  return(intersect.spdf.attribute %>% sp::spTransform(projection))
 }
 
 
@@ -304,7 +304,7 @@ add.area <- function(spdf, ## SpatialPolygonsDataFrame to add area values to
 #' @export
 restrict.tdat <- function(dd.raw, tdat.spdf){
   ## NAD83 sp::CRS()
-  nad83.prj <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+  nad83.prj <- sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
   ## Save this for later
   tdat.prj <- tdat.spdf@proj4string
   ## Create a list to dump restricted SPDFs into
@@ -327,7 +327,7 @@ restrict.tdat <- function(dd.raw, tdat.spdf){
     }
     return(tdat.spdf.restricted)
   } else {
-    tdat.spdf.restricted <- spTransform(restrictions[[1]], nad83.prj)
+    tdat.spdf.restricted <- sp::spTransform(restrictions[[1]], nad83.prj)
   }
 
   ## Drop that SampleFrame variable
@@ -355,8 +355,8 @@ add.coords <- function(spdf,
                        xynames = NULL,
                        nad83 = FALSE,
                        albers = FALSE){
-  projNAD83 <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
-  projAL <- CRS("+proj=aea")
+  projNAD83 <- sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+  projAL <- sp::CRS("+proj=aea")
   if (current.proj) {
     coords <- as.data.frame(spdf@coords)
     if(!is.null(xynames)) {

@@ -210,6 +210,12 @@ intersect <- function(spdf1,
   intersect.spdf.attribute@data$UNIQUE.IDENTIFIER <- runif(n = nrow(intersect.spdf.attribute@data),
                                                            min = 10000000000,
                                                            max = 99999999999)
+  ## Just to make sure that they're unique, although the odds of it being otherwise are low
+  while(length(unique(intersect.spdf.attribute@data$UNIQUE.IDENTIFIER)) < nrow(intersect.spdf.attribute@data)) {
+    intersect.spdf.attribute@data$UNIQUE.IDENTIFIER <- runif(n = nrow(intersect.spdf.attribute@data),
+                                                             min = 10000000000,
+                                                             max = 99999999999)
+  }
 
   ## Remove those two columns we made that were just duplicates of existing columns but with .spdf1 or .spdf2 appended
   intersect.spdf.attribute@data <- intersect.spdf.attribute@data[, names(intersect.spdf.attribute@data)[!(intersect.spdf.attribute@data %in% c(paste0(spdf1.attributefieldname, ".spdf1"), paste0(spdf2.attributefieldname, ".spdf2")))]]

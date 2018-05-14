@@ -311,7 +311,7 @@ restrict.tdat <- function(dd.raw, tdat.spdf){
   restrictions <- list()
   ## Restrict!
   for (design in names(dd.raw$sf)) {
-    restrictions[[design]] <- spTransform(attribute.shapefile(spdf1 = tdat.spdf,
+    restrictions[[design]] <-sp::spTransform(attribute.shapefile(spdf1 = tdat.spdf,
                                                               spdf2 = dd.raw$sf[[design]],
                                                               attributefield = "TERRA_SAMPLE_FRAME_ID",
                                                               newfield = "SampleFrame"),

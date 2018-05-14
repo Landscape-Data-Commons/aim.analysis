@@ -8,20 +8,20 @@ intersect(spdf1, spdf1.attributefieldname,
   spdf1.attributefieldname.output = NULL, spdf2, spdf2.attributefieldname,
   spdf2.attributefieldname.output = NULL, method = "gintersection",
   area.ha = TRUE, area.sqkm = TRUE,
-  projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
+  projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
 }
 \arguments{
 \item{spdf1}{A SpatialPolygonsDataFrame to be intersected}
 
 \item{spdf1.attributefieldname}{Name of the field in \code{spdf1} unique to the unit groups or units to take values from.}
 
-\item{spdf1.attributefieldname.output}{Optional string for the name of the field in the output SPDF to duplicate values from spdf1.attributefieldname into. If unspecified, then \code{spdf1.attributefieldname} will be used. Defaults to \code{NULL}.}
+\item{spdf1.attributefieldname.output}{Optional string for the name of the field in the output SPDF to duplicate values from spdf1.attributefieldname into. If unspecified, then \code{spdf1.attributefieldname} will be used.}
 
 \item{spdf2}{A SpatialPolygonsDataFrame to be intersected}
 
 \item{spdf2.attributefieldname}{Name of the field in \code{spdf2} unique to the unit groups or units to take values from.}
 
-\item{spdf2.attributefieldname.output}{Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then \code{spdf2.attributefieldname} will be used. Defaults to \code{NULL}.}
+\item{spdf2.attributefieldname.output}{Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then \code{spdf2.attributefieldname} will be used.}
 
 \item{method}{A string specifying which function to use for the interscting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.}
 

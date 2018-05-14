@@ -4,9 +4,9 @@
 \alias{flex.erase}
 \title{Erase a Spatial Polygons Data Frame from another, either with rgeos or ArcPy}
 \usage{
-flex.erase(spdf, spdf.erase, method = "arcpy", temp.path = "",
-  python.search.path = "C:/Python27", sliverdrop = T, sliverwarn = T,
-  sliverthreshold = 0.01)
+flex.erase(spdf, spdf.erase, method = "arcpy", temp.path = NULL,
+  python.search.path = "C:/Python27", sliverdrop = TRUE,
+  sliverwarn = TRUE, sliverthreshold = 0.01)
 }
 \arguments{
 \item{spdf}{A Spatial Polygons Data Frame to remove FROM.}
@@ -15,7 +15,7 @@ flex.erase(spdf, spdf.erase, method = "arcpy", temp.path = "",
 
 \item{method}{Character string. This must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Case insensitive. Defaults to \code{"arcpy"}.}
 
-\item{temp.path}{Optional character string. If \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.}
+\item{temp.path}{Optional character string. If \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps. Defaults to the result of a \code{tempdir()} call.}
 
 \item{python.search.path}{Character string. The filepath for the folder containing \code{pythonw.exe}. Defaults to \code{"C:/Python27"}.}
 
@@ -26,7 +26,7 @@ flex.erase(spdf, spdf.erase, method = "arcpy", temp.path = "",
 \item{sliverdrop}{Optional numeric value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_polyThreshold()} to temporarily set the environment during the erasure attempt. Defaults to \code{0.01}.}
 }
 \value{
-The remaining geometry and data in \code{spdf} after \code{spdf.erase} has been removed from it.
+The remaining geometry and data in \code{spdf} after any parts overlapping \code{spdf.erase} has been removed from it.
 }
 \description{
 Spatial manipulations in R can get, for lack of a better term, squirrelly. Even with multiple failsafes in place to try to compensate for sliver geometry, \code{rgeos::gDifference()} still isn't as robust as one might hope. This wrapper removes the geometry of one SPDF from another via a system call to \code{Python} using the library \code{ArcPy} or via \code{rgeos::gDifference()}.

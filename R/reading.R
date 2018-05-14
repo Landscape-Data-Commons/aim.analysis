@@ -96,7 +96,7 @@ read.dd <- function(src = "", ## A filepath as a string
 
   ## Checking that func is a valid value
   if (!(func %in% c("ARCGISBINDING", "READOGR"))) {
-    print("The argument func needs to be 'arcgisbinding' or 'readOGR'")
+    stop("The argument func needs to be 'arcgisbinding' or 'readOGR'")
   }
 
   ## Only keeping the DD filenames that actually exist in the src filepath provided
@@ -104,7 +104,7 @@ read.dd <- function(src = "", ## A filepath as a string
 
   ## Reporting the filenames it couldn't find in the folder
   if (length(dd.src) != length(dd.src.exist)) {
-    print(paste0("Couldn't find the following .gdb[s]: ", paste(dd.src[!(dd.src %in% list.files(path = src))], collapse = ", ")))
+    message(paste0("Couldn't find the following .gdb[s]: ", paste(dd.src[!(dd.src %in% list.files(path = src))], collapse = ", ")))
   }
 
   switch(func,

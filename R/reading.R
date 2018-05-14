@@ -89,7 +89,7 @@ read.dd <- function(src = "", ## A filepath as a string
   safe.readOGR <- purrr::safely(rgdal::readOGR, otherwise = NULL)
 
   ## Sanitization
-  func <- stringr::str_to_upper(func)
+  func <- toupper(func)
   target.values <- c(target.values,
                      "Target Sampled",
                      "TS") %>% unique() %>% stringr::str_to_upper()

@@ -1008,3 +1008,98 @@ clip.arcpy <- function(spdf,
 
   return(output)
 }
+
+#' Find the intersection of two Spatial Polygon/Points Data Frames with ArcPy
+#' @description
+#' @param spdf A Spatial Polygons Data Frame
+#' @param spdf.intersect A Spatial Polygons Data Frame to intersect with \code{spdf}.
+#' @param temp.path Optional character string. A pre-existing filepath to use as a temporary folder to write files to. Defaults to a temporary directory from \code{tempdir()}.
+#' @param python.search.path Optional character string. The filepath to search for pythonw.exe in. Defaults to "C:/Python27".
+#' @export
+intersect.arcpy <- function(spdf,
+                            spdf.intersect,
+                            temp.path = NULL,
+                            python.search.path = "C:/Python27"
+){
+  if (!(class(spdf) %in% c("SpatialPolygonsDataFrame", "SpatialPointsDataFrame"))) {
+    stop("spdf must be a valid Spatial Polygons or Spatial Points Data Frame")
+  }
+  if (class(spdf.intersect) != "SpatialPolygonsDataFrame") {
+    stop("spdf.intersect must be a valid Spatial Polygons Data Frame")
+  }
+  if (!file.exists(python.search.path)) {
+    stop("python.search.path must be a valid, pre-existing filepath.")
+  }
+  ## Create a temp directory
+  if (is.null(temp.path)) {
+    temp.path <- tempdir()
+    delete <- FALSE
+  } else {
+    if (!file.exists(temp.path)) {
+      stop("temp.path must be a valid, pre-existing filepath.")
+    }
+    temp.path <- paste0(temp.path, "/arcpy_temp")
+    dir.create(temp.path, showWarnings = FALSE)
+    delete <- TRUE
+  }
+
+  # Conform spdf.intersect to spdf
+  if (spdf@proj4string@projargs != spdf.intersect@proj4string@projargs) {
+    spdf.intersect <- sp::spTransform(spdf.intersect, CRSobj = spdf@proj4string)
+  }
+
+  ## Write out the two current frames
+  rgdal::writeOGR(obj = spdf,
+                  dsn = temp.path,
+                  layer = "inshape",
+                  driver = "ESRI Shapefile",
+                  overwrite_layer = TRUE)
+  rgdal::writeOGR(obj = spdf.intersect,
+                  dsn = temp.path,
+                  layer = "intersectshape",
+                  driver = "ESRI Shapefile",
+                  overwrite_layer = TRUE)
+
+  ## Construct a quick python script to intersect spdf with spdf.intersect
+  arcpy.script <- c("import arcpy",
+                    "from arcpy import env",
+                    paste0("env.workspace = '", temp.path, "'"),
+                    "infeatures = ['inshape.shp', 'intersectshape.shp']",
+                    "intersectOutput = 'intersectresults.shp'",
+                    "clusterTolerance = 1.5",
+                    "arcpy.Intersect_analysis(infeatures, intersectOutput, '', '', 'INPUT')"
+  )
+
+
+  ## Write the constructed script out
+  cat(arcpy.script, file = paste0(temp.path, "/intersect.py"), sep = "\n", append = FALSE)
+
+  ## Find the local machine's copy of pythonw.exe in python.search.path. There are no failsafes for if this isn't where to find it
+  python.path <- paste0(python.search.path, "/", list.files(path = python.search.path, pattern = "pythonw.exe", recursive = TRUE))
+  if (length(python.path) < 1) {
+    stop(paste0("Unable to find pythonw.exe in the folder or subfolders of ", python.search.path))
+  } else {
+    python.path <- python.path[1]
+  }
+
+  ## Execute the Python script
+  system(paste(python.path, stringr::str_replace_all(paste0(temp.path, "/intersect.py"), pattern = "/", replacement = "\\\\")))
+
+  ## Read in the results and rename the attributes because rgdal::writeOGR() almost certainly truncated them
+  intersect.results <- rgdal::readOGR(dsn = temp.path, layer = "intersectresults", stringsAsFactors = FALSE)
+  names(intersect.results@data) <- c("FID1", names(spdf@data), "FID2", names(spdf.intersect@data))
+
+  ## Make sure that the results are in the same projection as the original source SPDF
+  if (intersect.results@proj4string@projargs != spdf@proj4string@projargs) {
+    output <-sp::spTransform(intersect.results, CRSobj = spdf@proj4string)
+  } else {
+    output <- intersect.results
+  }
+
+  ## Remove the temp folder and files if we didn't use tempdir()
+  if (delete) {
+    system(paste("cmd /c rmdir", stringr::str_replace_all(temp.path, pattern = "/", replacement = "\\\\"), "/s /q"))
+  }
+
+  return(output)
+}

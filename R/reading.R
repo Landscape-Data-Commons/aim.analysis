@@ -100,7 +100,8 @@ read.dd <- function(src = "", ## A filepath as a string
   }
 
   ## Only keeping the DD filenames that actually exist in the src filepath provided
-  dd.src.exist <- dd.src[dd.src %in% list.files(path = src)]
+  filepaths <- paste(src, dd.src, sep = "/")
+  dd.src.exist <- filepaths[file.exists(filepaths)]
 
   ## Reporting the filenames it couldn't find in the folder
   if (length(dd.src) != length(dd.src.exist)) {

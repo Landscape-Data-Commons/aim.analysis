@@ -729,6 +729,136 @@ drop.values <- function(df, variable = "", dropvalue = NA, ignore.case = TRUE) {
   return(filtered)
 }
 
+#' Erase geometry from a Spatial Polygons/Points Data Frame using a Spatial Polygons Data Frame with ArcPy
+#' @description Spatial manipulations in R can get, for lack of a better term, squirrelly. This removes the geometry of one SPDF from another via a system call to \code{Python} using the library \code{ArcPy}.
+#' @param spdf A Spatial Polygons or Points Data Frame to remove FROM.
+#' @param spdf.erase  A Spatial Polygons Data Frame to remove geometry from \code{spdf} WITH.
+#' @param temp.path Optional character string. This must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps. Defaults to the output from a \code{tempdir()} call.
+#' @param python.search.path Optional character string. The filepath for the folder containing \code{pythonw.exe}. Defaults to \code{"C:/Python27"}.
+#' @return The remaining geometry and data in \code{spdf} after any parts overlapping \code{spdf.erase} has been removed from it.
+#' @export
+erase.arcpy <- function(spdf,
+                        spdf.erase,
+                        temp.path = NULL,
+                        python.search.path = "C:/Python27"){
+  if (class(spdf) != "SpatialPolygonsDataFrame") {
+    stop("spdf must be a valid Spatial Polygons Data Frame")
+  }
+  if (class(spdf.erase) != "SpatialPolygonsDataFrame") {
+    stop("spdf.erase must be a valid Spatial Polygons Data Frame")
+  }
+  if (!file.exists(python.search.path)) {
+    stop("python.search.path must be a valid, pre-existing filepath.")
+  }
+  if (spdf@proj4string@projargs != spdf.erase@proj4string@projargs) {
+    spdf.erase <- sp::spTransform(spdf.erase, CRSobj = spdf@proj4string)
+  }
+  ## Create a temp directory
+  if (is.null(temp.path)) {
+    temp.path <- tempdir()
+    delete <- FALSE
+  } else {
+    if (!file.exists(temp.path)) {
+      stop("temp.path must be a valid, pre-existing filepath.")
+    }
+    temp.path <- paste0(temp.path, "/arcpy_temp")
+    dir.create(temp.path, showWarnings = FALSE)
+    delete <- TRUE
+  }
+
+  ## Write out the two current frames
+  rgdal::writeOGR(obj = spdf, dsn = temp.path, layer = "inshape", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+  rgdal::writeOGR(obj = spdf.erase, dsn = temp.path, layer = "eraseshape", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
+  ## Construct a quick python script to erase frame.spdf from frame.spdf.temp
+  arcpy.script <- c("import arcpy",
+                    "from arcpy import env",
+                    paste0("env.workspace = '", temp.path, "'"),
+                    "in_features = 'inshape.shp'",
+                    "erase_features = 'eraseshape.shp'",
+                    "out_feature_class = 'eraseresults.shp'",
+                    "xy_tolerance = ''",
+                    "arcpy.Erase_analysis(in_features, erase_features, out_feature_class)"
+  )
+  ## Write the constructed script out
+  cat(arcpy.script, file = paste0(temp.path, "/erase.py"), sep = "\n", append = F)
+
+  ## Find the local machine's copy of pythonw.exe in C:/Python27. There are no failsafes for if this isn't where to find it
+  python.path <- paste0(python.search.path, "/", list.files(path = python.search.path, pattern = "pythonw.exe", recursive = TRUE))
+  if (length(python.path) < 1) {
+    stop(paste0("Unable to find pythonw.exe in the folder or subfolders of ", python.search.path))
+  } else {
+    python.path <- python.path[1]
+  }
+
+  ## Execute the Python script
+  system(paste(python.path, stringr::str_replace_all(paste0(temp.path, "/erase.py"), pattern = "/", replacement = "\\\\")))
+
+  ## Read in the results and rename the attributes because rgdal::writeOGR() truncated them
+  erase.results <- rgdal::readOGR(dsn = temp.path, layer = "eraseresults", stringsAsFactors = FALSE)
+  names(erase.results@data) <- names(spdf@data)
+
+  if (erase.results@proj4string@projargs != spdf@proj4string@projargs) {
+    output <-sp::spTransform(erase.results, CRSobj = spdf@proj4string)
+  } else {
+    output <- erase.results
+  }
+  ## Remove the temp folder and files if we didn't use tempdir()
+  if (delete) {
+    system(paste("cmd /c rmdir", stringr::str_replace_all(temp.path, pattern = "/", replacement = "\\\\"), "/s /q"))
+  }
+}
+
+#' @param spdf A Spatial Polygons Data Frame to remove FROM.
+#' @param spdf.erase  A Spatial Polygons Data Frame to remove geometry from \code{spdf} WITH.
+#' @param sliverdrop Optional logical value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_dropSlivers()} to temporarily set the environment during the erasure attempt. Defaults to \code{TRUE}.
+#' @param sliverwarn Optional logical value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_warnSlivers()} to temporarily set the environment during the erasure attempt. Defaults to \code{TRUE}.
+#' @param sliverdrop Optional numeric value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_polyThreshold()} to temporarily set the environment during the erasure attempt. Defaults to \code{0.01}.
+#' @return The remaining geometry and data in \code{spdf} after any parts overlapping \code{spdf.erase} has been removed from it.
+#' @export
+erase.rgeos <- function(spdf,
+                        spdf.erase,
+                        sliverdrop = TRUE,
+                        sliverwarn = TRUE,
+                        sliverthreshold = 0.01){
+  if (spdf@proj4string@projargs != spdf.erase@proj4string@projargs) {
+    spdf.erase <- sp::spTransform(spdf.erase, CRSobj = spdf@proj4string)
+  }
+
+  current.drop <- rgeos::get_RGEOS_dropSlivers()
+  current.warn <- rgeos::get_RGEOS_warnSlivers()
+  current.tol <- rgeos::get_RGEOS_polyThreshold()
+
+  rgeos::set_RGEOS_dropSlivers(sliverdrop)
+  rgeos::set_RGEOS_warnSlivers(sliverwarn)
+  rgeos::set_RGEOS_polyThreshold(sliverthreshold)
+  message(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
+  ## Making this Albers for right now for gBuffer()
+  ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
+  sp.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(spdf, CRS("+proj=aea")),
+                                                         byid = TRUE,
+                                                         width = 0.1),
+                                spgeom2 = rgeos::gBuffer(sp::spTransform(spdf.erase,
+                                                                         CRS("+proj=aea")),
+                                                         byid = TRUE,
+                                                         width = 0.1),
+                                drop_lower_td = TRUE)
+
+  rgeos::set_RGEOS_dropSlivers(current.drop)
+  rgeos::set_RGEOS_warnSlivers(current.warn)
+  rgeos::set_RGEOS_polyThreshold(current.tol)
+
+  if (!is.null(frame.sp.temp)) {
+    output <- sp::spTransform(sp::SpatialPolygonsDataFrame(sp.temp,
+                                                           data = spdf@data[1:length(sp.temp@polygons),]),
+                              CRSobj = spdf@proj4string)
+  } else {
+    output <- NULL
+  }
+
+  return(output)
+}
+
 #' Erase a Spatial Polygons Data Frame from another, either with rgeos or ArcPy
 #' @description Spatial manipulations in R can get, for lack of a better term, squirrelly. Even with multiple failsafes in place to try to compensate for sliver geometry, \code{rgeos::gDifference()} still isn't as robust as one might hope. This wrapper removes the geometry of one SPDF from another via a system call to \code{Python} using the library \code{ArcPy} or via \code{rgeos::gDifference()}.
 #' @param spdf A Spatial Polygons Data Frame to remove FROM.

@@ -82,7 +82,7 @@ read.dd <- function(src = "", ## A filepath as a string
                                       "TS"),
                     split = TRUE,
                     omitNAdesignations = FALSE, ## Strip out plots with a final designation value of NA
-                    projection = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0") ## Standard NAD83
+                    projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0") ## Standard NAD83
 ){
 
   ## readOGR() wrapped in safely() so that it will return NULL instead of an error

@@ -864,21 +864,21 @@ erase.rgeos <- function(spdf,
 #' @param spdf A Spatial Polygons Data Frame to remove FROM.
 #' @param spdf.erase  A Spatial Polygons Data Frame to remove geometry from \code{spdf} WITH.
 #' @param method Character string. This must either be \code{"arcpy"} or \code{"rgeos"} and determines which approach will be used to frames from one another if \code{combine} is \code{TRUE}. If \code{"arcpy"} is used, then R must have write permissions to the folder \code{temp.path} and a valid install of ArcPy. This is preferable to \code{"rgeos"} because the functions involved tend to crash at random when handling very small remainder geometries. Case insensitive. Defaults to \code{"arcpy"}.
-#' @param temp.path Optional character string. If \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps.
+#' @param temp.path Optional character string. If \code{erase} is \code{"arcpy"} this must be the path to a folder that R has write permissions to so that a subfolder called arcpy_temp can be created and used for ArcPy erasure steps. Defaults to the result of a \code{tempdir()} call.
 #' @param python.search.path Character string. The filepath for the folder containing \code{pythonw.exe}. Defaults to \code{"C:/Python27"}.
 #' @param sliverdrop Optional logical value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_dropSlivers()} to temporarily set the environment during the erasure attempt. Defaults to \code{TRUE}.
 #' @param sliverwarn Optional logical value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_warnSlivers()} to temporarily set the environment during the erasure attempt. Defaults to \code{TRUE}.
 #' @param sliverdrop Optional numeric value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_polyThreshold()} to temporarily set the environment during the erasure attempt. Defaults to \code{0.01}.
-#' @return The remaining geometry and data in \code{spdf} after \code{spdf.erase} has been removed from it.
+#' @return The remaining geometry and data in \code{spdf} after any parts overlapping \code{spdf.erase} has been removed from it.
 #' @export
 
 flex.erase <- function(spdf,
                        spdf.erase,
                        method = "arcpy",
-                       temp.path = "",
+                       temp.path = NULL,
                        python.search.path = "C:/Python27",
-                       sliverdrop = T,
-                       sliverwarn = T,
+                       sliverdrop = TRUE,
+                       sliverwarn = TRUE,
                        sliverthreshold = 0.01
 ){
   if (class(spdf) != "SpatialPolygonsDataFrame") {
@@ -887,7 +887,7 @@ flex.erase <- function(spdf,
   if (class(spdf.erase) != "SpatialPolygonsDataFrame") {
     stop("spdf.erase must be a valid Spatial Polygons Data Frame")
   }
-  if (!(toupper(method) %in% c("ARCPY", "RGEOS"))) {
+  if (!(tolower(method) %in% c("arcpy", "rgeos"))) {
     stop("method must be either 'arcpy' or 'rgeos'.")
   }
   if (!file.exists(python.search.path)) {
@@ -897,8 +897,20 @@ flex.erase <- function(spdf,
     stop("temp.path must be a valid, pre-existing filepath.")
   }
 
-  if (spdf@proj4string@projargs != spdf.erase@proj4string@projargs) {
-    spdf.erase <- sp::spTransform(spdf.erase, CRSobj = spdf@proj4string)
+  switch(tolower(method),
+         "arcpy" = {
+           output <- erase.arcpy(spdf = spdf,
+                                 spdf.erase = spdf.erase)},
+         "rgeos" = {
+           output <- erase.rgeos(spdf = spdf,
+                                 spdf.erase = spdf.erase,
+                                 sliverdrop = sliverdrop,
+                                 sliverwarn = sliverwarn,
+                                 sliverthreshold = sliverthreshold)
+         }
+  )
+  return(output)
+}
   }
   switch(toupper(method),
          "ARCPY" = {

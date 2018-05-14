@@ -80,6 +80,7 @@ read.dd <- function(src = "", ## A filepath as a string
                     # validate.keys = T, ## Should the process also produce a data frame in the output of points in the design dtabases that have issues with final designations or TerrAdat primary keys?
                     target.values = c("Target Sampled",
                                       "TS"),
+                    split = TRUE,
                     omitNAdesignations = FALSE, ## Strip out plots with a final designation value of NA
                     projection = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0") ## Standard NAD83
 ){
@@ -217,7 +218,9 @@ read.dd <- function(src = "", ## A filepath as a string
   output <- list(sf = sf.list, pts = pts.list, strata = strata.list)
 
   ## In case there're databases involved that had more than one design in them, split them
-  output <- dd.split(output)
+  if (split) {
+    output <- dd.split(output)
+  }
 
   return(output)
 }

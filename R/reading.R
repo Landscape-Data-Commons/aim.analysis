@@ -108,12 +108,17 @@ read.dd <- function(src = "", ## A filepath as a string
     message(paste0("Couldn't find the following .gdb[s]: ", paste(dd.src[!(dd.src %in% list.files(path = src))], collapse = ", ")))
   }
 
+  ## Create the lists to store stuff from the databases
+  sf.list <- list()
+  pts.list <- list()
+  strata.list <- list()
+
   switch(func,
          READOGR = {
            ## Looped so that it can execute across all the DDs in the vector (if there are more than one)
            for (s in dd.src.exist) {
              ## Read in the sample frame feature class inside the current DD.
-             sf <- safe.readOGR(dsn = paste(src, s, sep = "/"),
+             sf <- safe.readOGR(dsn = s,
                                 layer = "Terra_Sample_Frame",
                                 stringsAsFactors = FALSE)[[1]] ## The [[]] is to get the SPDF (or NULL) out of the list returned by the safely()
              # The spTransform() is just to be safe, but probably isn't necessary
@@ -121,100 +126,77 @@ read.dd <- function(src = "", ## A filepath as a string
                sf <- sp::spTransform(sf, projection)
              }
              ## Sanitize the column names
-             names(sf@data) <- stringr::str_to_upper(names(sf@data))
-             ## Stores the current sf SPDF with the name sf.[DD name]
-             assign(x = paste("sf", s, sep = "."), value = sf)
+             names(sf@data) <- toupper(names(sf@data))
+             ## Stores the returned sf object with the name s in sf.list
+             sf.list[[s]] <- sf
 
              #Read in the Strata
-             strata <- safe.readOGR(dsn = paste(src, s, sep = "/"),
+             strata <- safe.readOGR(dsn = s,
                                     layer = "Terra_Strtfctn",
                                     stringsAsFactors = FALSE)[[1]]
              if (!is.null(strata)) {
-               strata <- spTransform(strata, projection)
-               names(strata@data) <- stringr::str_to_upper(names(strata@data))
+               strata <- sp::spTransform(strata, projection)
+               names(strata@data) <- toupper(names(strata@data))
              }
-             assign(x = paste("strata", s, sep = "."), value = strata)
+             strata.list[[s]] <- strata
 
              #Read in the Points
-             points <- safe.readOGR(dsn = paste(src, s, sep = "/"),
+             points <- safe.readOGR(dsn = s,
                                     layer = "Terra_Sample_Points",
                                     stringsAsFactors = FALSE)[[1]]
              if (!is.null(points)) {
-               points <- spTransform(points, projection)
+               points <- sp::spTransform(points, projection)
              }
-             names(points@data) <- stringr::str_to_upper(names(points@data))
+             names(points@data) <- toupper(names(points@data))
              ## Strip out points with an NA value in the FINAL_DESIG field if asked
              if (omitNAdesignations) {
                points <- points[!is.na(points@data$FINAL_DESIG)]
              }
-             assign(x = paste("pts", s, sep = "."), value = points)
+             pts.list[[s]] <- points
            }
          },
          ARCGISBINDING = {
            for (s in dd.src.exist) {
              ## Identify/create the filepath to the sample frame feature class inside the current DD
-             sf <- paste(src, s, "Terra_Sample_Frame", sep = "/")
+             sf.path <- paste(s, "Terra_Sample_Frame", sep = "/")
              ## Creates an SPDF with the name sf.[DD name] using the filepath to that feature class
-             assign(x = paste("sf", s, sep = "."),
-                    value = sf %>% arc.open() %>% arc.select %>%
-                      SpatialPolygonsDataFrame(Sr = {arc.shape(.) %>% arc.shape2sp()}, data = .) %>% spTransform(projection)
-             )
-             eval(parse(text = paste0("names(", paste("sf", s, sep = "."), ") <- stringr::str_to_upper(names(", paste("sf", s, sep = "."), "))")))
+             sf <- read.arclayer(filepath = sf.path, projection = projection)
+             ## Sanitize the column names
+             names(sf@data) <- toupper(names(sf@data))
+             ## Stores the returned sf object with the name s in sf.list
+             sf.list[[s]] <- sf
 
              #Read in the Strata
              #first check for strata
              ## Identify/create the filepath to the design stratification feature class inside the current DD
-             strata <- paste(src, s, "Terra_Strtfctn", sep = "/")
+             strata.path <- paste(s, "Terra_Strtfctn", sep = "/")
              #this loads enough of the feature class to tell if there are strata
-             strata <- strata %>% arc.open() %>% arc.select
+             strata <- strata.path %>% arc.open() %>% arc.select
              #check for strata, if there are, then we will finish loading the file.
              if (nrow(strata) > 0) {
-               ## Identify/create the filepath to the design stratification feature class inside the current DD
-               strata <- paste(src, s, "Terra_Strtfctn", sep = "/")
                ## Creates an SPDF with the name strat.[DD name] using the filepath to that feature class
-               assign(x = paste("strata", s, sep = "."),
-                      value = strata %>% arc.open() %>% arc.select %>%
-                        SpatialPolygonsDataFrame(Sr = {arc.shape(.) %>% arc.shape2sp()},
-                                                 data = .) %>% spTransform(projection))
-               eval(parse(text = paste0("names(", paste("strata", s, sep = "."), ") <- stringr::str_to_upper(names(", paste("strata", s, sep = "."), "))")))
-
+               strata <- read.arclayer(strata.path, projection)
+               names(strata@data) <- toupper(names(strata@data))
              } else {
                ## If the stratification feature class is empty, we'll just save ourselves some pain and store NULL
-               assign(x = paste("strata", s, sep = "."),
-                      value = NULL)
+              strata <- NULL
              }
+             strata.list[[s]] <- strata
 
              #Read in the Points
              ## Identify/create the filepath to the design points feature class inside the current DD
-             pts <- paste(src, s, "Terra_Sample_Points", sep = "/")
+             points.path <- paste(s, "Terra_Sample_Points", sep = "/")
              ## Creates an SPDF with the name pts.[DD name] using the filepath to that feature class
-             assign(x = paste("pts", s, sep = "."),
-                    value = pts %>% arc.open() %>% arc.select %>%
-                      #read in the feature class, notice the difference between Polygons and points (different function with different arguments needs)
-                      SpatialPointsDataFrame(coords = {arc.shape(.) %>% arc.shape2sp()}) %>% spTransform(projection))
-             eval(parse(text = paste0("names(", paste("pts", s, sep = "."), ") <- stringr::str_to_upper(names(", paste("pts", s, sep = "."), "))")))
+             points <- read.arclayer(points.path, projection)
+             names(points@data) <- toupper(names(points@data))
              ## Strip out points with an NA value in the FINAL_DESIG field if asked
              if (omitNAdesignation) {
-               eval(parse(text = paste0(paste("pts", s, sep = "."), " <- ", paste("pts", s, sep = "."), "[!is.na(", paste("pts", s, sep = "."), "@data$FINAL_DESIG)]")))
+               points <- points[!is.na(points@data$FINAL_DESIG),]
              }
+             pts.list[[s]] <- points
            }
          }
   )
-
-  ## Create a list of the sample frame SPDFs.
-  ## This programmatically create a string of the existing object names that start with "sf." separated by commas
-  ## then wraps that in "list()" and runs the whole string through parse() and eval() to execute it, creating a list from those SPDFs
-  sf.list <- eval(parse(text = paste0("list(`", paste(ls()[grepl(x = ls(), pattern = "^sf\\.") & !grepl(x = ls(), pattern = "^sf.list$")], collapse = "`, `"), "`)")))
-  ## Rename them with the correct DD name because they'll be in the same order that ls() returned them earlier. Also, we need to remove sf.list itself
-  names(sf.list) <- ls()[grepl(x = ls(), pattern = "^sf\\.") & !grepl(x = ls(), pattern = "^sf.list$")] %>% stringr::str_replace(pattern = "^sf\\.", replacement = "")
-
-  ## Creating the named list of all the pts SPDFs created by the loop
-  pts.list <- eval(parse(text = paste0("list(`", paste(ls()[grepl(x = ls(), pattern = "^pts\\.") & !grepl(x = ls(), pattern = "^pts.list$")], collapse = "`, `"), "`)")))
-  names(pts.list) <- ls()[grepl(x = ls(), pattern = "^pts\\.") & !grepl(x = ls(), pattern = "^pts.list$")] %>% stringr::str_replace(pattern = "^pts\\.", replacement = "")
-
-  ## Creating the named list of all the strata SPDFs created by the loop
-  strata.list <- eval(parse(text = paste0("list(`", paste(ls()[grepl(x = ls(), pattern = "^strata\\.") & !grepl(x = ls(), pattern = "^strata.list$")], collapse = "`, `"), "`)")))
-  names(strata.list) <- ls()[grepl(x = ls(), pattern = "^strata\\.") & !grepl(x = ls(), pattern = "^strata.list$")] %>% stringr::str_replace(pattern = "^strata\\.", replacement = "")
 
   output <- list(sf = sf.list, pts = pts.list, strata = strata.list)
 

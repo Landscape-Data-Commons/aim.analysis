@@ -86,7 +86,7 @@ read.dd <- function(src = "", ## A filepath as a string
 ){
 
   ## readOGR() wrapped in safely() so that it will return NULL instead of an error
-  safe.readOGR <- safely(rgdal::readOGR, otherwise = NULL)
+  safe.readOGR <- purrr::safely(rgdal::readOGR, otherwise = NULL)
 
   ## Sanitization
   func <- stringr::str_to_upper(func)

@@ -912,7 +912,7 @@ flex.erase <- function(spdf,
   return(output)
 }
 
-#' Clip a Spatial Polygon/Points data frame to a Spatial Polygons Data Frame with ArcPy
+#' Clip a Spatial Polygon/Points Data Frame to a Spatial Polygons Data Frame with ArcPy
 #' @description
 #' @param spdf A Spatial Point or Spatial Polygons Data Frame to be clipped
 #' @param spdf.clip A Spatial Polygons Data Frame to clip \code{spdf} by

@@ -1,7 +1,7 @@
 #' Reading in the benchmarks from the Data Explorer
 #'
 #' @param data.path A string specifying the path to the folder containing the .XLSX with the benchmarks
-#' @param benchmarks.filename A string specifying the filename of the .XLSX containing the benchmarks
+#' @param benchmarks.filename A string specifying the filename of the .XLSX, .CSV, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
 #' @param indicator.lut A data frame with the column \code{"indicator.name"} matching the values in the Data Explorer "Indicator" field and one called \code{"indicator.tdat"} with corresponding value for the indicators' names in TerrADat.
 #' @param indicator.lut.benchmarkfield The name of the column in \code{indicator.lut} that matches the "Indicator column of Data Explorer. Defaults to \code{"indicator.name"}
 #' @return A data frame of the benchmarks from the Data Explorer with a field containing an evaluation string to use in testing indicator values against the benchmarks.

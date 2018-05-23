@@ -4,6 +4,7 @@
 #' @param benchmarks.filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
 #' @param indicator.lut Data frame containing a variable specified in \code{indicator.lut.benchmarkfield} holding values matching those values in the benchmark file's column named "Indicator" and \code{"indicator.tdat"} with corresponding values for the indicators' names in the point data. Defaults to the output from \code{indicator.lut()}.
 #' @param indicator.lut.benchmarkfield The name of the column in \code{indicator.lut} that holds values matching the "Indicator" column of the benchmark file. Defaults to \code{"indicator.name"}
+#' @param convertl2r Logical. If \code{TRUE} then all inequalities in "LL Relation" in the benchmark data frame will be converted from > and >= to <= and <, respectively, which are the expected directions. Defaults to \code{TRUE}.
 #' @return A data frame of the benchmarks from the specified file with fields containing evaluation strings to use in testing indicator values against the benchmarks.
 #' @examples
 #' read.benchmarks()

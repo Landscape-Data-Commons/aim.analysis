@@ -139,90 +139,45 @@ read.dd <- function(src = "", ## A filepath as a string
   pts.list <- list()
   strata.list <- list()
 
-  switch(func,
-         READOGR = {
-           ## Looped so that it can execute across all the DDs in the vector (if there are more than one)
-           for (s in dd.src.exist) {
-             ## Read in the sample frame feature class inside the current DD.
-             sf <- safe.readOGR(dsn = s,
-                                layer = "Terra_Sample_Frame",
-                                stringsAsFactors = FALSE)[[1]] ## The [[]] is to get the SPDF (or NULL) out of the list returned by the safely()
-             # The spTransform() is just to be safe, but probably isn't necessary
-             if (!is.null(sf)) {
-               sf <- sp::spTransform(sf, projection)
-             }
-             ## Sanitize the column names
-             names(sf@data) <- toupper(names(sf@data))
-             ## Stores the returned sf object with the name s in sf.list
-             sf.list[[s]] <- sf
+  ## Looped so that it can execute across all the DDs in the vector (if there are more than one)
+  for (s in dd.src.exist) {
+    ## Read in the sample frame feature class inside the current DD.
+    sf <- safe.readOGR(dsn = s,
+                       layer = "Terra_Sample_Frame",
+                       stringsAsFactors = FALSE)[[1]] ## The [[]] is to get the SPDF (or NULL) out of the list returned by the safely()
+    # The spTransform() is just to be safe, but probably isn't necessary
+    if (!is.null(sf)) {
+      sf <- sp::spTransform(sf, projection)
+    }
+    ## Sanitize the column names
+    names(sf@data) <- toupper(names(sf@data))
+    ## Stores the returned sf object with the name s in sf.list
+    sf.list[[s]] <- sf
 
-             #Read in the Strata
-             strata <- safe.readOGR(dsn = s,
-                                    layer = "Terra_Strtfctn",
-                                    stringsAsFactors = FALSE)[[1]]
-             if (!is.null(strata)) {
-               strata <- sp::spTransform(strata, projection)
-               names(strata@data) <- toupper(names(strata@data))
-             }
-             strata.list[[s]] <- strata
+    #Read in the Strata
+    strata <- safe.readOGR(dsn = s,
+                           layer = "Terra_Strtfctn",
+                           stringsAsFactors = FALSE)[[1]]
+    if (!is.null(strata)) {
+      strata <- sp::spTransform(strata, projection)
+      names(strata@data) <- toupper(names(strata@data))
+    }
+    strata.list[[s]] <- strata
 
-             #Read in the Points
-             points <- safe.readOGR(dsn = s,
-                                    layer = "Terra_Sample_Points",
-                                    stringsAsFactors = FALSE)[[1]]
-             if (!is.null(points)) {
-               points <- sp::spTransform(points, projection)
-             }
-             names(points@data) <- toupper(names(points@data))
-             ## Strip out points with an NA value in the FINAL_DESIG field if asked
-             if (omitNAdesignations) {
-               points <- points[!is.na(points@data$FINAL_DESIG)]
-             }
-             pts.list[[s]] <- points
-           }
-         },
-         ARCGISBINDING = {
-           for (s in dd.src.exist) {
-             ## Identify/create the filepath to the sample frame feature class inside the current DD
-             sf.path <- paste(s, "Terra_Sample_Frame", sep = "/")
-             ## Creates an SPDF with the name sf.[DD name] using the filepath to that feature class
-             sf <- read.arclayer(filepath = sf.path, projection = projection)
-             ## Sanitize the column names
-             names(sf@data) <- toupper(names(sf@data))
-             ## Stores the returned sf object with the name s in sf.list
-             sf.list[[s]] <- sf
-
-             #Read in the Strata
-             #first check for strata
-             ## Identify/create the filepath to the design stratification feature class inside the current DD
-             strata.path <- paste(s, "Terra_Strtfctn", sep = "/")
-             #this loads enough of the feature class to tell if there are strata
-             strata <- strata.path %>% arc.open() %>% arc.select
-             #check for strata, if there are, then we will finish loading the file.
-             if (nrow(strata) > 0) {
-               ## Creates an SPDF with the name strat.[DD name] using the filepath to that feature class
-               strata <- read.arclayer(strata.path, projection)
-               names(strata@data) <- toupper(names(strata@data))
-             } else {
-               ## If the stratification feature class is empty, we'll just save ourselves some pain and store NULL
-              strata <- NULL
-             }
-             strata.list[[s]] <- strata
-
-             #Read in the Points
-             ## Identify/create the filepath to the design points feature class inside the current DD
-             points.path <- paste(s, "Terra_Sample_Points", sep = "/")
-             ## Creates an SPDF with the name pts.[DD name] using the filepath to that feature class
-             points <- read.arclayer(points.path, projection)
-             names(points@data) <- toupper(names(points@data))
-             ## Strip out points with an NA value in the FINAL_DESIG field if asked
-             if (omitNAdesignation) {
-               points <- points[!is.na(points@data$FINAL_DESIG),]
-             }
-             pts.list[[s]] <- points
-           }
-         }
-  )
+    #Read in the Points
+    points <- safe.readOGR(dsn = s,
+                           layer = "Terra_Sample_Points",
+                           stringsAsFactors = FALSE)[[1]]
+    if (!is.null(points)) {
+      points <- sp::spTransform(points, projection)
+    }
+    names(points@data) <- toupper(names(points@data))
+    ## Strip out points with an NA value in the FINAL_DESIG field if asked
+    if (omitNAdesignations) {
+      points <- points[!is.na(points@data$FINAL_DESIG)]
+    }
+    pts.list[[s]] <- points
+  }
 
   output <- list(sf = sf.list, pts = pts.list, strata = strata.list)
 

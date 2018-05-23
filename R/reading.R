@@ -17,25 +17,53 @@ read.benchmarks <- function(data.path = "",
                             indicator.lut.benchmarkfield = "indicator.name",
                             convert.l2r = TRUE
 ){
-  ## Sanitizing inputs because users can't be trusted
-  benchmarks.filename <- sanitize(benchmarks.filename, "xlsx")
+  ## Check for the file extension
+  if (!grepl(benchmarks.filename, pattern = "\\.((xlsx)|(csv)|(xls))")) {
+    stop("The benchmark filename needs to have a valid file extension (xlsx, csv, or xls). The most likely extension is xlsx.")
+  }
 
+  # Make the full filepath
+  filepath <- paste0(data.path, "/", benchmarks.filename)
+
+  # Check to see if it exists
+  if (file.exists(filepath)) {
+    if (grepl(filepath, pattern = "\\.csv", ignore.case = TRUE)) {
+      ## Import the spreadsheet from the workbook. Should work regardless of presence/absence of other spreadsheets as long as the name is the same
+      benchmarks.raw <- read.csv(filepath, stringsAsFactors = FALSE)
+    } else {
+      ## Import the spreadsheet from the workbook. Should work regardless of presence/absence of other spreadsheets as long as the name is the same
+      benchmarks.raw <- readxl::read_excel(path = filepath,
+                                           sheet = sheet.name)
+      # Check to make sure that there's not a weird row up top we need to skip
+      if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks.raw)))){
+        benchmarks.raw <- readxl::read_excel(path = filepath,
+                                             sheet = sheet.name,
+                                             skip = 1)
+      }
+    }
+    ## Change all the header names to use "." instead of " " for consistency
+    names(benchmarks.raw) <- gsub(names(benchmarks.raw), pattern = " ", replacement = ".")
+
+    if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks.raw)))){
+      stop("Can't find the expected column headers in the provided benchmark file. Check to make sure that there are no non-header rows before the headers.")
+    }
+  } else {
+    stop(paste("Can't find the benchmark file at", filepath))
+  }
+
+  ## If there's no indicator lookup table provided, use the defaut one built into the package
   if (is.null(indicator.lut)) {
     indicator.lut <- indicator.lookup()
   }
 
-  ## Import the spreadsheet from the workbook. Should work regardless of presence/absence of other spreadsheets as long as the name is the same
-  benchmarks.raw <- readxl::read_excel(path = paste0(data.path, "/", benchmarks.filename),
-                                       sheet = sheet.name)
-
-  names(benchmarks.raw) <- names(benchmarks.raw) %>% stringr::str_replace_all(pattern = " ", replacement = "\\.")
 
   ## In case there's a "Classification" column where we'd prefer a "Category" column. This lets us maintain backwards compatibility with older iterations of the spreadsheet
-  names(benchmarks.raw)[names(benchmarks.raw) %in% c("Classification")] <- "Evaluation.Category"
+  names(benchmarks.raw)[toupper(names(benchmarks.raw)) %in% c("CLASSIFICATION", "EVALUATION.CATEGORY")] <- "Condition.Category"
 
-  ## Strip out the extraneous columns and rows, which includes if they left the example in there
+  ## Strip out the extraneous columns and rows, which includes if they left the example in there. The pattern to look for is "e.g"
   benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), 1:12]
 
+  ## In case the lower bound relationships have been inverted for whatever reason, this'll flip them to the expected
   if (convert.l2r) {
     benchmarks$LL.Relation[benchmarks$LL.Relation == ">="] <- "<"
     benchmarks$LL.Relation[benchmarks$LL.Relation == ">"] <- "<="

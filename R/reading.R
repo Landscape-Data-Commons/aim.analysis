@@ -18,7 +18,7 @@ read.benchmarks <- function(data.path = "",
                             convert.l2r = TRUE
 ){
   ## Check for the file extension
-  if (!grepl(benchmarks.filename, pattern = "\\.((xlsx)|(csv)|(xls))")) {
+  if (!grepl(benchmarks.filename, pattern = "\\.((xlsx)|(csv)|(xls))", ignore.case = TRUE)) {
     stop("The benchmark filename needs to have a valid file extension (xlsx, csv, or xls). The most likely extension is xlsx.")
   }
 

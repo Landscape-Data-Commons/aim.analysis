@@ -56,7 +56,10 @@ read.benchmarks <- function(data.path = "",
   benchmarks$eval.string.proportion[!is.na(benchmarks$Required.Proportion)] <- paste(benchmarks$Proportion.Relation[!is.na(benchmarks$Required.Proportion)], benchmarks$Required.Proportion[!is.na(benchmarks$Required.Proportion)])
 
   ## For each benchmark add in the name of the field in TerrADat that corresponds
-  benchmarks <- merge(x = benchmarks, y = indicator.lut, by.x = "Indicator", by.y = indicator.lut.benchmarkfield)
+  benchmarks <- merge(x = benchmarks,
+                      y = indicator.lut,
+                      by.x = "Indicator",
+                      by.y = indicator.lut.benchmarkfield)
 
   return(benchmarks)
 }

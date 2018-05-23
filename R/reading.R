@@ -192,14 +192,33 @@ read.dd <- function(src = "", ## A filepath as a string
 #' Reading in an exported TerrADat geodatabase
 #'
 #' @description Reads in the terrestrial and remote sensing indicator feature classes from an ESRI geodatabase exported from the BLM NOC TerrADat. Returns a single SpatialPointsDataFrame containing the data from both.
-#' @param tdat.path A string of the folder path that contains the \code{.gdb}.
+#' @param tdat.path Character string. The folder path that contains the geodatabase specified in \code{tdat.name}. Defaults to the working directory.
 #' @param tdat.name A string of the filename of the geodatabase to import from
 #' @export
-read.tdat <- function(tdat.path,
+read.tdat <- function(tdat.path = NULL,
                       tdat.name){
-  tdat.name <- sanitize(tdat.name, "gdb")
-  tdat.terrestrial.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_TERRESTRIALAIM", stringsAsFactors = FALSE)
-  tdat.remote.spdf <- rgdal::readOGR(dsn = paste0(tdat.path, "/", tdat.name), layer = "SV_IND_REMOTESENSING", stringsAsFactors = FALSE)
+  ## Default to the working directory
+  if (is.null(tdat.path)) {
+    tdat.path <- getwd()
+  }
+
+  ## Construct the full filepath
+  filepath <- paste0(tdat.path, "/", tdat.name)
+  ## Add the extension if necessary
+  if (!grepl(filepath, pattern = "\\.gdb", ignore.case = TRUE)) {
+    filepath <- paste0(filepath, ".gdb")
+  }
+  ## Check to make sure the geodatabase exists
+  if (!file.exists(filepath)) {
+    stop(paste("Can't find the geodatabase", filepath))
+  }
+  # Read in the data
+  tdat.terrestrial.spdf <- rgdal::readOGR(dsn = filepath,
+                                          layer = "SV_IND_TERRESTRIALAIM",
+                                          stringsAsFactors = FALSE)
+  tdat.remote.spdf <- rgdal::readOGR(dsn = filepath,
+                                     layer = "SV_IND_REMOTESENSING",
+                                     stringsAsFactors = FALSE)
   tdat.spdf <- sp::merge(tdat.terrestrial.spdf, tdat.remote.spdf)
   return(tdat.spdf)
 }

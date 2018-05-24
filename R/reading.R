@@ -314,12 +314,16 @@ read.tracking <- function(filename = "",
   return(tracking)
 }
 
-# Read in the default indicator lookup table
+#' Return the default indicator lookup table
+#' @description The default lookup table for combining the BLM Benchmark Tool table with the data from TerrADat
+#' @export
 indicator.lookup <- function(){
   return(read.csv(paste0(path.package("aim.analysis"), "/defaults/indicator_lut.csv"), stringsAsFactors = FALSE))
 }
 
-# Read in the default point fate lookup table
+#' Return the default point fate lookup table
+#' @description The default lookup table for final point fate designations in sample design databases.
+#' @export
 fate.lookup <- function(){
   return(read.csv(paste0(path.package("aim.analysis"), "/defaults/fates.csv"), stringsAsFactors = FALSE))
 }

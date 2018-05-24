@@ -4,10 +4,10 @@
 \alias{read.tdat}
 \title{Reading in an exported TerrADat geodatabase}
 \usage{
-read.tdat(tdat.path, tdat.name)
+read.tdat(tdat.path = NULL, tdat.name)
 }
 \arguments{
-\item{tdat.path}{A string of the folder path that contains the \code{.gdb}.}
+\item{tdat.path}{Character string. The folder path that contains the geodatabase specified in \code{tdat.name}. Defaults to the working directory.}
 
 \item{tdat.name}{A string of the filename of the geodatabase to import from}
 }

@@ -4,9 +4,7 @@
 \alias{read.dd}
 \title{Importing Sample Design Databases for AIM Sample Designs}
 \usage{
-read.dd(src = "", dd.src, func = "arcgisbinding",
-  target.values = c("Target Sampled", "TS"), split = TRUE,
-  omitNAdesignations = FALSE,
+read.dd(src = "", dd.src, split = TRUE, omitNAdesignations = FALSE,
   projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"))
 }
 \arguments{
@@ -14,9 +12,11 @@ read.dd(src = "", dd.src, func = "arcgisbinding",
 
 \item{dd.src}{Character string or character vector containing the filenames of the geodatabases to import. Each filename should include the extension ".gdb"}
 
-\item{func}{Character string. Defines whether to use the \code{rgdal::} or \code{arcgisbinding::} package to read in the geodatabases. Defaults to \code{"arcgisbinding"}. Valid values are \code{"arcgisbinding"} and \code{"readogr"}. This is not case sensitive}
+\item{split}{Logical. If \code{TRUE} then databases containing multiple designs will be split so that they appear as separate designs in the output list rather than kept together due to coming from the same database. Defaults to \code{TRUE}.}
 
-\item{projection}{\code{sp::CRS()} argument. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations}
+\item{projection}{\code{sp::CRS()} call defining the coordinate reference system. Defaults to NAD83 with \code{sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}. Is used to reproject all SPDFs in order to perform spatial manipulations.}
+
+\item{omNAdesignations}{Logical. if \code{TRUE} then any plots with a final designation of \code{NA} are dropped after reading. Defaults to \code{FALSE}.}
 }
 \description{
 This function imports one or more Sample Design Database[s] and returns a list of the named lists sf, pts, and strata. The named lists contain SpatialPoints/PolygonsDataFrames of the sample frame, points, and strata from each of the geodatabases. The SPDFs are named using the filename of the geodatabase source, so that each list has one SPDF named for each geodatabase imported and those names are identical between lists. If a Sample Design Database is missing any one of those features, a NULL value replaces the SPDF.

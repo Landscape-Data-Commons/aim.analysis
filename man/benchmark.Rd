@@ -4,17 +4,47 @@
 \alias{benchmark}
 \title{Applying indicator benchmarks to a data frame of TerrADat data.}
 \usage{
-benchmark(benchmarks, tdat, evalstratumfield = "Evaluation.Stratum")
+benchmark(benchmarks, data, data.tall = FALSE,
+  data.indicatorfield = "indicator", data.groupfield = "benchmark.group",
+  use.indicator.lut = TRUE, indicator.lut = NULL,
+  lut.data.indicatorfield = "indicator",
+  lut.benchmark.indicatorfield = "indicator.name",
+  benchmark.indicatorfield = "Indicator",
+  benchmark.groupfield = "Benchmark.Group",
+  benchmark.categoryfield = "Condition.Category",
+  benchmark.evalstringfield = c("eval.string.lower", "eval.string.upper"),
+  benchmark.metagroupfield = c("Management.Question"))
 }
 \arguments{
-\item{benchmarks}{A data frame containing the benchmark information, imported from .XLSX with \code{read.benchmarks()}.}
+\item{benchmarks}{A data frame containing the benchmark information, probably imported from .XLSX with \code{read.benchmarks()}.}
 
-\item{tdat}{A data frame imported from TerrADat's terrestrial or remote sensing indicators feature classes AND a field defining the evaluation stratum/group each plot should be considered part of, probably added using \code{attribute.shapefile()}.}
+\item{data}{Data frame. The data to be benchmarked. At a minimum, it must contain a variable  imported from TerrADat's terrestrial or remote sensing indicators feature classes AND a field defining the evaluation stratum/group each plot should be considered part of, probably added using \code{attribute.shapefile()}.}
 
-\item{evalstratumfield}{A string of the name of the field in \code{tdat} that contains the evaluation stratum/group identities. Defaults to \code{"Evaluation.Stratum"}.}
-}
-\value{
-A data frame with the variables \code{"PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY"}
+\item{data.tall}{Logical. If \code{TRUE}, then the data frame provided as \code{data} is treated as tidy, where each row/observation is of a single indicator and its value with the indicator name in a variable matching the string provided as \code{data.indicatorfield}. Otherwise is the name that will be used when the function converts the data from wide to tall. Defaults to \code{FALSE}.}
+
+\item{data.indicatorfield}{Optional character string. If \code{data.tall} is \code{TRUE} then this must match the name of the variable in \code{data} that contains the indicator names. Ignored if \code{data.tall} is \code{FALSE}. Defaults to \code{"indicator"}.}
+
+\item{data.groupfield}{Character string. The name of the variable in \code{data} that contains the benchmark group identities in the \code{benchmark.groupfield} variable of \code{benchmarks}. Defaults to \code{"Benchmark.Group"}.}
+
+\item{use.indicator.lut}{Logical. If \code{TRUE} then use the data frame provided as \code{indicator.lut} or the default lookup table to match the indicators in the \code{benchmarks} data frame to the indicators in the \code{data} data frame. Defaults to \code{TRUE}.}
+
+\item{indicator.lut}{Optional data frame. If \code{use.indicator.lut} is \code{TRUE} then it will be used to join \code{data} and \code{benchmarks}. Defaults to the output from \code{indicator.lookup()}.}
+
+\item{lut.data.indicatorfield}{Optional character string. If using a lookup table, the name of the variable in \code{indicator.lut} that contains the indicator identities matching those in the variable \code{data.indicatorfield} in \code{data}. Defaults to \code{indicator}, appropriate for use with the default indicator lookup table.}
+
+\item{lut.benchmark.indicatorfield}{Optional character string. If using a lookup table, the name of the variable in \code{indicator.lut} that contains the indicator identities matching those in the variable \code{benchmark.indicatorfield} in \code{benchmark}. Defaults to \code{indicator.name}, appropriate for use with the default indicator lookup table.}
+
+\item{benchmark.indicatorfield}{Character string. This must match the name of the variable in \code{benchmarks} that contains the indicator names. Defaults to \code{"Indicator"}.}
+
+\item{benchmark.groupfield}{Character string. The name of the variable in \code{benchmarks} that contains the benchmark group identities in the \code{data.groupfield} variable of \code{data}. Defaults to \code{"Benchmark.Group"}.}
+
+\item{benchmark.categoryfield}{Character string. The nameof the variable in \code{benchmarks} that contains the categories that each benchmark corresponds to. Defaults to \code{"Condition.Category"}.}
+
+\item{benchmark.evalstringfield}{Vector of character strings. The variable names for all relevant inequality strings to be evaluated for each benchmark. The string must express an inequality to be evaluated with the character \code{"x"} where the indicator value from the data set will be substituted, e.g. \code{"0 <= x"}. Defaults to \code{c("eval.string.lower", "eval.string.upper")}}
+
+\item{benchmark.metagroupfield}{Vector of}
+
+\item{data.valuefield}{Character string. If \code{data.tall} is \code{TRUE} the name of the variable in \code{data} that contains the numeric values for each indicator. Ignored if \code{data.tall} is \code{FALSE}. Defaults to \code{"value"}.}
 }
 \description{
 This evaluates the indicator values in TerrADat against the supplied benchmarks. If a plot should be evaluated in multiple evaluation strata/groups, there should be one copy of the plot per stratum/group.

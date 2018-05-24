@@ -4,21 +4,25 @@
 \alias{read.benchmarks}
 \title{Reading in the benchmarks from the Data Explorer}
 \usage{
-read.benchmarks(data.path = "", benchmarks.filename = "",
+read.benchmarks(data.path = NULL, benchmarks.filename = "",
   sheet.name = "Monitoring Objectives", indicator.lut = NULL,
   indicator.lut.benchmarkfield = "indicator.name", convert.l2r = TRUE)
 }
 \arguments{
-\item{data.path}{A string specifying the path to the folder containing the .XLSX with the benchmarks}
+\item{data.path}{Character string. The path to the folder containing the file \code{benchmarks.filename} with the benchmarks. Defaults to the working directory.}
 
-\item{benchmarks.filename}{A string specifying the filename of the .XLSX containing the benchmarks}
+\item{benchmarks.filename}{Character string. The filename, including filetype extension, of the .XLSX, .CSV, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".}
 
-\item{indicator.lut}{A data frame with the column \code{"indicator.name"} matching the values in the Data Explorer "Indicator" field and one called \code{"indicator.tdat"} with corresponding value for the indicators' names in TerrADat.}
+\item{sheet.name}{Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{benchmarks.filename}. Only used if \code{benchmarks.filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.}
 
-\item{indicator.lut.benchmarkfield}{The name of the column in \code{indicator.lut} that matches the "Indicator column of Data Explorer. Defaults to \code{"indicator.name"}}
+\item{indicator.lut}{Data frame containing a variable specified in \code{indicator.lut.benchmarkfield} holding values matching those values in the benchmark file's column named "Indicator" and \code{"indicator.tdat"} with corresponding values for the indicators' names in the point data. Defaults to the output from \code{indicator.lut()}.}
+
+\item{indicator.lut.benchmarkfield}{The name of the column in \code{indicator.lut} that holds values matching the "Indicator" column of the benchmark file. Defaults to \code{"indicator.name"}}
+
+\item{convertl2r}{Logical. If \code{TRUE} then all inequalities in "LL Relation" in the benchmark data frame will be converted from > and >= to <= and <, respectively, which are the expected directions. Defaults to \code{TRUE}.}
 }
 \value{
-A data frame of the benchmarks from the Data Explorer with a field containing an evaluation string to use in testing indicator values against the benchmarks.
+A data frame of the benchmarks from the specified file with fields containing evaluation strings to use in testing indicator values against the benchmarks.
 }
 \description{
 Reading in the benchmarks from the Data Explorer

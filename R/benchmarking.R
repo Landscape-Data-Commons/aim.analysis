@@ -1,89 +1,130 @@
 #' Applying indicator benchmarks to a data frame of TerrADat data.
 #'
 #' This evaluates the indicator values in TerrADat against the supplied benchmarks. If a plot should be evaluated in multiple evaluation strata/groups, there should be one copy of the plot per stratum/group.
-#' @param benchmarks A data frame containing the benchmark information, imported from .XLSX with \code{read.benchmarks()}.
-#' @param tdat A data frame imported from TerrADat's terrestrial or remote sensing indicators feature classes AND a field defining the evaluation stratum/group each plot should be considered part of, probably added using \code{attribute.shapefile()}.
-#' @param evalstratumfield A string of the name of the field in \code{tdat} that contains the evaluation stratum/group identities. Defaults to \code{"Evaluation.Stratum"}.
-#' @return A data frame with the variables \code{"PRIMARYKEY", "PLOTID", "MANAGEMENT.QUESTION", "EVALUATION.STRATUM", "INDICATOR", "VALUE", "EVALUATION.CATEGORY"}
+#' @param benchmarks A data frame containing the benchmark information, probably imported from .XLSX with \code{read.benchmarks()}.
+#' @param data Data frame. The data to be benchmarked. At a minimum, it must contain a variable  imported from TerrADat's terrestrial or remote sensing indicators feature classes AND a field defining the evaluation stratum/group each plot should be considered part of, probably added using \code{attribute.shapefile()}.
+#' @param data.tall Logical. If \code{TRUE}, then the data frame provided as \code{data} is treated as tidy, where each row/observation is of a single indicator and its value with the indicator name in a variable matching the string provided as \code{data.indicatorfield}. Otherwise is the name that will be used when the function converts the data from wide to tall. Defaults to \code{FALSE}.
+#' @param data.indicatorfield Optional character string. If \code{data.tall} is \code{TRUE} then this must match the name of the variable in \code{data} that contains the indicator names. Ignored if \code{data.tall} is \code{FALSE}. Defaults to \code{"indicator"}.
+#' @param data.valuefield Character string. If \code{data.tall} is \code{TRUE} the name of the variable in \code{data} that contains the numeric values for each indicator. Ignored if \code{data.tall} is \code{FALSE}. Defaults to \code{"value"}.
+#' @param data.groupfield Character string. The name of the variable in \code{data} that contains the benchmark group identities in the \code{benchmark.groupfield} variable of \code{benchmarks}. Defaults to \code{"Benchmark.Group"}.
+#' @param use.indicator.lut Logical. If \code{TRUE} then use the data frame provided as \code{indicator.lut} or the default lookup table to match the indicators in the \code{benchmarks} data frame to the indicators in the \code{data} data frame. Defaults to \code{TRUE}.
+#' @param indicator.lut Optional data frame. If \code{use.indicator.lut} is \code{TRUE} then it will be used to join \code{data} and \code{benchmarks}. Defaults to the output from \code{indicator.lookup()}.
+#' @param lut.data.indicatorfield Optional character string. If using a lookup table, the name of the variable in \code{indicator.lut} that contains the indicator identities matching those in the variable \code{data.indicatorfield} in \code{data}. Defaults to \code{indicator}, appropriate for use with the default indicator lookup table.
+#' @param lut.benchmark.indicatorfield Optional character string. If using a lookup table, the name of the variable in \code{indicator.lut} that contains the indicator identities matching those in the variable \code{benchmark.indicatorfield} in \code{benchmark}. Defaults to \code{indicator.name}, appropriate for use with the default indicator lookup table.
+#' @param benchmark.indicatorfield Character string. This must match the name of the variable in \code{benchmarks} that contains the indicator names. Defaults to \code{"Indicator"}.
+#' @param benchmark.groupfield Character string. The name of the variable in \code{benchmarks} that contains the benchmark group identities in the \code{data.groupfield} variable of \code{data}. Defaults to \code{"Benchmark.Group"}.
+#' @param benchmark.categoryfield Character string. The nameof the variable in \code{benchmarks} that contains the categories that each benchmark corresponds to. Defaults to \code{"Condition.Category"}.
+#' @param benchmark.evalstringfield Vector of character strings. The variable names for all relevant inequality strings to be evaluated for each benchmark. The string must express an inequality to be evaluated with the character \code{"x"} where the indicator value from the data set will be substituted, e.g. \code{"0 <= x"}. Defaults to \code{c("eval.string.lower", "eval.string.upper")}
+#' @param benchmark.metagroupfield Vector of
 #' @examples
 #' benchmark()
 #' @export
 
-benchmark <- function(benchmarks, ## The data frame imported with read.benchmarks()
-                      tdat, ## The data frame from TerrADat. It needs to already be attributed with evaluation strata
-                      evalstratumfield = "Evaluation.Stratum" ## The field in tdat that contains the evaluation strata
+benchmark <- function(benchmarks,
+                      data,
+                      data.tall = FALSE,
+                      data.indicatorfield = "indicator",
+                      data.groupfield = "benchmark.group",
+                      use.indicator.lut = TRUE,
+                      indicator.lut = NULL,
+                      lut.data.indicatorfield = "indicator",
+                      lut.benchmark.indicatorfield = "indicator.name",
+                      benchmark.indicatorfield = "Indicator",
+                      benchmark.groupfield = "Benchmark.Group",
+                      benchmark.categoryfield = "Condition.Category",
+                      benchmark.evalstringfield = c("eval.string.lower", "eval.string.upper"),
+                      benchmark.metagroupfield = c("Management.Question")
 ){
-  ## Sanitization as always
-  names(benchmarks) <- stringr::str_to_upper(names(benchmarks))
-  ## In case someone didn't read the instructions and fed in an SPDF
-  if (class(tdat)[1] == "SpatialPointsDataFrame") {
-    tdat <- tdat@data
+  ## Only take a data frames
+  if (class(data)[1] != "data.frame") {
+    stop("The data must be a data frame")
+  }
+  if (class(benchmarks)[1] != "data.frame") {
+    stop("The benchmarks must be a data frame")
   }
 
-  # Get the list of indicators from the lookup table
-  tdat.fields.indicators.expected <- indicator.lookup()[["indicator.tdat"]]
+  # Make the benchmark data frame minimal
 
-  if (length(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)]) != length(tdat.fields.indicators.expected)) {
-    message("These expected indicators weren't found in the tdat data frame:")
-    message(paste(tdat.fields.indicators.expected[!(tdat.fields.indicators.expected %in% names(tdat))], collapse = ", "))
-    message("All of these are being dropped from consideration and the remaining indicators are being used.")
+  # Make the data tall
+  if (!data) {
+    # TODO
+    # ## This shouldn't be needed except in weird scenarios, but occasionally you end up with the string <Null> where you shouldn't.
+    # ## This is likely the result of exporting an attribute table from a geodatabase to a spreadsheet, converting that to a .csv, then reading it in and converting it to an SPDF
+    # data.tall$Value[data.tall$Value == "<Null>"] <- NA
+    #
   }
-  ## Making a tall version of the TerrADat data frame
-  tdat.tall <- tidyr::gather(data = tdat,
-                             key = Indicator,
-                             value = Value,
-                             !!!rlang::quos(tdat.fields.indicators.expected[tdat.fields.indicators.expected %in% names(tdat)])
-  )
 
-  ## This shouldn't be needed except in weird scenarios, but occasionally you end up with the string <Null> where you shouldn't.
-  ## This is likely the result of exporting an attribute table from a geodatabase to a spreadsheet, converting that to a .csv, then reading it in and converting it to an SPDF
-  tdat.tall$Value[tdat.tall$Value == "<Null>"] <- NA
+  ## Check that the variable exist in the inputs
+  benchmark.missing.variables <- c(benchmark.indicatorfield, benchmark.evalstringfield, benchmark.groupfield, benchmark.categoryfield, benchmark.metagroupfield)[c(benchmark.indicatorfield, benchmark.evalstringfield, benchmark.groupfield, benchmark.categoryfield, benchmark.metagroupfield) %in% names(benchmarks)]
+  if (length(benchmark.missing.variables) >  0) {
+    stop(paste("The following required variables are missing from the benchmark data frame:", paste(benchmark.missing.variables, collapse = ", ")))
+  }
+  data.missing.variables <- c(data.indicatorfield, data.groupfield)[c(data.indicatorfield, data.groupfield) %in% names(data)]
+  if (length(data.missing.variables) >  0) {
+    stop(paste("The following required variables are missing from the data data frame:", paste(data.missing.variables, collapse = ", ")))
+  }
 
-  ## It's not clear what this column will be called, so we'll just get it now
-  eval.name.benchmarks <- names(benchmarks)[grep(x = names(benchmarks), pattern = "evaluation.group$|^evaluation.stratum|evaluation.area$", ignore.case = TRUE)]
+  # Pare down the benchmarks
+  benchmarks <- distinct(benchmarks[,c(benchmark.indicatorfield, benchmark.evalstringfield, benchmark.groupfield, benchmark.categoryfield, benchmark.metagroupfield)])
 
-  ## Strip down benchmarks to just the distinct ones that matter because sometimes the same benchmark appears for multiple reasons?
-  benchmarks.distinct <- distinct(benchmarks[, c("MANAGEMENT.QUESTION", eval.name.benchmarks, "INDICATOR.TDAT", "EVALUATION.CATEGORY", "EVAL.STRING.LOWER", "EVAL.STRING.UPPER")])
-
-  ## Merge the tall TerrADat with the benchmark information
-  tdat.tall.benched <- merge(x = tdat.tall,
-                             y = benchmarks.distinct,
-                             by.x = c(names(tdat.tall)[grepl(x = names(tdat.tall), pattern = evalstratumfield, ignore.case = TRUE)], "Indicator"),
-                             by.y = c(eval.name.benchmarks, "INDICATOR.TDAT"))
-
-  ## Create parseable evaluation strings
-  tdat.tall.benched$EVAL.STRING.LOWER <- paste0(tdat.tall.benched$EVAL.STRING.LOWER, tdat.tall.benched$Value)
-  tdat.tall.benched$EVAL.STRING.UPPER <- paste0(tdat.tall.benched$Value, tdat.tall.benched$EVAL.STRING.UPPER)
-
-  ## A parsing function for the lapply()
-  parser <- function(x) {
-    eval(parse(text = x))
+  if (use.indicator.lut) {
+    if (is.null(indicator.lut)) {
+      indicator.lut <- indicator.lookup()
     }
-  ## Parse the strings to determing if the value falls within the upper and lower bounds for that benchmark evaluation category
-  tdat.tall.benched$meeting <- lapply(tdat.tall.benched$EVAL.STRING.LOWER, parser) %>% unlist() & lapply(tdat.tall.benched$EVAL.STRING.UPPER, parser) %>% unlist()
 
-  names(tdat.tall.benched) <- stringr::str_to_upper(names(tdat.tall.benched))
+    # Make sure that the the variables are there
+    lut.missing.variables <- c(lut.data.indicatorfield, lut.benchmark.indicatorfield)[c(lut.data.indicatorfield, lut.benchmark.indicatorfield) %in% names(indicator.lut)]
+    if (length(lut.missing.variables) >  0) {
+      stop(paste("The following expected variables are missing from the indicator lookup table:", paste(lut.missing.variables, collapse = ", ")))
+    }
 
-  names(tdat.tall.benched)[names(tdat.tall.benched) %in% "EVALUATION.GROUP"] <- "EVALUATION.STRATUM"
+    # Warn about indicators that show up in data and benchmarks but not the lookup table
+    missing.dataindicators <- data[data[[data.indicatorfield]] %in% indicator.lut[[lut.data.indicatorfield]], data.indicatorfield]
+    missing.benchmarkindicators <- benchmarks[benchmarks[[benchmark.indicatorfield]] %in% indicator.lut[[lut.benchmark.indicatorfield]], benchmark.indicatorfield]
 
-  ## Because all the benchmark evaluation categories should be mutually exclusive, applying the vector from $meeting should result in one row per indicator per plot
-  ## Also restricting this to the relevant columns that are required for the next step
-  output <- tdat.tall.benched %>% dplyr::filter(MEETING) %>% dplyr::select(PRIMARYKEY,
-                                                                           PLOTID,
-                                                                           MANAGEMENT.QUESTION,
-                                                                           EVALUATION.STRATUM,
-                                                                           INDICATOR,
-                                                                           VALUE,
-                                                                           EVALUATION.CATEGORY,
-                                                                           LONGITUDE,
-                                                                           LATITUDE,
-                                                                           dplyr::matches(match = "^(DT_VST)|(DATEVISITED)$", ignore.case = TRUE)) %>%
-    dplyr::filter(!is.na(PRIMARYKEY))
-  names(output) <- stringr::str_to_upper(names(output))
-  ## If dates made it in. These are needed for the reporting step and this means that we don't need TerrADat for anything there anymore
-  names(output)[grepl(names(output), pattern = "^(DT_VST)|(DATEVISITED)$", ignore.case = TRUE)] <- "DATE.VISITED"
-  if ("DATE.VISITED" %in% names(output)) {
-    output$DATE.VISITED <- lubridate::as_date(output$DATE.VISITED)
+    if (length(missing.dataindicators) > 0) {
+      message("The following indicators in the data do not appear in the lookup table:")
+      message(paste(missing.dataindicators, collapse = ", "))
+    }
+    if (length(missing.benchmarkindicators) > 0) {
+      message("The following indicators in the benchmarks do not appear in the lookup table:")
+      message(paste(missing.benchmarkindicators, collapse = ", "))
+    }
+
+    data.benchmarked <- merge(x = merge(x = data,
+                                        y = indicator.lut,
+                                        by.x = data.indicatorfield,
+                                        by.y = lut.data.indicatorfield),
+                              y = benchmarks,
+                              by.x = lut.benchmark.indicatorfield,
+                              by.y = benchmark.indicatorfield)
+
+  } else {
+    data.benchmarked <- merge(x =data,
+                              y = benchmarks,
+                              by.x = data.indicatorfield,
+                              by.y = benchmark.indicatorfield)
   }
-  return(output)
+
+  # Evaluate the inequalities into a data frame
+  inequalities <- data.frame(lapply(benchmark.evalstringfield, data.benchmarked = data.benchmarked,
+         FUN = function(X, data.benchmarked){
+           # For each inequality variable, sub the indicator values in for the character x in the relevant inequality string and evaluate it
+           mapply(data.benchmarked[[data.valuefield]], data.benchmarked[[X]],
+                  FUN = function(string, value){
+                    evalstring <- gsub(string, pattern = "x", replacement = value, ignore.case = TRUE)
+                    return(eval(parse(text = evalstring)))
+                  })
+         }))
+
+
+
+  # Slice the benchmarked data to just the rows where all the inequalities evaluated to TRUE
+  data.benchmarked <- data.benchmarked[, sapply(1:nrow(inequalities), inequalities = inequalities,
+                                                FUN = function(row, inequalities){
+                                                  all(inequalities[row,])
+                                                })]
+
+
+  return(data.benchmarked)
 }

@@ -68,7 +68,7 @@ read.benchmarks <- function(data.path = NULL,
   # names(benchmarks.raw)[toupper(names(benchmarks.raw)) %in% c("CLASSIFICATION", "EVALUATION.CATEGORY")] <- "Condition.Category"
 
   ## Strip out the extraneous columns and rows, which includes if they left the example in there. The pattern to look for is "e.g"
-  benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), 1:12]
+  benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), !grepl(names(benchmarks.raw), pattern = "__\\d+$")]
 
   ## In case the lower bound relationships have been inverted for whatever reason, this'll flip them to the expected
   if (convert.l2r) {

@@ -65,7 +65,7 @@ read.benchmarks <- function(data.path = NULL,
 
 
   ## In case there's a "Classification" column where we'd prefer a "Category" column. This lets us maintain backwards compatibility with older iterations of the spreadsheet
-  names(benchmarks.raw)[toupper(names(benchmarks.raw)) %in% c("CLASSIFICATION", "EVALUATION.CATEGORY")] <- "Condition.Category"
+  # names(benchmarks.raw)[toupper(names(benchmarks.raw)) %in% c("CLASSIFICATION", "EVALUATION.CATEGORY")] <- "Condition.Category"
 
   ## Strip out the extraneous columns and rows, which includes if they left the example in there. The pattern to look for is "e.g"
   benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), 1:12]

@@ -19,3 +19,6 @@ clip.arcpy(spdf, spdf.clip, temp.path = NULL,
 \value{
 The remaining geometry and data in \code{spdf} after being restricted to only overlap with \code{spdf.clip}.
 }
+\description{
+Clip a Spatial Polygon/Points Data Frame to a Spatial Polygons Data Frame with ArcPy
+}

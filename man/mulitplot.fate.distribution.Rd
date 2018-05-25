@@ -12,6 +12,9 @@ mulitplot.fate.distribution(point.weights, fates = NULL)
 
 \item{fates}{Optional data frame. Defaults to the output from \code{fate.lookup()} which matches the plot fates found in sample design databases.}
 }
+\value{
+A list of \code{ggplot} plots of the fate distributions of the reporting units as histograms.
+}
 \description{
 Plotting Fate Distributions For Multiple Reporting Units
 A wrapper for \code{plot.fate.distribution()} to apply that splits the input \code{point.weights} by the variable REPORTING.UNIT and returns a list

@@ -16,3 +16,6 @@ intersect.arcpy(spdf, spdf.intersect, temp.path = NULL,
 
 \item{python.search.path}{Optional character string. The filepath to search for pythonw.exe in. Defaults to "C:/Python27".}
 }
+\description{
+Find the intersection of two Spatial Polygon/Points Data Frames with ArcPy
+}

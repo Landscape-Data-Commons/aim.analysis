@@ -461,7 +461,7 @@ multiplot.indicator.distribution <- function(analysis.df,
 #' Plotting Fate Distributions
 #' @param point.weights Data frame. The point weights output from \code{weight()} with a common reporting unit.
 #' @param fates Optional data frame. Defaults to the output from \code{fate.lookup()} which matches the plot fates found in sample design databases.
-#' @output A \code{ggplot} plot of the fate distribution as a histogram.
+#' @return A \code{ggplot} plot of the fate distribution as a histogram.
 #' @export
 plot.fate.distribution <- function(point.weights,
                                    fates = NULL) {
@@ -531,7 +531,7 @@ plot.fate.distribution <- function(point.weights,
 #' A wrapper for \code{plot.fate.distribution()} to apply that splits the input \code{point.weights} by the variable REPORTING.UNIT and returns a list
 #' @param point.weights Data frame. The point weights output from \code{weight()}.
 #' @param fates Optional data frame. Defaults to the output from \code{fate.lookup()} which matches the plot fates found in sample design databases.
-#' @output A list of \code{ggplot} plots of the fate distributions of the reporting units as histograms.
+#' @return A list of \code{ggplot} plots of the fate distributions of the reporting units as histograms.
 #' @export
 mulitplot.fate.distribution <- function(point.weights,
                                         fates = NULL){

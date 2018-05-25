@@ -11,6 +11,9 @@ plot.fate.distribution(point.weights, fates = NULL)
 
 \item{fates}{Optional data frame. Defaults to the output from \code{fate.lookup()} which matches the plot fates found in sample design databases.}
 }
+\value{
+A \code{ggplot} plot of the fate distribution as a histogram.
+}
 \description{
 Plotting Fate Distributions
 }

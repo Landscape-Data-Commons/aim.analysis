@@ -809,6 +809,7 @@ erase.arcpy <- function(spdf,
   }
 }
 
+#' Erase geometry from a Spatial Polygons/Points Data Frame using a Spatial Polygons Data Frame with rgeos
 #' @param spdf A Spatial Polygons Data Frame to remove FROM.
 #' @param spdf.erase  A Spatial Polygons Data Frame to remove geometry from \code{spdf} WITH.
 #' @param sliverdrop Optional logical value. If \code{erase} is \code{"rgeos"} this will be passed to \code{rgeos::set_RGEOS_dropSlivers()} to temporarily set the environment during the erasure attempt. Defaults to \code{TRUE}.
@@ -913,7 +914,6 @@ flex.erase <- function(spdf,
 }
 
 #' Clip a Spatial Polygon/Points Data Frame to a Spatial Polygons Data Frame with ArcPy
-#' @description
 #' @param spdf A Spatial Point or Spatial Polygons Data Frame to be clipped
 #' @param spdf.clip A Spatial Polygons Data Frame to clip \code{spdf} by
 #' @param temp.path Optional character string. A pre-existing filepath to use as a temporary folder to write files to. Defaults to a temporary directory from \code{tempdir()}.
@@ -1010,7 +1010,6 @@ clip.arcpy <- function(spdf,
 }
 
 #' Find the intersection of two Spatial Polygon/Points Data Frames with ArcPy
-#' @description
 #' @param spdf A Spatial Polygons Data Frame
 #' @param spdf.intersect A Spatial Polygons Data Frame to intersect with \code{spdf}.
 #' @param temp.path Optional character string. A pre-existing filepath to use as a temporary folder to write files to. Defaults to a temporary directory from \code{tempdir()}.

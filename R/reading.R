@@ -1,8 +1,8 @@
 #' Reading in the benchmarks from the Data Explorer
 #'
-#' @param data.path Character string. The path to the folder containing the file \code{benchmarks.filename} with the benchmarks. Defaults to the working directory.
-#' @param benchmarks.filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
-#' @param sheet.name Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{benchmarks.filename}. Only used if \code{benchmarks.filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.
+#' @param data.path Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory.
+#' @param filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
+#' @param sheet.name Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.
 #' @param indicator.lut Data frame containing a variable specified in \code{indicator.lut.benchmarkfield} holding values matching those values in the benchmark file's column named "Indicator" and \code{"indicator.tdat"} with corresponding values for the indicators' names in the point data. Defaults to the output from \code{indicator.lut()}.
 #' @param indicator.lut.benchmarkfield The name of the column in \code{indicator.lut} that holds values matching the "Indicator" column of the benchmark file. Defaults to \code{"indicator.name"}
 #' @param convertl2r Logical. If \code{TRUE} then all inequalities in "LL Relation" in the benchmark data frame will be converted from > and >= to <= and <, respectively, which are the expected directions. Defaults to \code{TRUE}.
@@ -13,7 +13,7 @@
 
 ## TODO: Add capitalization sanitization stuff
 read.benchmarks <- function(data.path = NULL,
-                            benchmarks.filename = "",
+                            filename = "",
                             sheet.name = "Monitoring Objectives",
                             indicator.lut = NULL,
                             indicator.lut.benchmarkfield = "indicator.name",
@@ -25,12 +25,12 @@ read.benchmarks <- function(data.path = NULL,
   }
 
   ## Check for the file extension
-  if (!grepl(benchmarks.filename, pattern = "\\.((xlsx)|(csv)|(xls))", ignore.case = TRUE)) {
-    stop("The benchmark filename needs to have a valid file extension (xlsx, csv, or xls). The most likely extension is xlsx.")
+  if (!grepl(filename, pattern = "\\.((xlsx)|(csv)|(xls)|(xlsm))$", ignore.case = TRUE)) {
+    stop("The benchmark filename needs to have a valid file extension (xlsx, csv, xls, or xlsm). The most likely extension is xlsx.")
   }
 
   # Make the full filepath
-  filepath <- paste0(data.path, "/", benchmarks.filename)
+  filepath <- paste0(data.path, "/", filename)
 
   # Check to see if it exists
   if (file.exists(filepath)) {

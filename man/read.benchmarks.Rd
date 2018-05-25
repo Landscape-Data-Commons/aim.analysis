@@ -4,16 +4,16 @@
 \alias{read.benchmarks}
 \title{Reading in the benchmarks from the Data Explorer}
 \usage{
-read.benchmarks(data.path = NULL, benchmarks.filename = "",
+read.benchmarks(data.path = NULL, filename = "",
   sheet.name = "Monitoring Objectives", indicator.lut = NULL,
   indicator.lut.benchmarkfield = "indicator.name", convert.l2r = TRUE)
 }
 \arguments{
-\item{data.path}{Character string. The path to the folder containing the file \code{benchmarks.filename} with the benchmarks. Defaults to the working directory.}
+\item{data.path}{Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory.}
 
-\item{benchmarks.filename}{Character string. The filename, including filetype extension, of the .XLSX, .CSV, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".}
+\item{filename}{Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".}
 
-\item{sheet.name}{Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{benchmarks.filename}. Only used if \code{benchmarks.filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.}
+\item{sheet.name}{Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.}
 
 \item{indicator.lut}{Data frame containing a variable specified in \code{indicator.lut.benchmarkfield} holding values matching those values in the benchmark file's column named "Indicator" and \code{"indicator.tdat"} with corresponding values for the indicators' names in the point data. Defaults to the output from \code{indicator.lut()}.}
 

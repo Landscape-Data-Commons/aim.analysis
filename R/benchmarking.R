@@ -46,7 +46,7 @@ benchmark <- function(benchmarks,
   # Make the benchmark data frame minimal
 
   # Make the data tall
-  if (!data) {
+  if (!data.tall) {
     # TODO
     # ## This shouldn't be needed except in weird scenarios, but occasionally you end up with the string <Null> where you shouldn't.
     # ## This is likely the result of exporting an attribute table from a geodatabase to a spreadsheet, converting that to a .csv, then reading it in and converting it to an SPDF

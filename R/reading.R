@@ -3,8 +3,6 @@
 #' @param data.path Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory.
 #' @param filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
 #' @param sheet.name Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.
-#' @param indicator.lut Data frame containing a variable specified in \code{indicator.lut.benchmarkfield} holding values matching those values in the benchmark file's column named "Indicator" and \code{"indicator.tdat"} with corresponding values for the indicators' names in the point data. Defaults to the output from \code{indicator.lut()}.
-#' @param indicator.lut.benchmarkfield The name of the column in \code{indicator.lut} that holds values matching the "Indicator" column of the benchmark file. Defaults to \code{"indicator.name"}
 #' @param convertl2r Logical. If \code{TRUE} then all inequalities in "LL Relation" in the benchmark data frame will be converted from > and >= to <= and <, respectively, which are the expected directions. Defaults to \code{TRUE}.
 #' @return A data frame of the benchmarks from the specified file with fields containing evaluation strings to use in testing indicator values against the benchmarks.
 #' @examples
@@ -15,8 +13,8 @@
 read.benchmarks <- function(data.path = NULL,
                             filename = "",
                             sheet.name = "Monitoring Objectives",
-                            indicator.lut = NULL,
-                            indicator.lut.benchmarkfield = "indicator.name",
+                            # indicator.lut = NULL,
+                            # indicator.lut.benchmarkfield = "indicator.name",
                             convert.l2r = TRUE
 ){
   ## Use the working directory if none is provided
@@ -59,9 +57,9 @@ read.benchmarks <- function(data.path = NULL,
   }
 
   ## If there's no indicator lookup table provided, use the defaut one built into the package
-  if (is.null(indicator.lut)) {
-    indicator.lut <- indicator.lookup()
-  }
+  # if (is.null(indicator.lut)) {
+  #   indicator.lut <- indicator.lookup()
+  # }
 
 
   ## In case there's a "Classification" column where we'd prefer a "Category" column. This lets us maintain backwards compatibility with older iterations of the spreadsheet
@@ -91,10 +89,10 @@ read.benchmarks <- function(data.path = NULL,
   benchmarks$eval.string.proportion[!is.na(benchmarks$Required.Proportion)] <- paste(benchmarks$Proportion.Relation[!is.na(benchmarks$Required.Proportion)], benchmarks$Required.Proportion[!is.na(benchmarks$Required.Proportion)])
 
   ## For each benchmark add in the name of the field in TerrADat that corresponds
-  benchmarks <- merge(x = benchmarks,
-                      y = indicator.lut,
-                      by.x = "Indicator",
-                      by.y = indicator.lut.benchmarkfield)
+  # benchmarks <- merge(x = benchmarks,
+  #                     y = indicator.lut,
+  #                     by.x = "Indicator",
+  #                     by.y = indicator.lut.benchmarkfield)
 
   return(benchmarks)
 }

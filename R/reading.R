@@ -316,7 +316,6 @@ read.tracking <- function(filename = "",
   tracking <- readxl::read_excel(path = paste0(path, filename),
                                  sheet = 1,
                                  col_types = c("text"),
-                                 # col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "date", "text", "text", "date", "numeric", "numeric"),
                                  skip = 1
   )
 

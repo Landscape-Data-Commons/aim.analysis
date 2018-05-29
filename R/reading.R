@@ -15,7 +15,8 @@ read.benchmarks <- function(data.path = NULL,
                             sheet.name = "Monitoring Objectives",
                             # indicator.lut = NULL,
                             # indicator.lut.benchmarkfield = "indicator.name",
-                            convert.l2r = TRUE
+                            # convert.l2r = TRUE,
+                            eval.strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
 ){
   ## Use the working directory if none is provided
   if (is.null(data.path)){
@@ -69,24 +70,38 @@ read.benchmarks <- function(data.path = NULL,
   benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), !grepl(names(benchmarks.raw), pattern = "__\\d+$")]
 
   ## In case the lower bound relationships have been inverted for whatever reason, this'll flip them to the expected
-  if (convert.l2r) {
-    benchmarks$LL.Relation[benchmarks$LL.Relation == ">="] <- "<"
-    benchmarks$LL.Relation[benchmarks$LL.Relation == ">"] <- "<="
+  # if (convert.l2r) {
+  #   benchmarks$LL.Relation[benchmarks$LL.Relation == ">="] <- "<"
+  #   benchmarks$LL.Relation[benchmarks$LL.Relation == ">"] <- "<="
+  # }
+
+  ## Create the evaluations strings if asked to!
+  if (!is.null(eval.strings)) {
+    # Figure out if any are missing (the character "x" is fine though because it's the indicator stand-in)
+    varnames <- unlist(eval.strings)[unlist(eval.strings) != "x"]
+    missing.varnames <- varnames[!(varnames %in% names(benchmarks))]
+    if (length(missing.varnames) > 0) {
+      stop(paste("The following expected variables for constructing eval strings are missing:", paste0(missing.varnames, collapse = ", ")))
+    }
+    # If none were missing, rename each of the vectors with "evalstring" and a suffix number. This will be their variable names in the data frame
+    names(eval.strings) <- paste0("evalstring", 1:length(eval.strings))
+    # Construct the strings. For each vector in the list
+    strings <- lapply(eval.strings, benchmarks = benchmarks, FUN = function(X, benchmarks){
+      # For each character string in the vector, grab the values in the matching variable in the benchmarks (or just return the "x")
+      vectors <- lapply(X, benchmarks = benchmarks, FUN = function(X, benchmarks){
+        if (X %in% names(benchmarks)) {
+          return(benchmarks[[X]])
+        } else {
+          return(X)
+        }
+      })
+      # Paste them together. This gnarly eval(parse()) business is to do it regardless of how many components there are
+      output <- eval(parse(text = paste0("paste(", paste0("vectors[[", 1:length(vectors), "]]", collapse = ", "), ")")))
+      return(output)
+    })
+    # Add the strings as variables to the benchmarks data frame
+    benchmarks <- cbind(benchmarks, data.frame(strings))
   }
-
-  ## Create the evaluations for the upper and lower limits of each benchmark.
-  ## The way the spreadsheet is configured, there should be no rows without both defined
-  benchmarks$eval.string.lower <- paste(benchmarks$Lower.Limit, benchmarks$LL.Relation)
-  benchmarks$eval.string.upper <- paste(benchmarks$UL.Relation, benchmarks$Upper.Limit)
-
-  ## Assume that the upper limit is infinity for places where there's a lower limit but not an upper
-  benchmarks$eval.string.upper[!is.na(benchmarks$Lower.Limit) & !is.na(benchmarks$LL.Relation) & is.na(benchmarks$UL.Relation) & is.na(benchmarks$Upper.Limit)] <- "< Inf"
-  ## Assume that the lower limit is negative infinity for places where there's an upper limit but not a lower
-  benchmarks$eval.string.lower[is.na(benchmarks$Lower.Limit) & is.na(benchmarks$LL.Relation) & !is.na(benchmarks$UL.Relation) & !is.na(benchmarks$Upper.Limit)] <- "-Inf <"
-
-  ## Create an evaluation string for future use with the required proportion and its relationship
-  benchmarks$eval.string.proportion <- ""
-  benchmarks$eval.string.proportion[!is.na(benchmarks$Required.Proportion)] <- paste(benchmarks$Proportion.Relation[!is.na(benchmarks$Required.Proportion)], benchmarks$Required.Proportion[!is.na(benchmarks$Required.Proportion)])
 
   ## For each benchmark add in the name of the field in TerrADat that corresponds
   # benchmarks <- merge(x = benchmarks,

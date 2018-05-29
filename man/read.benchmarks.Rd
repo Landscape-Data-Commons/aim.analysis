@@ -5,8 +5,9 @@
 \title{Reading in the benchmarks from the Data Explorer}
 \usage{
 read.benchmarks(data.path = NULL, filename = "",
-  sheet.name = "Monitoring Objectives", indicator.lut = NULL,
-  indicator.lut.benchmarkfield = "indicator.name", convert.l2r = TRUE)
+  sheet.name = "Monitoring Objectives", eval.strings = list(c("Lower.Limit",
+  "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x",
+  "Required.Relation", "Required.Proportion")))
 }
 \arguments{
 \item{data.path}{Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory.}
@@ -15,11 +16,7 @@ read.benchmarks(data.path = NULL, filename = "",
 
 \item{sheet.name}{Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.}
 
-\item{indicator.lut}{Data frame containing a variable specified in \code{indicator.lut.benchmarkfield} holding values matching those values in the benchmark file's column named "Indicator" and \code{"indicator.tdat"} with corresponding values for the indicators' names in the point data. Defaults to the output from \code{indicator.lut()}.}
-
-\item{indicator.lut.benchmarkfield}{The name of the column in \code{indicator.lut} that holds values matching the "Indicator" column of the benchmark file. Defaults to \code{"indicator.name"}}
-
-\item{convertl2r}{Logical. If \code{TRUE} then all inequalities in "LL Relation" in the benchmark data frame will be converted from > and >= to <= and <, respectively, which are the expected directions. Defaults to \code{TRUE}.}
+\item{eval.strings}{Optional list of character vectors. If \code{NULL}, nothing will be done. Otherwise, each character vector should contain one or more variable/column names from the benchmarks. The only other string allowed is \code{"x"} which can be used as a placeholder for indicator values. As an example, \code{list(c("lower.relationship", "lower.limit", "x"))} would add a column to the output called \code{"evalstring1"} that contains the results of \code{paste(benchmarks$lower.limit, benchmarks$lower.relationship, "x")}. Defaults to \code{list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Required.Relation", "Required.Proportion"))}, appropriate for use with the AIM "Benchmark Tool".}
 }
 \value{
 A data frame of the benchmarks from the specified file with fields containing evaluation strings to use in testing indicator values against the benchmarks.

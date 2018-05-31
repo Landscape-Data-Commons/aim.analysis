@@ -7,7 +7,7 @@
 read.benchmarks(data.path = NULL, filename = "",
   sheet.name = "Monitoring Objectives", eval.strings = list(c("Lower.Limit",
   "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x",
-  "Required.Relation", "Required.Proportion")))
+  "Proportion.Relation", "Required.Proportion")))
 }
 \arguments{
 \item{data.path}{Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory.}

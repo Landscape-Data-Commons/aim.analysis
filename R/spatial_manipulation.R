@@ -173,19 +173,19 @@ rgeos.intersect <- function(spdf1,
 #' @param projection An \code{sp::CRS()} argument. The final output will be reprojected using this. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}
 #' @return A SpatialPolygonsDataFrame with the attributes inherited from \code{spdf1} and \code{spdf2}, areas as appropriate, and a unique identifier.
 #' @examples
-#' intersect()
+#' flex.intersect()
 #' @export
 
-intersect <- function(spdf1,
-                      spdf1.attributefieldname,
-                      spdf1.attributefieldname.output = NULL,
-                      spdf2,
-                      spdf2.attributefieldname,
-                      spdf2.attributefieldname.output = NULL,
-                      method = "gintersection",
-                      area.ha = TRUE,
-                      area.sqkm = TRUE,
-                      projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+flex.intersect <- function(spdf1,
+                           spdf1.attributefieldname,
+                           spdf1.attributefieldname.output = NULL,
+                           spdf2,
+                           spdf2.attributefieldname,
+                           spdf2.attributefieldname.output = NULL,
+                           method = "gintersection",
+                           area.ha = TRUE,
+                           area.sqkm = TRUE,
+                           projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
 ){
   ## Sanitization
   if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {

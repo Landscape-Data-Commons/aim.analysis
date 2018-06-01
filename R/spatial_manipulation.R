@@ -167,7 +167,7 @@ rgeos.intersect <- function(spdf1,
 #' @param spdf2 A SpatialPolygonsDataFrame to be intersected
 #' @param spdf2.attributefieldname Name of the field in \code{spdf2} unique to the unit groups or units to take values from.
 #' @param spdf2.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then \code{spdf2.attributefieldname} will be used.
-#' @param method A string specifying which function to use for the intersecting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.
+#' @param method A string specifying which function to use for the intersecting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"rgeos"} which calls \code{rgeos.intersect()} and \code{"raster"}. Defaults to \code{"rgeos"}.
 #' @param area.ha Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{FALSE}.
 #' @param area.sqkm Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{FALSE}.
 #' @param projection An \code{sp::CRS()} call. The final output will be reprojected using this, unless it's \code{NULL}. Defaults to \code{NULL} (but for many uses you'll want NAD83: \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}).
@@ -340,6 +340,9 @@ add.area <- function(spdf,
 
 
 #' Restricting imported TerrADat data to the boundaries of the imported design databases
+#' @param dd.raw The output from \code{read.dd()}. The function uses the spatial polygons data frames found in the \code{sf} list
+#' @param tdat.spdf The output from \code{read.tdat()}.
+#' @return The contents of \code{read.tdat} that overlap spatially with the sample frames in \code{dd.raw}
 #' @export
 restrict.tdat <- function(dd.raw, tdat.spdf){
   ## NAD83 sp::CRS()

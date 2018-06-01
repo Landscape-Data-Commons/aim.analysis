@@ -103,6 +103,61 @@ attribute.shapefile <- function(spdf1,
   return(output)
 }
 
+#' Creating the Intersection of Two Spatial Polygons Data Frames
+#' @description This uses \code{rgeos::ginstersect} and assumes that the row names in both \code{spdf1} and \code{spdf2} DO NOT HAVE SPACES.
+#' @param spdf1 Spatial polygons data frame. One of the two set of polygons to intersect. If \code{crs} is \code{NULL} and \code{spdf1} and \code{spdf2} have different CRSes, then the CRS from \code{spdf1} will be use to reproject \code{spdf2}.
+#' @param spdf2 Spatial polygons data frame.
+#' @param crs Optional \code{sp::CRS()} call. USed to reproject both \code{spdf1} and \code{spdf2} using \code{sp::spTransform()}. Defaults to \code{NULL}.
+#' @export
+rgeos.intersect <- function(spdf1,
+                        spdf2,
+                        crs = NULL){
+
+  if (class(spdf1)[1] != "SpatialPolygonsDataFrame") {
+    stop("spdf1 must be a spatial polygons data frame")
+  }
+  if (class(spdf2)[1] != "SpatialPolygonsDataFrame") {
+    stop("spdf2 must be a spatial polygons data frame")
+  }
+
+
+  if (!is.null(crs)) {
+    spdf1 <- sp::spTransform(spdf1, CRSobj = crs)
+    spdf2 <- sp::spTransform(spdf2, CRSobj = crs)
+  }
+
+  if (as.character(spdf1@proj4string) != as.character(spdf2@proj4string)) {
+    spdf2 <- sp::spTransform(spdf2, CRSobj = spdf1@proj4string)
+  }
+  # First off, just do the intersect with rgeos::gintersect()
+  intersect.sp <- rgeos::gIntersection(spdf1,
+                                       spdf2,
+                                       byid = TRUE,
+                                       drop_lower_td = TRUE)
+
+  ## Now we need to build the data frame that goes back into this. It's a pain
+  ## Get the place in the rownames from the polygons where a " " occurs
+  intersection.rownames.splitpoints <-  sapply(row.names(intersect.sp),
+                                               function(X){gregexpr(X, pattern = " ")[[1]][1]})
+
+  # Usng thse split information, get the rows from the source data that match each and cbind() them into a data frame
+  intersection.dataframe <- cbind(spdf1@data[mapply(X = row.names(intersect.sp),
+                                                      Y = intersection.rownames.splitpoints,
+                                                      FUN = function(X, Y){1+ as.numeric(substr(X, start = 1, stop = Y-1))}),],
+                                       spdf2@data[mapply(X = row.names(intersect.sp),
+                                                      Y = intersection.rownames.splitpoints,
+                                                      FUN = function(X, Y){1 + as.numeric(substr(X, start = Y+1, stop = nchar(X)))}),])
+
+  # Set the rownames to be the same as the intersection SP
+  rownames(intersection.dataframe) <- row.names(intersect.sp)
+
+  # Make it an SPDF
+  intersect.spdf <- sp::SpatialPolygonsDataFrame(Sr = intersect.sp,
+                                                           data = intersection.dataframe)
+
+  return(intersect.spdf)
+}
+
 #' Create a SpatialPolygonsDataFrame from the intersection of two SpatialPolygonsDataFrames
 #'
 #' Basically a wrapping of \code{rgeos::gIntersection()} and \code{raster::intersect()} with additional opportunity to call add.area() and automatically added unique identifiers for each resultant polygon

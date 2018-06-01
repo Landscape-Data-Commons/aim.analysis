@@ -170,7 +170,7 @@ rgeos.intersect <- function(spdf1,
 #' @param method A string specifying which function to use for the intersecting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.
 #' @param area.ha Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{FALSE}.
 #' @param area.sqkm Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{FALSE}.
-#' @param projection An \code{sp::CRS()} call. The final output will be reprojected using this, unless it's \code{NULL}. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}
+#' @param projection An \code{sp::CRS()} call. The final output will be reprojected using this, unless it's \code{NULL}. Defaults to \code{NULL} (but for many uses you'll want NAD83: \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}).
 #' @return A SpatialPolygonsDataFrame with the attributes inherited from \code{spdf1} and \code{spdf2}, areas as appropriate, and a unique identifier.
 #' @examples
 #' flex.intersect()
@@ -185,7 +185,7 @@ flex.intersect <- function(spdf1,
                            method = "rgeos",
                            area.ha = FALSE,
                            area.sqkm = FALSE,
-                           projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+                           projection = NULL
 ){
   ## Sanitization
   if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
@@ -293,7 +293,12 @@ flex.intersect <- function(spdf1,
   }
 
   ## Return the final SPDF, making sure to project it into NAD83 (or whatever projection was provided to override the default)
-  return(intersect.spdf.attribute %>% sp::spTransform(projection))
+  if (is.null(projection)) {
+    output <- intersect.spdf.attribute
+  } else {
+    output <- sp::spTransform(intersect.spdf.attribute, CRSobj = projection)
+  }
+  return(output)
 }
 
 

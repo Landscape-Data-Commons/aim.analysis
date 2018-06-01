@@ -167,10 +167,10 @@ rgeos.intersect <- function(spdf1,
 #' @param spdf2 A SpatialPolygonsDataFrame to be intersected
 #' @param spdf2.attributefieldname Name of the field in \code{spdf2} unique to the unit groups or units to take values from.
 #' @param spdf2.attributefieldname.output Optional string for the name of the field in the output SPDF to duplicate values from spdf2.attributefieldname into. If unspecified, then \code{spdf2.attributefieldname} will be used.
-#' @param method A string specifying which function to use for the interscting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.
-#' @param area.ha Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{TRUE}.
-#' @param area.sqkm Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{TRUE}.
-#' @param projection An \code{sp::CRS()} argument. The final output will be reprojected using this. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}
+#' @param method A string specifying which function to use for the intersecting step: either \code{rgeos::gIntersection()} or \code{raster::intersect()}. Valid options are \code{"gintersection"} and \code{"intersect"}. Defaults to \code{"gintersection"}.
+#' @param area.ha Logical. If \code{TRUE}, areas will be calculated and added in hectares. Default is \code{FALSE}.
+#' @param area.sqkm Logical. If \code{TRUE}, areas will be calculated and added in square kilometers. Default is \code{FALSE}.
+#' @param projection An \code{sp::CRS()} call. The final output will be reprojected using this, unless it's \code{NULL}. Defaults to \code{CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")}
 #' @return A SpatialPolygonsDataFrame with the attributes inherited from \code{spdf1} and \code{spdf2}, areas as appropriate, and a unique identifier.
 #' @examples
 #' flex.intersect()
@@ -182,9 +182,9 @@ flex.intersect <- function(spdf1,
                            spdf2,
                            spdf2.attributefieldname,
                            spdf2.attributefieldname.output = NULL,
-                           method = "gintersection",
-                           area.ha = TRUE,
-                           area.sqkm = TRUE,
+                           method = "rgeos",
+                           area.ha = FALSE,
+                           area.sqkm = FALSE,
                            projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
 ){
   ## Sanitization
@@ -192,7 +192,7 @@ flex.intersect <- function(spdf1,
     ## Make sure that the points also adhere to the same projection
     spdf2 <- sp::spTransform(spdf2, CRSobj = spdf1@proj4string)
   }
-  if (!(toupper(method) %in% c("GINTERSECTION", "INTERSECT"))) {
+  if (!(toupper(method) %in% c("RGEOS", "RASTER"))) {
     stop(paste0("method must be either 'gintersection' or 'intersect' but is currently '", method, "'."))
   }
 
@@ -205,32 +205,11 @@ flex.intersect <- function(spdf1,
   spdf2@data[, paste0(spdf2.attributefieldname, ".spdf2")] <- spdf2@data[, spdf2.attributefieldname]
 
   switch(toupper(method),
-         "GINTERSECTION" = {
-           intersect.sp.attribute <- rgeos::gIntersection(spdf1,
-                                                          spdf2,
-                                                          byid = TRUE,
-                                                          drop_lower_td = TRUE)
-
-           ## Now we need to build the data frame that goes back into this. It's a pain
-           ## Get the rownames from the polygons. This will consist of the two row names from spdf1 and spdf2 separated by a " "
-           intersection.rownames <- intersect.sp.attribute %>% row.names() %>% strsplit(split = " ")
-
-           ## Create an empty data frame that we can add the constructed rows to
-           intersection.dataframe <- data.frame()
-           ## For each of the intersection polygons, create a row with the attributes from the source polygons
-           for (row in 1:length(intersection.rownames)) {
-             intersection.dataframe <- rbind(intersection.dataframe,
-                                             cbind(
-                                               spdf1@data[intersection.rownames[[row]][1],],
-                                               spdf2@data[intersection.rownames[[row]][2],]
-                                             ))
-           }
-           rownames(intersection.dataframe) <- row.names(intersect.sp.attribute)
-
-           intersect.spdf.attribute <- sp::SpatialPolygonsDataFrame(Sr = intersect.sp.attribute,
-                                                                    data = intersection.dataframe)
+         "RGEOS" = {
+           intersect.spdf.attribute <- rgeos.intersect(spdf1,
+                                                       spdf2)
          },
-         "INTERSECT" = {
+         "RASTER" = {
            current.drop <- rgeos::get_RGEOS_dropSlivers()
            current.warn <- rgeos::get_RGEOS_warnSlivers()
            current.tol <- rgeos::get_RGEOS_polyThreshold()

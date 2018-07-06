@@ -55,11 +55,11 @@ benchmark <- function(benchmarks,
   }
 
   ## Check that the variable exist in the inputs
-  benchmark.missing.variables <- c(benchmark.indicatorfield, benchmark.evalstringfield, benchmark.groupfield, benchmark.categoryfield, benchmark.metagroupfield)[c(benchmark.indicatorfield, benchmark.evalstringfield, benchmark.groupfield, benchmark.categoryfield, benchmark.metagroupfield) %in% names(benchmarks)]
+  benchmark.missing.variables <- c(benchmark.indicatorfield, benchmark.evalstringfield, benchmark.groupfield, benchmark.categoryfield, benchmark.metagroupfield)[!(c(benchmark.indicatorfield, benchmark.evalstringfield, benchmark.groupfield, benchmark.categoryfield, benchmark.metagroupfield) %in% names(benchmarks))]
   if (length(benchmark.missing.variables) >  0) {
     stop(paste("The following required variables are missing from the benchmark data frame:", paste(benchmark.missing.variables, collapse = ", ")))
   }
-  data.missing.variables <- c(data.indicatorfield, data.groupfield)[c(data.indicatorfield, data.groupfield) %in% names(data)]
+  data.missing.variables <- c(data.indicatorfield, data.groupfield)[!(c(data.indicatorfield, data.groupfield) %in% names(data))]
   if (length(data.missing.variables) >  0) {
     stop(paste("The following required variables are missing from the data data frame:", paste(data.missing.variables, collapse = ", ")))
   }

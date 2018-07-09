@@ -97,34 +97,40 @@ benchmark <- function(benchmarks,
                                         by.x = data.indicatorfield,
                                         by.y = lut.data.indicatorfield),
                               y = benchmarks,
-                              by.x = lut.benchmark.indicatorfield,
-                              by.y = benchmark.indicatorfield)
+                              by.x = c(lut.benchmark.indicatorfield, data.groupfield),
+                              by.y = c(benchmark.indicatorfield, benchmark.groupfield))
 
   } else {
     data.benchmarked <- merge(x =data,
                               y = benchmarks,
-                              by.x = data.indicatorfield,
-                              by.y = benchmark.indicatorfield)
+                              by.x = c(data.indicatorfield, data.groupfield),
+                              by.y = c(benchmark.indicatorfield, benchmark.groupfield))
   }
 
   # Evaluate the inequalities into a data frame
-  inequalities <- data.frame(lapply(benchmark.evalstringfield, data.benchmarked = data.benchmarked,
-         FUN = function(X, data.benchmarked){
-           # For each inequality variable, sub the indicator values in for the character x in the relevant inequality string and evaluate it
-           mapply(data.benchmarked[[data.valuefield]], data.benchmarked[[X]],
-                  FUN = function(string, value){
-                    evalstring <- gsub(string, pattern = "x", replacement = value, ignore.case = TRUE)
-                    return(eval(parse(text = evalstring)))
-                  })
-         }))
+  inequalities <- data.frame(lapply(benchmark.evalstringfield,
+                                    data.benchmarked = data.benchmarked,
+                                    data.valuefield = data.valuefield,
+                                    FUN = function(X,
+                                                   data.benchmarked,
+                                                   data.valuefield){
+                                      # For each inequality variable, sub the indicator values in for the character x in the relevant inequality string and evaluate it
+                                      mapply(string = data.benchmarked[[X]],
+                                             value = data.benchmarked[[data.valuefield]],
+                                             FUN = function(string, value){
+                                               evalstring <- gsub(string, pattern = "x", replacement = value, ignore.case = TRUE)
+                                               return(eval(parse(text = evalstring)))
+                                             })
+                                    }))
 
 
 
   # Slice the benchmarked data to just the rows where all the inequalities evaluated to TRUE
-  data.benchmarked <- data.benchmarked[, sapply(1:nrow(inequalities), inequalities = inequalities,
-                                                FUN = function(row, inequalities){
-                                                  all(inequalities[row,])
-                                                })]
+  data.benchmarked <- data.benchmarked[sapply(X = 1:nrow(inequalities),
+                                              inequalities = inequalities,
+                                              FUN = function(X, inequalities){
+                                                all(unlist(inequalities[X,]))
+                                              }),]
 
 
   return(data.benchmarked)

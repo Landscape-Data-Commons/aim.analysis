@@ -126,12 +126,12 @@ benchmark <- function(benchmarks,
 
 
   # Slice the benchmarked data to just the rows where all the inequalities evaluated to TRUE
-  data.benchmarked <- data.benchmarked[sapply(X = 1:nrow(inequalities),
+  output <- data.benchmarked[sapply(X = 1:nrow(inequalities),
                                               inequalities = inequalities,
                                               FUN = function(X, inequalities){
                                                 all(unlist(inequalities[X,]))
                                               }),]
 
 
-  return(data.benchmarked)
+  return(output)
 }

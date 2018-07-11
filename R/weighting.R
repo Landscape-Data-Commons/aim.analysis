@@ -306,10 +306,10 @@ weight <- function(dd.import,
 
   ## In case the DDs are from different generations, we need to restrict them to only the shared fields
   if (length(dd.import$pts) > 1) {
-    fieldnames.common <- lapply(dd.raw$pts, names) %>% unlist() %>%
+    fieldnames.common <- lapply(dd.import$pts, names) %>% unlist() %>%
       data.frame(fields = ., stringsAsFactors = FALSE) %>%
       dplyr::group_by(fields) %>% dplyr::summarize(count = n()) %>%
-      dplyr::filter(count == length(dd.raw$pts)) %>% .$fields
+      dplyr::filter(count == length(dd.import$pts)) %>% .$fields
   }
 
 

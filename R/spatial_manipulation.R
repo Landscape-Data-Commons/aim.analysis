@@ -126,7 +126,7 @@ rgeos.intersect <- function(spdf1,
     spdf2 <- sp::spTransform(spdf2, CRSobj = crs)
   }
 
-  if (!raster::compareCRS(spdf1, spdf2)) {
+  if (spdf1@proj4strings@projargs != spdf2@proj4strings@projargs) {
     spdf2 <- sp::spTransform(spdf2, CRSobj = spdf1@proj4string)
   }
   # First off, just do the intersect with rgeos::gintersect()

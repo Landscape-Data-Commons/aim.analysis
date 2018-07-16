@@ -29,7 +29,7 @@ attribute.shapefile <- function(spdf1,
 
   if (any(is.na(spdf2@data[[attributefield]]))) {
     message(paste0("Removing geometry from spdf2 with NA in the field ", attributefield))
-    spdf2 <- spdf2[!is.na(spdf2@data[[eval.strata.field]]),]
+    spdf2 <- spdf2[!is.na(spdf2@data[[attributefield]]),]
   }
 
   if (is.null(newfield)) {

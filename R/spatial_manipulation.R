@@ -142,11 +142,19 @@ rgeos.intersect <- function(spdf1,
 
   # Usng thse split information, get the rows from the source data that match each and cbind() them into a data frame
   intersection.dataframe <- cbind(spdf1@data[mapply(X = row.names(intersect.sp),
-                                                      Y = intersection.rownames.splitpoints,
-                                                      FUN = function(X, Y){1+ as.numeric(substr(X, start = 1, stop = Y-1))}),],
-                                       spdf2@data[mapply(X = row.names(intersect.sp),
-                                                      Y = intersection.rownames.splitpoints,
-                                                      FUN = function(X, Y){1 + as.numeric(substr(X, start = Y+1, stop = nchar(X)))}),])
+                                                    Y = intersection.rownames.splitpoints,
+                                                    rownames = rownames(spdf1@data),
+                                                    FUN = function(X, Y, rownames){
+                                                      rowname <- substr(X, start = 1, stop = Y-1)
+                                                      row.index <- grep(rownames, pattern = paste0("^", rowname, "$"))
+                                                      return(row.index)}),],
+                                  spdf2@data[mapply(X = row.names(intersect.sp),
+                                                    Y = intersection.rownames.splitpoints,
+                                                    rownames = rownames(spdf2@data),
+                                                    FUN = function(X, Y, rownames){
+                                                      rowname <- substr(X, start = Y + 1, stop = nchar(X))
+                                                      row.index <- grep(rownames, pattern = paste0("^", rowname, "$"))
+                                                      return(row.index)}),])
 
   # Set the rownames to be the same as the intersection SP
   rownames(intersection.dataframe) <- row.names(intersect.sp)

@@ -25,8 +25,8 @@ analyze <- function(evaluated.points,
   names(evaluated.points) <- toupper(names(evaluated.points))
   names(point.weights) <- toupper(names(point.weights))
   ## Limiting to points that have valid PrimaryKey values
-  point.weights <- point.weights %>% dplyr::filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
-  evaluated.points <- evaluated.points %>% dplyr::filter(grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
+  point.weights <- dplyr::filter(point.weights, grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
+  evaluated.points <- dplyr::filter(evaluated.points, grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
   if (is.null(reportingunit.type)){
     reportingunit.type <- NA
   }
@@ -36,16 +36,16 @@ analyze <- function(evaluated.points,
   }
 
   ## Then we combine them!
-  data <- merge(x = dplyr::select(.data = evaluated.points, -dplyr::matches(match = "^(LONGITUDE)|(LATITUDE)$", ignore.case = FALSE)),
-                y = point.weights,
-                by.x = "PRIMARYKEY",
-                by.y = "PRIMARYKEY") %>% distinct()
+  data <- dplyr::distinct(merge(x = dplyr::select(.data = evaluated.points, -dplyr::matches(match = "^(LONGITUDE)|(LATITUDE)$", ignore.case = FALSE)),
+                                y = point.weights,
+                                by.x = "PRIMARYKEY",
+                                by.y = "PRIMARYKEY"))
 
   ## If there are NA values, just add in the default
   data$REPORTING.UNIT[is.na(data$REPORTING.UNIT)] <- default.reportingunit
 
   ## We're going to add ".ind" to the end of each indicator name so we can find them easily later with a select() after we've spread() this data frame
-  data$INDICATOR <- paste0(data$INDICATOR, ".ind") %>% as.factor()
+  data$INDICATOR <- as.factor(paste0(data$INDICATOR, ".ind"))
 
   ## Sometimes you'll get duplicate PLOTID fields? We're going to remove the one that came from point.weights, i.e. PLOTID.y
   if ("PLOTID.x" %in% names(data)) {
@@ -63,7 +63,7 @@ analyze <- function(evaluated.points,
 
     ## Make the data set wide because that's the format that makes our lives easier for cat.analysis()
     ## Need to remove the columns Value and so that each plot ends up existing on just one row per evaluation stratum it has membership in
-    data.wide.current <- tidyr::spread(data = data.current %>% dplyr::select(-VALUE, -EVALUATION.STRATUM), ## Data frame to make wide
+    data.wide.current <- tidyr::spread(data = dplyr::select(data.current, -VALUE, -EVALUATION.STRATUM), ## Data frame to make wide
                                        key = INDICATOR, ## Column that contains the column names
                                        value = EVALUATION.CATEGORY, ## Column that contains the values
                                        fill = NA ## Where there's an NA, fill it with 0
@@ -91,25 +91,27 @@ analyze <- function(evaluated.points,
     data.wide.current <- data.wide.current[data.wide.current$wgt > 0,]
 
     ## First, the sites. This is a data frame with the siteIDs and whether they're active or not
-    aim.sites <- data.wide.current[, c("siteID", "Active")] %>% distinct()
+    aim.sites <- dplyr::distinct(data.wide.current[, c("siteID", "Active")])
 
     ## The subpopulations. This is a data frame of the siteIDs and reporting units. I think each siteID can only appear once, so we need to programmatically create this from the tall data frame
-    aim.subpop <- data.wide.current[, c("siteID", "Reporting.Unit")] %>% distinct()
+    aim.subpop <- dplyr::distinct(data.wide.current[, c("siteID", "Reporting.Unit")])
 
     ## The design information
-    aim.design <- data.wide.current[, c("siteID", "wgt", "xcoord", "ycoord")] %>% distinct()
+    aim.design <- dplyr::distinct(data.wide.current[, c("siteID", "wgt", "xcoord", "ycoord")])
 
     ## The data. A data frame with siteID and columns for each indicator (with the evaluation category strings as factors)
-    aim.datacat <- data.wide.current %>% dplyr::select(siteID, matches("\\.ind$")) %>% distinct()
+    aim.datacat <- dplyr::distinct(dplyr::select(data.wide.current,
+                                                 siteID, matches("\\.ind$")))
     ## Fix the names of the indicators so that the output doesn't include the ".ind" suffix which interferes with the automated report knitting
-    names(aim.datacat) <- names(aim.datacat) %>% stringr::str_replace_all("\\.ind$", "")
+    names(aim.datacat) <- stringr::str_replace_all(names(aim.datacat), "\\.ind$", "")
 
     ## TODO: Think about how to get sum of wgt by stratum and set up a stratified aim.popsize list
     ## The areas should be the sum of the weights, right?
-    areas.df <- data.wide.current %>% dplyr::group_by(Reporting.Unit) %>% dplyr::summarize(area = sum(wgt))
+    areas.df <- dplyr::summarize(dplyr::group_by(data.wide.current, Reporting.Unit),
+                                 area = sum(wgt))
 
     ## So we're converting them to a list
-    area.list <- areas.df$area %>% as.list()
+    area.list <- as.list(areas.df$area)
     ## And naming them with the reporting unit they belong to
     names(area.list) <- areas.df$Reporting.Unit
 

@@ -34,7 +34,7 @@ weight.gen <- function(pts,
   if (class(working.pts) != "data.frame") {
     stop("pts must be either a data frame or a spatial points data frame.")
   }
-  working.pts[[pts.fatefield]] <- stringr::str_to_upper(working.pts[[pts.fatefield]])
+  working.pts[[pts.fatefield]] <- toupper(working.pts[[pts.fatefield]])
 
   if (!all(working.pts[[pts.fatefield]] %in% c(target.values, unknown.values, nontarget.values, inaccessible.values, unneeded.values))) {
     message("The following fate[s] need to be added to the appropriate fate argument[s] in your function call:")
@@ -263,7 +263,7 @@ weight <- function(dd.import,
                    sliverwarn = TRUE,
                    sliverthreshold = 0.01
 ){
-  if (!(stringr::str_to_upper(erase) %in% c("ARCPY", "RGEOS"))) {
+  if (!(toupper(erase) %in% c("ARCPY", "RGEOS"))) {
     stop("erase must be either 'arcpy' or 'rgeos'.")
   }
   if (erase == "arcpy" & (is.null(temp.path) | !is.character(temp.path))) {
@@ -271,12 +271,12 @@ weight <- function(dd.import,
   }
   ## Sanitization
   if (!is.null(reporting.units.spdf)) {
-    names(reporting.units.spdf@data) <- stringr::str_to_upper(names(reporting.units.spdf@data))
+    names(reporting.units.spdf@data) <- toupper(names(reporting.units.spdf@data))
   }
-  fatefieldname <- stringr::str_to_upper(fatefieldname)
-  pointstratumfieldname <- stringr::str_to_upper(pointstratumfieldname)
-  designstratumfield <- stringr::str_to_upper(designstratumfield)
-  reportingunitfield <- stringr::str_to_upper(reportingunitfield)
+  fatefieldname <- toupper(fatefieldname)
+  pointstratumfieldname <- toupper(pointstratumfieldname)
+  designstratumfield <- toupper(designstratumfield)
+  reportingunitfield <- toupper(reportingunitfield)
 
   ## Initialize data frame for stratum info. The results from each loop end up bound to this
   strata.weights <- NULL
@@ -326,7 +326,7 @@ weight <- function(dd.import,
     if (length(dd.import$pts) > 1) {
       pts.spdf@data <- pts.spdf@data[, fieldnames.common]
     }
-    pts.spdf@data[, fatefieldname] <- stringr::str_to_upper(pts.spdf@data[, fatefieldname])
+    pts.spdf@data[, fatefieldname] <- toupper(pts.spdf@data[, fatefieldname])
     pts.spdf@data$WGT <- 0
     ## Add in the REPORTING.UNITS field with the value "Unspecified" if it's not there already.
     ## The only way it'd already be there is if the points were restricted coming in, which is currently impossible
@@ -601,10 +601,10 @@ weight.adjust <- function(points,
                           projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
 ){
   ## Sanitization
-  names(points) <- stringr::str_to_upper(names(points))
-  names(wgtcat.spdf@data) <- stringr::str_to_upper(names(wgtcat.spdf@data))
-  spdf.area.field <- stringr::str_to_upper(spdf.area.field)
-  spdf.wgtcat.field <- stringr::str_to_upper(spdf.wgtcat.field)
+  names(points) <- toupper(names(points))
+  names(wgtcat.spdf@data) <- toupper(names(wgtcat.spdf@data))
+  spdf.area.field <- toupper(spdf.area.field)
+  spdf.wgtcat.field <- toupper(spdf.wgtcat.field)
 
   ## Convert points to an SPDF
   points.spdf <- SpatialPointsDataFrame(coords = points[, c("LONGITUDE", "LATITUDE")],

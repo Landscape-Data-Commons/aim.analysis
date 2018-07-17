@@ -415,7 +415,7 @@ weight <- function(dd.import,
     } else {
       ## If this isn't the first pass through the loop, then the areas on the frame are incorrect because the SPDF has been subjected to erase()
       ## We also need to make sure that there's something left to even run this on, hence the nrow()
-      if (!is.null(dd.completed) & !is.null(frame.spdf) > 0) {
+      if (length(dd.completed) > 0 & !is.null(frame.spdf)) {
         if (nrow(frame.spdf) > 0) {
           print("(Re)calculating areas for frame.spdf")
           frame.spdf <- add.area(frame.spdf)

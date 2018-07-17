@@ -27,7 +27,7 @@ weight.gen <- function(pts,
 ){
   ## Sanitize
   if (class(pts) == "SpatialPointsDataFrame") {
-    working.pts <- pts.spdf@data
+    working.pts <- pts@data
   } else {
     working.pts <- pts
   }

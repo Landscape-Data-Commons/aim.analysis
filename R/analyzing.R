@@ -42,7 +42,10 @@ analyze <- function(evaluated.points,
                                 by.y = "PRIMARYKEY"))
 
   ## If there are NA values, just add in the default
-  data$REPORTING.UNIT[is.na(data$REPORTING.UNIT)] <- default.reportingunit
+  if (any(is.na(data$REPORTING.UNIT))) {
+    data$REPORTING.UNIT[is.na(data$REPORTING.UNIT)] <- default.reportingunit
+  }
+
 
   ## We're going to add ".ind" to the end of each indicator name so we can find them easily later with a select() after we've spread() this data frame
   data$INDICATOR <- as.factor(paste0(data$INDICATOR, ".ind"))

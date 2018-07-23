@@ -15,137 +15,149 @@
 
 analyze <- function(evaluated.points,
                     point.weights,
+                    points.joinfield,
+                    points.valuefield,
+                    points.keyfield,
+                    points.idfield,
+                    points.splitfield = NULL,
+                    points.xcoordfield,
+                    points.ycoordfield,
+                    weights.joinfield,
+                    weights.weightfield,
+                    weights.reportingfield,
                     default.reportingunit = "No reporting unit",
                     reportingunit.type = NA,
-                    adjustedweights = FALSE,
                     conf = 80
 ){
-
-  ## Sanitization
-  names(evaluated.points) <- toupper(names(evaluated.points))
-  names(point.weights) <- toupper(names(point.weights))
-  ## Limiting to points that have valid PrimaryKey values
-  point.weights <- dplyr::filter(point.weights, grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
-  evaluated.points <- dplyr::filter(evaluated.points, grepl(x = PRIMARYKEY, pattern = "^[0-9]{15,24}-[0-9]{1,3}-[0-9]{1,3}$"))
   if (is.null(reportingunit.type)){
     reportingunit.type <- NA
   }
 
-  if (!adjustedweights) {
-    message("adjustedweights is FALSE and therefore weights adjusted for reporting units will not be used.")
-  }
 
   ## Then we combine them!
-  data <- dplyr::distinct(merge(x = dplyr::select(.data = evaluated.points, -dplyr::matches(match = "^(LONGITUDE)|(LATITUDE)$", ignore.case = FALSE)),
-                                y = point.weights,
-                                by.x = "PRIMARYKEY",
-                                by.y = "PRIMARYKEY"))
+  data <- dplyr::distinct(merge(x = evaluated.points[, c(points.joinfield,
+                                                         points.idfield,
+                                                         points.valuefield,
+                                                         points.keyfield,
+                                                         points.splitfield,
+                                                         points.xcoordfield,
+                                                         points.ycoordfield)],
+                                y = point.weights[, c(weights.joinfield,
+                                                      weights.weightfield,
+                                                      weights.reportingfield)],
+                                by.x = points.joinfield,
+                                by.y = weights.joinfield))
 
   ## If there are NA values, just add in the default
-  if (any(is.na(data$REPORTING.UNIT))) {
-    data$REPORTING.UNIT[is.na(data$REPORTING.UNIT)] <- default.reportingunit
+  missing.reporting <- is.na(data[[weights.reportingfield]])
+  if (any(missing.reporting)) {
+    data[missing.reporting, weights.reportingfield] <- default.reportingunit
   }
 
-
-  ## We're going to add ".ind" to the end of each indicator name so we can find them easily later with a select() after we've spread() this data frame
-  data$INDICATOR <- as.factor(paste0(data$INDICATOR, ".ind"))
-
-  ## Sometimes you'll get duplicate PLOTID fields? We're going to remove the one that came from point.weights, i.e. PLOTID.y
-  if ("PLOTID.x" %in% names(data)) {
-    names(data)[names(data) == "PLOTID.x"] <- "PLOTID"
-    data <- data[, names(data)[names(data) != "PLOTID.y"]]
+  # Split the data frame into a list to work with so we can just lapply() the same actions across each
+  # Or just put it in a list if we're not splitting it. That lets us still use the lapply()
+  if (is.null(points.splitfield)) {
+    df.list <- list(data)
+  } else {
+    df.list <- split(data, data[[points.splitfield]])
   }
 
-  ## Initialize the output data frame
-  output <- data.frame()
-  warnings <- data.frame()
+  # This is the step that creates the objects for cat.analysis() and runs it.
+  # The lapply() means that we can efficiently apply this to each of the
+  analyses.list <- lapply(X = df.list,
+                          splitfield = points.splitfield,
+                          idfield = points.idfield,
+                          valuefield = points.valuefield,
+                          keyfield = points.keyfield,
+                          weightfield = weights.weightfield,
+                          reportingfield = weights.reportingfield,
+                          xcoordfield = points.xcoordfield,
+                          ycoordfield = points.ycoordfield,
+                          splitype = points.splitfield.type,
+                          FUN = function(X,
+                                         splitfield,
+                                         idfield,
+                                         valuefield,
+                                         keyfield,
+                                         weightfield,
+                                         reportingfield,
+                                         xcoordfield,
+                                         ycoordfield,
+                                         splitype){
+                            # Just for ease of reference, so X isn't going on all over the place
+                            data.current <- X
 
-  ## The actual analysis will be done on a per-objective level, so we're just going to loop through those because apply() is kind of a pain and this is computationally cheap enough (I think)
-  for (o in unique(data$MANAGEMENT.QUESTION)) {
-    data.current <- data[data$MANAGEMENT.QUESTION == o,]
+                            # Get all the indicators now. We'll use these to identify newly-made columns post-spread()
+                            indicators <- unique(data.current[[keyfield]])
 
-    ## Make the data set wide because that's the format that makes our lives easier for cat.analysis()
-    ## Need to remove the columns Value and so that each plot ends up existing on just one row per evaluation stratum it has membership in
-    data.wide.current <- tidyr::spread(data = dplyr::select(data.current, -VALUE, -EVALUATION.STRATUM), ## Data frame to make wide
-                                       key = INDICATOR, ## Column that contains the column names
-                                       value = EVALUATION.CATEGORY, ## Column that contains the values
-                                       fill = NA ## Where there's an NA, fill it with 0
-    )
+                            # Get the split value (Managment Objective for AIM)
+                            splitvalue <- data.current[[splitfield]][1]
 
-    ## Because it's easier to do this now while the data frame is still just one object and not four or five
-    names(data.wide.current)[names(data.wide.current) == "PLOTID"] <- "siteID"
-    ## If there are adjusted weights and we want to use them, then this is where to do it.
-    if (adjustedweights & ("ADJWGT" %in% names(data.wide.current))) {
-      names(data.wide.current)[names(data.wide.current) == "ADJWGT"] <- "wgt"
-      if ((NA %in% data.wide.current$wgt) & length(unique(data.wide.current$wgt)) == 1) {
-        stop("The adjusted weight values are all NA. If they should be something else, check your weighting step.")
-      }
+                            ## Make the data set wide because that's the format that makes our lives easier for cat.analysis()
+                            data.wide.current <- tidyr::spread(data = data.current,
+                                                               ## Column that contains the column names
+                                                               # The !!rlang::quo() lets us pass the string stored as keyfield to spread() which wants bare variables
+                                                               key = !!rlang::quo(keyfield),
+                                                               ## Column that contains the values
+                                                               value = !!rlang::quo(valuefield),
+                                                               ## Where there's an NA, fill it with 0
+                                                               fill = NA)
 
-    } else {
-      names(data.wide.current)[names(data.wide.current) == "WGT"] <- "wgt"
-    }
-    names(data.wide.current)[names(data.wide.current) == "REPORTING.UNIT"] <- "Reporting.Unit"
-    names(data.wide.current)[names(data.wide.current) == "LONGITUDE"] <- "xcoord"
-    names(data.wide.current)[names(data.wide.current) == "LATITUDE"] <- "ycoord"
-    ## All the sites are active? Sure! Why not?
-    data.wide.current$Active <- TRUE
+                            # Set the variable names to the ones expected by cat.analysis() to make it easy to create the objects it needs
+                            names(data.wide.current)[names(data.wide.current) == idfield] <- "siteID"
+                            names(data.wide.current)[names(data.wide.current) == weightfield] <- "wgt"
+                            names(data.wide.current)[names(data.wide.current) == reportingfield] <- "Reporting.Unit"
+                            names(data.wide.current)[names(data.wide.current) == xcoordfield] <- "xcoord"
+                            names(data.wide.current)[names(data.wide.current) == ycoordfield] <- "ycoord"
+                            # All of the data will be considered active when running cat.analysis()
+                            data.wide.current$Active <- TRUE
 
-    ## All weights need to be positive values, so drop any 0s that have found their way in
-    data.wide.current <- data.wide.current[data.wide.current$wgt > 0,]
 
-    ## First, the sites. This is a data frame with the siteIDs and whether they're active or not
-    aim.sites <- dplyr::distinct(data.wide.current[, c("siteID", "Active")])
+                            ## All weights need to be positive values, so drop any 0s that have found their way in
+                            data.wide.current <- data.wide.current[data.wide.current$wgt > 0,]
 
-    ## The subpopulations. This is a data frame of the siteIDs and reporting units. I think each siteID can only appear once, so we need to programmatically create this from the tall data frame
-    aim.subpop <- dplyr::distinct(data.wide.current[, c("siteID", "Reporting.Unit")])
+                            ## First, the sites. This is a data frame with the siteIDs and whether they're active or not
+                            sites <- dplyr::distinct(data.wide.current[, c("siteID", "Active")])
 
-    ## The design information
-    aim.design <- dplyr::distinct(data.wide.current[, c("siteID", "wgt", "xcoord", "ycoord")])
+                            ## The subpopulations. This is a data frame of the siteIDs and reporting units
+                            subpop <- dplyr::distinct(data.wide.current[, c("siteID", "Reporting.Unit")])
 
-    ## The data. A data frame with siteID and columns for each indicator (with the evaluation category strings as factors)
-    aim.datacat <- dplyr::distinct(dplyr::select(data.wide.current,
-                                                 siteID, matches("\\.ind$")))
-    ## Fix the names of the indicators so that the output doesn't include the ".ind" suffix which interferes with the automated report knitting
-    names(aim.datacat) <- stringr::str_replace_all(names(aim.datacat), "\\.ind$", "")
+                            ## The design information
+                            design <- dplyr::distinct(data.wide.current[, c("siteID", "wgt", "xcoord", "ycoord")])
 
-    ## TODO: Think about how to get sum of wgt by stratum and set up a stratified aim.popsize list
-    ## The areas should be the sum of the weights, right?
-    areas.df <- dplyr::summarize(dplyr::group_by(data.wide.current, Reporting.Unit),
-                                 area = sum(wgt))
+                            ## The data. A data frame with siteID and columns for each indicator
+                            datacat <- dplyr::distinct(data.wide.current[, c("siteID", indicators)])
 
-    ## So we're converting them to a list
-    area.list <- as.list(areas.df$area)
-    ## And naming them with the reporting unit they belong to
-    names(area.list) <- areas.df$Reporting.Unit
+                            ## TODO: Think about how to get sum of wgt by stratum and set up a stratified aim.popsize list
+                            ## The areas should be the sum of the weights
+                            ## This example is for unstratified sampling (also for simplicity) for stratified, need to add the stratum field to the design data frame
+                            ## and add the stratum areas to the popsize list
+                            popsize <- list("Reporting.Unit" = lapply(split(data.wide.current, data.wide.current$Reporting.Unit),
+                                                                      FUN = function(X){
+                                                                        ru <- X$Reporting.Unit[1]
+                                                                        area <- setNames(sum(X$wgt), ru)
+                                                                        return(area)
+                                                                      })
+                            )
 
-    ## This example is for unstratified sampling (also for simplicity) for stratified, need to add the stratum field to the design data frame
-    ## and add the stratum areas to the popsize list
-    aim.popsize <- list("Reporting.Unit" = area.list)
+                            ### Now run cat.analysis
+                            analysis <- spsurvey::cat.analysis(sites = sites,
+                                                               subpop = subpop,
+                                                               design = design,
+                                                               data.cat = datacat,
+                                                               popsize = popsize,
+                                                               conf = conf)
 
-    ## In case we got warnings last time, nullify them
-    warn.df <- NULL
+                            ## Add in the reporting unit type
+                            analysis$Type <- as.character(analysis$Type)
+                            analysis$Type <- reportingunit.type
 
-    ### Now run cat.analysis
-    aim.analysis <- spsurvey::cat.analysis(sites = aim.sites,
-                                           subpop = aim.subpop,
-                                           design = aim.design,
-                                           data.cat = aim.datacat,
-                                           popsize = aim.popsize,
-                                           conf = conf)
+                            ## Add the split value info to those results
+                            analysis[[splitfield]] <- splitvalue
 
-    ## Add in the reporting unit type
-    aim.analysis$Type <- as.character(aim.analysis$Type)
-    aim.analysis$Type <- reportingunit.type
+                            return(analysis)
+                          })
 
-    ## Add the objective/management question info to those results
-    aim.analysis$MANAGEMENT.QUESTION <- o
-
-    ## rbind() these results to the output data frame and the warnings if there are any
-    output <- rbind(output, aim.analysis)
-    if (!is.null(warn.df)) {
-      warnings <- rbind(warnings, warn.df)
-    }
-  }
-
-  return(list(analyses = output, warnings = warnings))
+  # Turn those data frames into a single output data frame
+  output <- dplyr::bind_rows(analyses.list)
 }

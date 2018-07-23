@@ -160,4 +160,43 @@ analyze <- function(evaluated.points,
 
   # Turn those data frames into a single output data frame
   output <- dplyr::bind_rows(analyses.list)
+
+  # This calculates binomial Wilson confidence intervals!
+  conf.ints <- mapply(n = output$NResp,
+                      proportion = output$Estimate.P/100,
+                      conf.level = rep.int(conf/100, times = nrow(output)),
+                      methods = rep.int("wilson", times = nrow(output)),
+                      FUN = function(n, proportion, conf.level, methods){
+                        x <- (proportion * n)
+
+                        alpha <- 1 - conf.level
+                        z <- qnorm(1 - alpha/2)
+
+                        ## See this paper for equations:
+                        # Interval Estimation for a Binomial Proportion
+                        # Author(s): Lawrence D. Brown, T. Tony Cai and Anirban DasGupta
+                        # Source: Statistical Science, Vol. 16, No. 2 (May, 2001), pp. 101-117
+                        # Published by: Institute of Mathematical Statistics
+                        # Stable URL: http://www.jstor.org/stable/2676784
+                        ci.l.w <- ((x + (z^2)/2)/(n + (z^2))) - ((z*sqrt(n))/(n + (z^2)))*sqrt(proportion*(1 - proportion) + ((z^2)/(4*n))) # lower limit of the confidence interval
+                        ci.u.w <- ((x + (z^2)/2)/(n + (z^2))) + ((z*sqrt(n))/(n + (z^2)))*sqrt(proportion*(1 - proportion) + ((z^2)/(4*n))) # upper limit of the confidence interval
+                        return(c(ci.l.w = ci.l.w, ci.u.w = ci.u.w))})
+
+  # This converts that matrix into a data frame, ready to be joined
+  conf.ints.df <- dplyr::bind_rows(lapply(1:ncol(conf.ints),
+                                          conf = conf,
+                                          conf.ints,
+                                          FUN = function(X, conf, conf.ints){
+                                            output <- data.frame(conf.ints[1,X]*100,
+                                                                 conf.ints[2,X]*100,
+                                                                 stringsAsFactors = FALSE)
+                                            names(output) <- paste0(c("LCB", "UCB"), conf, "Pct.W")
+                                            rownames(output) <- NULL
+                                            return(output)
+                                          }))
+
+  # Add in those Wilson's binomial confidence intervals for the sake of the wildlife biologists
+  output <- cbind(output, conf.ints.df)
+
+  return(output)
 }

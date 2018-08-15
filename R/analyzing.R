@@ -1,11 +1,20 @@
 #' Categorical Analysis of AIM Data
 #'
 #' This function takes the outputs from the functions \code{weight()} optionally passed through \code{weight.adjust()}, \code{benchmarker()}, and a TerrADat SpatialPointsDataFrame with a field for reporting units. It applies \code{spsurvey::cat.analysis()} and returns the results
-#' @param evaluated.points Data frame output from \code{benchmark()}.
-#' @param point.weights Data frame output from \code{weight()}, equivalent to \code{weight()[["point.weights"]]} or \code{weight()[[2]]}.
-#' @param default.reportingunit A string to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}
-#' @param reportingunit.type A string to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.
-#' @param adjustedweights Logical. If \code{TRUE}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{FALSE}.
+#' @param evaluated.points Data frame. This should be the output from \code{benchmark()} or an equivalent and must contain the variables specified in the arguments \code{points.joinfield}, \code{points.valuefield}, \code{points.keyfield}, \code{points.idfield}, \code{points.xcoordfield}, and \code{points.ycoordfield}. If \code{points.splitfield} is not \code{NULL} then that variable must also be in the data frame.
+#' @param point.weights Data frame. This should be the \code{"point.weights"} data frame output from \code{weight()} or an equivalent. It must contain the variables specified in the arguments \code{weights.joinfield}, \code{weights.weightfield}, and \code{weights.reportingfield}.
+#' @param points.joinfield Character string. The name of the variable in \code{evaluated.points} that contains the values used to join \code{evaluated.points} and \code{point.weights}. The relationship of \code{point.weights}:\code{evaluated.points} must be 1:1 or 1:Many.
+#' @param points.valuefield Character string. The name of the variable in \code{evaluated.points} that contains the categorical value assignments for the indicators appearing in \code{evaluated.points$points.keyfield}.
+#' @param points.keyfield Character string. The name of the variable in \code{evaluated.points} that contains the indicators for which there are categorical assignments in \code{evaluated.points$points.valuefield}.
+#' @param points.idfield Character string. The name of the variable in \code{evaluated.points} that contains the ID values for each plot. This can be the same string as \code{points.joinfield} if the IDs are being used to join the two data frames.
+#' @param points.splitfield Optional character string. The name of the variable in \code{evaluated.points} that contains the values to split the data frame by. This is required if \code{evaluated.points} has observations that share identical pairs of values in \code{point.idfield} and \code{points.keyfield}, which can happen if an indicator qualified to be evaluated by multiple standards on the same plot (e.g. at plot 420 the indicator bare ground was compared to standards for habitat quality and also hydrologic function). Defaults to \code{NULL}.
+#' @param points.xcoordfield Character string. The name of the variable in \code{evaluated.points} that contains the numeric values corresponding to the x coordinates (longitude) of the plots/observations.
+#' @param points.ycoordfield Character string. The name of the variable in \code{evaluated.points} that contains the numeric values corresponding to the y coordinates (latitude) of the plots/observations.
+#' @param weights.joinfield Character string. The name of the variable in \code{point.weights} that contains the values used to join \code{evaluated.points} and \code{point.weights}. The relationship of \code{point.weights}:\code{evaluated.points} must be 1:1 or 1:Many.
+#' @param weights.weightfield Character string. The name of the variable in \code{point.weights} that contains the numeric weight values.
+#' @param weights.reportingfield Character string. The name of the variable in \code{point.weights} that contains the values corresponding to the reporting unit (subpopulation) that the observations belong to.
+#' @param default.reportingunit Character string. Used to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}
+#' @param reportingunit.type Character string. Used to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.
 #' @param conf Numeric. The confidence level. Defaults to \code{80}.
 #' @return A data frame with the output from \code{spsurvey::cat.analysis()}
 #' @keywords analysis

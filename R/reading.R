@@ -1,6 +1,6 @@
 #' Reading in the benchmarks from the Data Explorer
 #'
-#' @param data.path Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory.
+#' @param data.path Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory as retrieved by \code{getwd()}.
 #' @param filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
 #' @param sheet.name Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.
 # #' @param convertl2r Logical. If \code{TRUE} then all inequalities in "LL Relation" in the benchmark data frame will be converted from > and >= to <= and <, respectively, which are the expected directions. Defaults to \code{TRUE}.
@@ -11,7 +11,7 @@
 #' @export
 
 ## TODO: Add capitalization sanitization stuff
-read.benchmarks <- function(data.path = NULL,
+read.benchmarks <- function(data.path = getwd(),
                             filename = "",
                             sheet.name = "Monitoring Objectives",
                             # indicator.lut = NULL,
@@ -19,11 +19,6 @@ read.benchmarks <- function(data.path = NULL,
                             # convert.l2r = TRUE,
                             eval.strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
 ){
-  ## Use the working directory if none is provided
-  if (is.null(data.path)){
-    data.path <- getwd()
-  }
-
   ## Check for the file extension
   if (!grepl(filename, pattern = "\\.((xlsx)|(csv)|(xls)|(xlsm))$", ignore.case = TRUE)) {
     stop("The benchmark filename needs to have a valid file extension (xlsx, csv, xls, or xlsm). The most likely extension is xlsx.")

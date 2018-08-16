@@ -3,7 +3,6 @@
 #' @param data.path Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory as retrieved by \code{getwd()}.
 #' @param filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
 #' @param sheet.name Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.
-# #' @param convertl2r Logical. If \code{TRUE} then all inequalities in "LL Relation" in the benchmark data frame will be converted from > and >= to <= and <, respectively, which are the expected directions. Defaults to \code{TRUE}.
 #' @param eval.strings Optional list of character vectors. If \code{NULL}, nothing will be done. Otherwise, each character vector should contain one or more variable/column names from the benchmarks. The only other string allowed is \code{"x"} which can be used as a placeholder for indicator values. As an example, \code{list(c("lower.relationship", "lower.limit", "x"))} would add a column to the output called \code{"evalstring1"} that contains the results of \code{paste(benchmarks$lower.limit, benchmarks$lower.relationship, "x")}. Defaults to \code{list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Required.Relation", "Required.Proportion"))}, appropriate for use with the AIM "Benchmark Tool".
 #' @return A data frame of the benchmarks from the specified file with fields containing evaluation strings to use in testing indicator values against the benchmarks.
 #' @examples
@@ -53,23 +52,8 @@ read.benchmarks <- function(data.path = getwd(),
     stop(paste("Can't find the benchmark file at", filepath))
   }
 
-  ## If there's no indicator lookup table provided, use the defaut one built into the package
-  # if (is.null(indicator.lut)) {
-  #   indicator.lut <- indicator.lookup()
-  # }
-
-
-  ## In case there's a "Classification" column where we'd prefer a "Category" column. This lets us maintain backwards compatibility with older iterations of the spreadsheet
-  # names(benchmarks.raw)[toupper(names(benchmarks.raw)) %in% c("CLASSIFICATION", "EVALUATION.CATEGORY")] <- "Condition.Category"
-
   ## Strip out the extraneous columns and rows, which includes if they left the example in there. The pattern to look for is "e.g"
   benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), !grepl(names(benchmarks.raw), pattern = "__\\d+$")]
-
-  ## In case the lower bound relationships have been inverted for whatever reason, this'll flip them to the expected
-  # if (convert.l2r) {
-  #   benchmarks$LL.Relation[benchmarks$LL.Relation == ">="] <- "<"
-  #   benchmarks$LL.Relation[benchmarks$LL.Relation == ">"] <- "<="
-  # }
 
   ## Create the evaluations strings if asked to!
   if (!is.null(eval.strings)) {

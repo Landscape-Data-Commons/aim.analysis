@@ -13,9 +13,6 @@
 read.benchmarks <- function(data.path = getwd(),
                             filename = "",
                             sheet.name = "Monitoring Objectives",
-                            # indicator.lut = NULL,
-                            # indicator.lut.benchmarkfield = "indicator.name",
-                            # convert.l2r = TRUE,
                             eval.strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
 ){
   ## Check for the file extension
@@ -29,13 +26,11 @@ read.benchmarks <- function(data.path = getwd(),
   # Check to see if it exists
   if (file.exists(filepath)) {
     if (grepl(filepath, pattern = "\\.csv", ignore.case = TRUE)) {
-      ## Import the spreadsheet from the workbook. Should work regardless of presence/absence of other spreadsheets as long as the name is the same
       benchmarks.raw <- read.csv(filepath, stringsAsFactors = FALSE)
     } else {
-      ## Import the spreadsheet from the workbook. Should work regardless of presence/absence of other spreadsheets as long as the name is the same
       benchmarks.raw <- readxl::read_excel(path = filepath,
                                            sheet = sheet.name)
-      # Check to make sure that there's not a weird row up top we need to skip
+      # Check to make sure that there's not a weird row up top we need to skip (very possible with the way the workbooks get formatted)
       if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks.raw)))){
         benchmarks.raw <- readxl::read_excel(path = filepath,
                                              sheet = sheet.name,
@@ -82,12 +77,6 @@ read.benchmarks <- function(data.path = getwd(),
     # Add the strings as variables to the benchmarks data frame
     benchmarks <- cbind(benchmarks, data.frame(strings))
   }
-
-  ## For each benchmark add in the name of the field in TerrADat that corresponds
-  # benchmarks <- merge(x = benchmarks,
-  #                     y = indicator.lut,
-  #                     by.x = "Indicator",
-  #                     by.y = indicator.lut.benchmarkfield)
 
   return(benchmarks)
 }

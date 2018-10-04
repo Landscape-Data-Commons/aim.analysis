@@ -79,18 +79,18 @@ benchmark <- function(benchmarks,
       stop(paste("The following expected variables are missing from the indicator lookup table:", paste(lut.missing.variables, collapse = ", ")))
     }
 
-    # Warn about indicators that show up in data and benchmarks but not the lookup table
-    missing.dataindicators <- data[data[[data.indicatorfield]] %in% indicator.lut[[lut.data.indicatorfield]], data.indicatorfield]
-    missing.benchmarkindicators <- benchmarks[benchmarks[[benchmark.indicatorfield]] %in% indicator.lut[[lut.benchmark.indicatorfield]], benchmark.indicatorfield]
-
-    if (length(missing.dataindicators) > 0) {
-      message("The following indicators in the data do not appear in the lookup table:")
-      message(paste(unique(missing.dataindicators), collapse = ", "))
-    }
-    if (length(missing.benchmarkindicators) > 0) {
-      message("The following indicators in the benchmarks do not appear in the lookup table:")
-      message(paste(unique(missing.benchmarkindicators), collapse = ", "))
-    }
+    # # Warn about indicators that show up in data and benchmarks but not the lookup table
+    # missing.dataindicators <- data[data[[data.indicatorfield]] %in% indicator.lut[[lut.data.indicatorfield]], data.indicatorfield]
+    # missing.benchmarkindicators <- benchmarks[benchmarks[[benchmark.indicatorfield]] %in% indicator.lut[[lut.benchmark.indicatorfield]], benchmark.indicatorfield]
+    #
+    # if (length(missing.dataindicators) > 0) {
+    #   message("The following indicators in the data do not appear in the lookup table:")
+    #   message(paste(unique(missing.dataindicators), collapse = ", "))
+    # }
+    # if (length(missing.benchmarkindicators) > 0) {
+    #   message("The following indicators in the benchmarks do not appear in the lookup table:")
+    #   message(paste(unique(missing.benchmarkindicators), collapse = ", "))
+    # }
 
     data.benchmarked <- merge(x = merge(x = data,
                                         y = indicator.lut,

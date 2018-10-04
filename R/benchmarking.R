@@ -74,7 +74,7 @@ benchmark <- function(benchmarks,
     }
 
     # Make sure that the the variables are there
-    lut.missing.variables <- c(lut.data.indicatorfield, lut.benchmark.indicatorfield)[c(lut.data.indicatorfield, lut.benchmark.indicatorfield) %in% names(indicator.lut)]
+    lut.missing.variables <- c(lut.data.indicatorfield, lut.benchmark.indicatorfield)[!(c(lut.data.indicatorfield, lut.benchmark.indicatorfield) %in% names(indicator.lut))]
     if (length(lut.missing.variables) >  0) {
       stop(paste("The following expected variables are missing from the indicator lookup table:", paste(lut.missing.variables, collapse = ", ")))
     }

@@ -85,11 +85,11 @@ benchmark <- function(benchmarks,
 
     if (length(missing.dataindicators) > 0) {
       message("The following indicators in the data do not appear in the lookup table:")
-      message(paste(missing.dataindicators, collapse = ", "))
+      message(paste(unique(missing.dataindicators), collapse = ", "))
     }
     if (length(missing.benchmarkindicators) > 0) {
       message("The following indicators in the benchmarks do not appear in the lookup table:")
-      message(paste(missing.benchmarkindicators, collapse = ", "))
+      message(paste(unique(missing.benchmarkindicators), collapse = ", "))
     }
 
     data.benchmarked <- merge(x = merge(x = data,

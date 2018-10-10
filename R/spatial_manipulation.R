@@ -76,9 +76,9 @@ attribute.shapefile <- function(spdf1,
     current.df <- current.spdf@data
 
     ## Only if the number of coordinates is greater than 0!
-    print(nrow(current.df[!is.na(current.df[, newfield]), ]))
-    if (nrow(current.df[!is.na(current.df[, newfield]), ]) > 0) {
-      attributed.dfs[[paste(n)]] <- current.df[!is.na(current.df[, newfield]), ]
+    print(nrow(current.df[current.df[, newfield] == n, ]))
+    if (nrow(current.df[current.df[, newfield] == n, ]) > 0) {
+      attributed.dfs[[paste(n)]] <- current.df[current.df[, newfield] == n, ]
     }
   }
 

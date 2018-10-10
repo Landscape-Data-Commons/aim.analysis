@@ -5,10 +5,11 @@
 \title{Generating summary reports.}
 \usage{
 report(out.path, project.name, indicator.lut = NULL, fates = NULL,
-  benchmarks = NULL, analysis = NULL, cats.to.suppress = c("Not Meeting"),
-  point.weights, strata.weights, reporting.units.spdf = NULL,
-  sample.frame.spdf, project.area.spdf = NULL, points.benchmarked = NULL,
-  dd.points, daterange.max = NULL, daterange.min = NULL,
+  benchmarks = NULL, analysis = NULL,
+  cats.to.suppress = c("Not Meeting"), point.weights, strata.weights,
+  reporting.units.spdf = NULL, sample.frame.spdf,
+  project.area.spdf = NULL, points.benchmarked = NULL, dd.points,
+  daterange.max = NULL, daterange.min = NULL,
   projection = sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"),
   extension = "html")
 }

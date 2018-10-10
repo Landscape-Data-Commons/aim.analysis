@@ -4,22 +4,43 @@
 \alias{analyze}
 \title{Categorical Analysis of AIM Data}
 \usage{
-analyze(evaluated.points, point.weights,
+analyze(evaluated.points, point.weights, points.joinfield,
+  points.valuefield, points.keyfield, points.idfield,
+  points.splitfield = NULL, points.xcoordfield, points.ycoordfield,
+  weights.joinfield, weights.weightfield, weights.reportingfield,
   default.reportingunit = "No reporting unit", reportingunit.type = NA,
-  adjustedweights = FALSE, conf = 80)
+  conf = 80)
 }
 \arguments{
-\item{evaluated.points}{Data frame output from \code{benchmark()}.}
+\item{evaluated.points}{Data frame. This should be the output from \code{benchmark()} or an equivalent and must contain the variables specified in the arguments \code{points.joinfield}, \code{points.valuefield}, \code{points.keyfield}, \code{points.idfield}, \code{points.xcoordfield}, and \code{points.ycoordfield}. If \code{points.splitfield} is not \code{NULL} then that variable must also be in the data frame.}
 
-\item{point.weights}{Data frame output from \code{weight()}, equivalent to \code{weight()[["point.weights"]]} or \code{weight()[[2]]}.}
+\item{point.weights}{Data frame. This should be the \code{"point.weights"} data frame output from \code{weight()} or an equivalent. It must contain the variables specified in the arguments \code{weights.joinfield}, \code{weights.weightfield}, and \code{weights.reportingfield}.}
 
-\item{default.reportingunit}{A string to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}}
+\item{points.joinfield}{Character string. The name of the variable in \code{evaluated.points} that contains the values used to join \code{evaluated.points} and \code{point.weights}. The relationship of \code{point.weights}:\code{evaluated.points} must be 1:1 or 1:Many.}
 
-\item{reportingunit.type}{A string to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.}
+\item{points.valuefield}{Character string. The name of the variable in \code{evaluated.points} that contains the categorical value assignments for the indicators appearing in \code{evaluated.points$points.keyfield}.}
 
-\item{adjustedweights}{Logical. If \code{TRUE}, use the values in the field ADJWGT instead of the field WGT. Allows for quick comparison between the results of analysis with and without the weight adjustment. Defaults to \code{FALSE}.}
+\item{points.keyfield}{Character string. The name of the variable in \code{evaluated.points} that contains the indicators for which there are categorical assignments in \code{evaluated.points$points.valuefield}.}
 
-\item{conf}{Numeric. The confidence level. Defaults to \code{80}.}
+\item{points.idfield}{Character string. The name of the variable in \code{evaluated.points} that contains the ID values for each plot. This can be the same string as \code{points.joinfield} if the IDs are being used to join the two data frames.}
+
+\item{points.splitfield}{Optional character string. The name of the variable in \code{evaluated.points} that contains the values to split the data frame by. This is required if \code{evaluated.points} has observations that share identical pairs of values in \code{point.idfield} and \code{points.keyfield}, which can happen if an indicator qualified to be evaluated by multiple standards on the same plot (e.g. at plot 420 the indicator bare ground was compared to standards for habitat quality and also hydrologic function). Defaults to \code{NULL}.}
+
+\item{points.xcoordfield}{Character string. The name of the variable in \code{evaluated.points} that contains the numeric values corresponding to the x coordinates (longitude) of the plots/observations.}
+
+\item{points.ycoordfield}{Character string. The name of the variable in \code{evaluated.points} that contains the numeric values corresponding to the y coordinates (latitude) of the plots/observations.}
+
+\item{weights.joinfield}{Character string. The name of the variable in \code{point.weights} that contains the values used to join \code{evaluated.points} and \code{point.weights}. The relationship of \code{point.weights}:\code{evaluated.points} must be 1:1 or 1:Many.}
+
+\item{weights.weightfield}{Character string. The name of the variable in \code{point.weights} that contains the numeric weight values.}
+
+\item{weights.reportingfield}{Character string. The name of the variable in \code{point.weights} that contains the values corresponding to the reporting unit (subpopulation) that the observations belong to.}
+
+\item{default.reportingunit}{Character string. Used to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}}
+
+\item{reportingunit.type}{Character string. Used to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.}
+
+\item{conf}{Numeric. The confidence level in percent. Defaults to \code{80}.}
 }
 \value{
 A data frame with the output from \code{spsurvey::cat.analysis()}

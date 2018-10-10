@@ -4,13 +4,14 @@
 \alias{read.benchmarks}
 \title{Reading in the benchmarks from the Data Explorer}
 \usage{
-read.benchmarks(data.path = NULL, filename = "",
-  sheet.name = "Monitoring Objectives", eval.strings = list(c("Lower.Limit",
-  "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x",
-  "Proportion.Relation", "Required.Proportion")))
+read.benchmarks(data.path = getwd(), filename = "",
+  sheet.name = "Monitoring Objectives",
+  eval.strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x",
+  "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation",
+  "Required.Proportion")))
 }
 \arguments{
-\item{data.path}{Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory.}
+\item{data.path}{Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory as retrieved by \code{getwd()}.}
 
 \item{filename}{Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".}
 

@@ -15,7 +15,7 @@
 #' @param weights.reportingfield Character string. The name of the variable in \code{point.weights} that contains the values corresponding to the reporting unit (subpopulation) that the observations belong to.
 #' @param default.reportingunit Character string. Used to populate the reporting unit field with in the case that designs were not restricted by reporting unit. Defaults to \code{"No reporting unit"}
 #' @param reportingunit.type Character string. Used to populate the reporting unit type field with. Depends on the reporting units used, e.g. it may be \code{"Watershed"} or \code{"Sage-grouse Habitat"}. Defaults to \code{NA}.
-#' @param conf Numeric. The confidence level. Defaults to \code{80}.
+#' @param conf Numeric. The confidence level in percent. Defaults to \code{80}.
 #' @return A data frame with the output from \code{spsurvey::cat.analysis()}
 #' @keywords analysis
 #' @examples

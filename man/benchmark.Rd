@@ -5,14 +5,15 @@
 \title{Applying indicator benchmarks to a data frame of TerrADat data.}
 \usage{
 benchmark(benchmarks, data, data.tall = FALSE,
-  data.indicatorfield = "indicator", data.groupfield = "benchmark.group",
-  use.indicator.lut = TRUE, indicator.lut = NULL,
-  lut.data.indicatorfield = "indicator",
+  data.indicatorfield = "indicator", data.valuefield = "value",
+  data.groupfield = "benchmark.group", use.indicator.lut = TRUE,
+  indicator.lut = NULL, lut.data.indicatorfield = "indicator",
   lut.benchmark.indicatorfield = "indicator.name",
   benchmark.indicatorfield = "Indicator",
   benchmark.groupfield = "Benchmark.Group",
   benchmark.categoryfield = "Condition.Category",
-  benchmark.evalstringfield = c("eval.string.lower", "eval.string.upper"),
+  benchmark.evalstringfield = c("eval.string.lower",
+  "eval.string.upper"),
   benchmark.metagroupfield = c("Management.Question"))
 }
 \arguments{
@@ -23,6 +24,8 @@ benchmark(benchmarks, data, data.tall = FALSE,
 \item{data.tall}{Logical. If \code{TRUE}, then the data frame provided as \code{data} is treated as tidy, where each row/observation is of a single indicator and its value with the indicator name in a variable matching the string provided as \code{data.indicatorfield}. Otherwise is the name that will be used when the function converts the data from wide to tall. Defaults to \code{FALSE}.}
 
 \item{data.indicatorfield}{Optional character string. If \code{data.tall} is \code{TRUE} then this must match the name of the variable in \code{data} that contains the indicator names. Ignored if \code{data.tall} is \code{FALSE}. Defaults to \code{"indicator"}.}
+
+\item{data.valuefield}{Character string. If \code{data.tall} is \code{TRUE} the name of the variable in \code{data} that contains the numeric values for each indicator. Ignored if \code{data.tall} is \code{FALSE}. Defaults to \code{"value"}.}
 
 \item{data.groupfield}{Character string. The name of the variable in \code{data} that contains the benchmark group identities in the \code{benchmark.groupfield} variable of \code{benchmarks}. Defaults to \code{"Benchmark.Group"}.}
 
@@ -43,8 +46,6 @@ benchmark(benchmarks, data, data.tall = FALSE,
 \item{benchmark.evalstringfield}{Vector of character strings. The variable names for all relevant inequality strings to be evaluated for each benchmark. The string must express an inequality to be evaluated with the character \code{"x"} where the indicator value from the data set will be substituted, e.g. \code{"0 <= x"}. Defaults to \code{c("eval.string.lower", "eval.string.upper")}}
 
 \item{benchmark.metagroupfield}{Vector of}
-
-\item{data.valuefield}{Character string. If \code{data.tall} is \code{TRUE} the name of the variable in \code{data} that contains the numeric values for each indicator. Ignored if \code{data.tall} is \code{FALSE}. Defaults to \code{"value"}.}
 }
 \description{
 This evaluates the indicator values in TerrADat against the supplied benchmarks. If a plot should be evaluated in multiple evaluation strata/groups, there should be one copy of the plot per stratum/group.

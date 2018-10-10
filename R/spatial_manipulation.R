@@ -15,7 +15,7 @@ attribute.shapefile <- function(spdf1,
                                 spdf2,
                                 attributefield = NULL,
                                 newfield = NULL,
-                                projection = CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+                                projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
 ){
   if (!grepl(class(spdf1), pattern = "^Spatial((Points)|(Polygons))DataFrame$")) {
     stop("spdf1 must be either a Spatial Points or Spatial Polygons Data Frame")
@@ -329,7 +329,7 @@ add.area <- function(spdf,
                      byid = TRUE
 ){
   ## Create a version in Albers Equal Area
-  spdf.albers <- sp::spTransform(x = spdf, CRSobj = CRS("+proj=aea"))
+  spdf.albers <- sp::spTransform(x = spdf, CRSobj = sp::CRS("+proj=aea"))
 
   ## Add the area in hectares, stripping the IDs from gArea() output
   spdf@data$AREA.HA <- unname(rgeos::gArea(spdf.albers, byid = byid) * 0.0001)
@@ -497,11 +497,11 @@ erase.rgeos <- function(spdf,
   message(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
   ## Making this Albers for right now for gBuffer()
   ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
-  sp.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(spdf, CRS("+proj=aea")),
+  sp.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(spdf, sp::CRS("+proj=aea")),
                                                          byid = TRUE,
                                                          width = 0.1),
                                 spgeom2 = rgeos::gBuffer(sp::spTransform(spdf.erase,
-                                                                         CRS("+proj=aea")),
+                                                                         sp::CRS("+proj=aea")),
                                                          byid = TRUE,
                                                          width = 0.1),
                                 drop_lower_td = TRUE)

@@ -59,7 +59,7 @@ attribute.shapefile <- function(spdf1,
     current.spdf <- spdf1
     ## Get the data frame from over()
     over.result <- sp::over(current.spdf,
-                            spdf2[spdf2@data[, attributefield] == n, ])
+                            spdf2[spdf2@data[[attributefield]] %in% n, ])
     ## Add the values to the newfield column
     current.spdf@data[, newfield] <- over.result[, attributefield]
     if (!(coord.names[1] %in% names(current.spdf@data)) & !(coord.names[2] %in% names(current.spdf@data))){
@@ -76,9 +76,9 @@ attribute.shapefile <- function(spdf1,
     current.df <- current.spdf@data
 
     ## Only if the number of coordinates is greater than 0!
-    print(nrow(current.df[current.df[, newfield] == n, ]))
-    if (nrow(current.df[current.df[, newfield] == n, ]) > 0) {
-      attributed.dfs[[paste(n)]] <- current.df[current.df[, newfield] == n, ]
+    print(nrow(current.df[current.df[[newfield]] %in% n, ]))
+    if (nrow(current.df[current.df[[newfield]] %in% n, ]) > 0) {
+      attributed.dfs[[paste(n)]] <- current.df[current.df[[newfield]] %in% n, ]
     }
   }
 

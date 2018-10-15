@@ -484,7 +484,7 @@ weight <- function(dd.import,
               frame.spdf.temp <- flex.erase(spdf = frame.spdf.temp,
                                             spdf.erase = frame.spdf,
                                             method = erase,
-                                            temp.path = data.path)
+                                            temp.path = temp.path)
 
               print("Erasure complete or at least attempted")
 

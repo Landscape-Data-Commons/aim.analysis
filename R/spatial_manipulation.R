@@ -107,7 +107,7 @@ attribute.shapefile <- function(spdf1,
 #' @description This uses \code{rgeos::ginstersect} and assumes that the row names in both \code{spdf1} and \code{spdf2} DO NOT HAVE SPACES.
 #' @param spdf1 Spatial polygons data frame. One of the two set of polygons to intersect. If \code{crs} is \code{NULL} and \code{spdf1} and \code{spdf2} have different CRSes, then the CRS from \code{spdf1} will be use to reproject \code{spdf2}.
 #' @param spdf2 Spatial polygons data frame.
-#' @param crs Optional \code{sp::CRS()} call. USed to reproject both \code{spdf1} and \code{spdf2} using \code{sp::spTransform()}. Defaults to \code{NULL}.
+#' @param crs Optional \code{sp::CRS()} call. Used to reproject both \code{spdf1} and \code{spdf2} using \code{sp::spTransform()}. Defaults to \code{NULL}.
 #' @export
 rgeos.intersect <- function(spdf1,
                         spdf2,
@@ -126,7 +126,7 @@ rgeos.intersect <- function(spdf1,
     spdf2 <- sp::spTransform(spdf2, CRSobj = crs)
   }
 
-  if (spdf1@proj4strings@projargs != spdf2@proj4strings@projargs) {
+  if (spdf1@proj4string@projargs != spdf2@proj4string@projargs) {
     spdf2 <- sp::spTransform(spdf2, CRSobj = spdf1@proj4string)
   }
   # First off, just do the intersect with rgeos::gintersect()

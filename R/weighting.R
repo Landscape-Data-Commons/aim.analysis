@@ -288,21 +288,21 @@ weight <- function(dd.import,
 
   ## The fate values that we know about are brought from defaults/fates.csv with fate.lookup()
   fate.lut <- fate.lookup()
-  fate.list <- lapply(unique(fate.lut$fate), function(X, df){
+  fate.list <- setNames(lapply(unique(fate.lut$fate), function(X, df){
     df$fate.value[df$fate == X]
-  }, df = fate.lut) %>% setNames(unique(fate.lut$fate))
+  }, df = fate.lut), unique(fate.lut$fate))
 
   ## Whatever values are provided in the function arguments get concatenated and then we keep only the unique values from that result
-  target.values <- c(target.values,
-                     fate.list$'Target Sampled') %>% toupper() %>% unique()
-  unknown.values <- c(unknown.values,
-                      fate.list$'Unknown') %>% toupper() %>% unique()
-  nontarget.values <- c(nontarget.values,
-                        fate.list$'Non-target') %>% toupper() %>% unique()
-  inaccessible.values <- c(inaccessible.values,
-                           fate.list$'Inaccessible') %>% toupper() %>% unique()
-  unneeded.values <- c(unneeded.values,
-                       fate.list$'Unneeded') %>% toupper() %>% unique()
+  target.values <- unique(toupper(c(target.values,
+                                    fate.list$'Target Sampled')))
+  unknown.values <- unique(toupper(c(unknown.values,
+                                     fate.list$'Unknown')))
+  nontarget.values <- unique(toupper(c(nontarget.values,
+                                       fate.list$'Non-target')))
+  inaccessible.values <- unique(toupper(c(inaccessible.values,
+                                          fate.list$'Inaccessible')))
+  unneeded.values <- unique(toupper(c(unneeded.values,
+                                      fate.list$'Unneeded')))
 
   ## In case the DDs are from different generations, we need to restrict them to only the shared fields
   if (length(dd.import$pts) > 1) {

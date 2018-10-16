@@ -433,33 +433,36 @@ weight <- function(dd.import,
           print(paste("Currently r is", r))
           ## First bring in the points
           pts.spdf.temp <- dd.import$pts[[r]]
-          if (nrow(pts.spdf.temp@data) > 0) {
-            ## Get a version of the points clipped to the current frame
-            pts.spdf.temp.attribute <- attribute.shapefile(spdf1 = pts.spdf.temp,
-                                                           spdf2 = frame.spdf,
-                                                           ## This will pick the appropriate field for a sample frame or strata
-                                                           attributefield = c("TERRA_SAMPLE_FRAME_ID", designstratumfield)[(c("TERRA_SAMPLE_FRAME_ID", designstratumfield) %in% names(frame.spdf@data))],
-                                                           newfield = "WEIGHT.ID"
-            )
+          if (!is.null(pts.spdf.temp)) {
+            if (nrow(pts.spdf.temp@data) > 0) {
+              ## Get a version of the points clipped to the current frame
+              pts.spdf.temp.attribute <- attribute.shapefile(spdf1 = pts.spdf.temp,
+                                                             spdf2 = frame.spdf,
+                                                             ## This will pick the appropriate field for a sample frame or strata
+                                                             attributefield = c("TERRA_SAMPLE_FRAME_ID", designstratumfield)[(c("TERRA_SAMPLE_FRAME_ID", designstratumfield) %in% names(frame.spdf@data))],
+                                                             newfield = "WEIGHT.ID"
+              )
 
-            ## WEIGHT.ID might end up not containing strata after this, but that's fine because the part of the weighting code that looks in it for strata
-            ## only runs in the event that WEIGHT.ID inherited strata identities instead of shapefile identities.
+              ## WEIGHT.ID might end up not containing strata after this, but that's fine because the part of the weighting code that looks in it for strata
+              ## only runs in the event that WEIGHT.ID inherited strata identities instead of shapefile identities.
 
-            ## If there was overlap then:
-            print(paste("!is.null(pts.spdf.temp.attribute) evaluates to", !is.null(pts.spdf.temp.attribute)))
-            if (!is.null(pts.spdf.temp.attribute)) {
-              print("Inside the !is.null(pts.spdf.temp.attribute) loop, so the next word had better damn well be TRUE")
-              print(!is.null(pts.spdf.temp.attribute))
-              ## Bind these points to the current DD's
-              if (pts.spdf@proj4string@projargs != pts.spdf.temp.attribute@proj4string@projargs) {
-                pts.spdf.temp.attribute <- pts.spdf.temp.attribute %>% spTransform(pts.spdf@proj4string)
+              ## If there was overlap then:
+              print(paste("!is.null(pts.spdf.temp.attribute) evaluates to", !is.null(pts.spdf.temp.attribute)))
+              if (!is.null(pts.spdf.temp.attribute)) {
+                print("Inside the !is.null(pts.spdf.temp.attribute) loop, so the next word had better damn well be TRUE")
+                print(!is.null(pts.spdf.temp.attribute))
+                ## Bind these points to the current DD's
+                if (pts.spdf@proj4string@projargs != pts.spdf.temp.attribute@proj4string@projargs) {
+                  pts.spdf.temp.attribute <- pts.spdf.temp.attribute %>% spTransform(pts.spdf@proj4string)
+                }
+                pts.spdf <- rbind(pts.spdf, pts.spdf.temp.attribute)
+                ## Remove the points that fell in the current frame from the temporary points and write it back into dd.import
+                ## This should find all the rows
+                dd.import$pts[[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
               }
-              pts.spdf <- rbind(pts.spdf, pts.spdf.temp.attribute)
-              ## Remove the points that fell in the current frame from the temporary points and write it back into dd.import
-              ## This should find all the rows
-              dd.import$pts[[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
             }
           }
+
 
 
           ## Then bring in the frame

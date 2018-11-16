@@ -10,8 +10,7 @@ License: MIT License
 Encoding: UTF-8
 LazyData: TRUE
 RoxygenNote: 6.1.0
-Imports:
-  dplyr,
+Imports: dplyr,
   tidyr,
   purrr,
   stringr,

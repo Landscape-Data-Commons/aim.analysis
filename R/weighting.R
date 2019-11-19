@@ -322,11 +322,10 @@ weight <- function(dd.import,
                                       fate.list[["Unneeded"]])))
 
   ## In case the DDs are from different generations, we need to restrict them to only the shared fields
-  if (length(dd.import$pts) > 1) {
-    fieldnames.common <- lapply(dd.import$pts, names) %>% unlist() %>%
-      data.frame(fields = ., stringsAsFactors = FALSE) %>%
-      dplyr::group_by(fields) %>% dplyr::summarize(count = n()) %>%
-      dplyr::filter(count == length(dd.import$pts)) %>% .$fields
+  if (length(dd.import[["pts"]]) > 1) {
+    fieldname_counts <- table(unlist(lapply(dd.import[["pts"]], names)))
+    # Only the variables that appear in *all* of the data frames
+    fieldnames.common <- names(fieldname_counts)[fieldname_counts == length(dd.import[["pts"]])]
   }
 
 

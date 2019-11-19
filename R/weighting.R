@@ -243,7 +243,7 @@ weight <- function(dd.import,
                    combine = TRUE,
                    reorder = TRUE,
                    erase = "arcpy",
-                   temp.path = getwd(),
+                   temp.path = tempdir(),
                    reporting.units.spdf = NULL,
                    reportingunitfield = "REPORTING.UNIT",
                    ## Keywords for point fate—the values in the vectors unknown and nontarget are considered nonresponses.

@@ -22,14 +22,7 @@ Imports: dplyr,
   spdplyr,
   ggplot2,
   lubridate,
-  leaflet,
-  raster,
-  gridExtra,
-  grid,
-  xtable,
-  pander
-Suggests:
-  arcgisbinding,
-    knitr,
+  raster
+Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

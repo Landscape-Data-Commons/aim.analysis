@@ -931,8 +931,10 @@ rgeos.intersect <- function(spdf1,
 
   ## Now we need to build the data frame that goes back into this. It's a pain
   ## Get the place in the rownames from the polygons where a " " occurs
-  intersection.rownames.splitpoints <-  sapply(row.names(intersect.sp),
-                                               function(X){gregexpr(X, pattern = " ")[[1]][1]})
+  intersection.rownames.splitpoints <-  sapply(X = row.names(intersect.sp),
+                                               FUN = function(X){
+                                                 gregexpr(X, pattern = " ")[[1]][1]
+                                               })
 
   # Usng thse split information, get the rows from the source data that match each and cbind() them into a data frame
   intersection.dataframe <- cbind(spdf1@data[mapply(X = row.names(intersect.sp),
@@ -955,7 +957,7 @@ rgeos.intersect <- function(spdf1,
 
   # Make it an SPDF
   intersect.spdf <- sp::SpatialPolygonsDataFrame(Sr = intersect.sp,
-                                                           data = intersection.dataframe)
+                                                 data = intersection.dataframe)
 
   return(intersect.spdf)
 }

@@ -8,7 +8,7 @@
 #' @param albers Logical. If \code{TRUE} Then the columns \code{X.METERS.AL} and \code{Y.METERS.AL} will be added using Albers Equal Area. Defaults to \code{FALSE}.
 #' @return \code{spdf} with fields added to the data frame as requested.
 #' @export
-add.coords <- function(spdf,
+add_coords <- function(spdf,
                        current.proj = TRUE,
                        xynames = NULL,
                        nad83 = FALSE,

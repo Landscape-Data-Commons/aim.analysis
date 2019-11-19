@@ -269,6 +269,16 @@ weight <- function(dd.import,
   if (erase == "arcpy" & !file.exists(temp.path)) {
     stop("If erase is 'arcpy' a valid filpath must be provided as temp.path.")
   }
+
+  for (value_type in c("target.values",
+                       "unknown.values",
+                       "nontarget.values",
+                       "inaccessible.values")) {
+    if (class(get(value_type)) != "character") {
+      stop("The value of ", value_type, " must be either a character string or a vector of character strings.")
+    }
+  }
+
   ## Sanitization
   if (!is.null(reporting.units.spdf)) {
     names(reporting.units.spdf@data) <- toupper(names(reporting.units.spdf@data))

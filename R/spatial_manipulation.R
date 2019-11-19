@@ -927,8 +927,8 @@ sf_intersect <- function(polygons1,
 #' @param crs Optional \code{sp::CRS()} call. Used to reproject both \code{spdf1} and \code{spdf2} using \code{sp::spTransform()}. Defaults to \code{NULL}.
 #' @export
 rgeos.intersect <- function(spdf1,
-                        spdf2,
-                        crs = NULL){
+                            spdf2,
+                            crs = NULL){
 
   if (class(spdf1)[1] != "SpatialPolygonsDataFrame") {
     stop("spdf1 must be a spatial polygons data frame")

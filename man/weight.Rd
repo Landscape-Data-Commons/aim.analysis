@@ -5,7 +5,7 @@
 \title{Calculating Weights from AIM Sample Designs}
 \usage{
 weight(dd.import, combine = TRUE, reorder = TRUE, erase = "arcpy",
-  temp.path = getwd(), reporting.units.spdf = NULL,
+  temp.path = tempdir(), reporting.units.spdf = NULL,
   reportingunitfield = "REPORTING.UNIT", target.values = NULL,
   unknown.values = NULL, nontarget.values = NULL,
   inaccessible.values = NULL, unneeded.values = NULL,

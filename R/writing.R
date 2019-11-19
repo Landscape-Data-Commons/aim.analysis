@@ -11,9 +11,11 @@ filename.aim <- function(name,
   if (is.null(extension)){
     extension <- ""
   } else {
-    extension <- extension %>% stringr::str_extract(pattern = "[A-z]{3,4}$") %>% stringr::str_to_lower() %>% paste0(".", .)
+    extension <- paste0(".",
+                        stringr::str_to_lower(stringr::str_extract(extension,
+                                                                   pattern = "[A-z]{3,4}$")))
   }
-  filename <- paste0(name, "_", Sys.Date() %>% format("%d%m%y"), "_", type, extension)
+  filename <- paste0(name, "_", format(Sys.Date(), "%d%m%y"), "_", type, extension)
   return(filename)
 }
 

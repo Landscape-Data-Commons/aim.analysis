@@ -281,8 +281,13 @@ weight <- function(dd.import,
 
   ## Sanitization
   if (!is.null(reporting.units.spdf)) {
+    if (class(reporting.units.spdf) != "SpatialPolygonsDataFrame") {
+      stop("reporting.units.spdf must be a spatial polygons data frame.")
+    }
+    # Convert all the names to upper case?
     names(reporting.units.spdf@data) <- toupper(names(reporting.units.spdf@data))
   }
+
   fatefieldname <- toupper(fatefieldname)
   pointstratumfieldname <- toupper(pointstratumfieldname)
   designstratumfield <- toupper(designstratumfield)

@@ -30,21 +30,21 @@ read_benchmarks <- function(filename = "",
   # Check to see if it exists
   if (file.exists(filepath)) {
     if (grepl(filepath, pattern = "\\.csv", ignore.case = TRUE)) {
-      benchmarks.raw <- read.csv(filepath, stringsAsFactors = FALSE)
+      benchmarks_raw <- read.csv(filepath, stringsAsFactors = FALSE)
     } else {
-      benchmarks.raw <- readxl::read_excel(path = filepath,
-                                           sheet = sheet.name)
+      benchmarks_raw <- readxl::read_excel(path = filepath,
+                                           sheet = sheet_name)
       # Check to make sure that there's not a weird row up top we need to skip (very possible with the way the workbooks get formatted)
-      if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks.raw)))){
-        benchmarks.raw <- readxl::read_excel(path = filepath,
-                                             sheet = sheet.name,
+      if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks_raw)))){
+        benchmarks_raw <- readxl::read_excel(path = filepath,
+                                             sheet = sheet_name,
                                              skip = 1)
       }
     }
     ## Change all the header names to use "." instead of " " for consistency
-    names(benchmarks.raw) <- gsub(names(benchmarks.raw), pattern = " ", replacement = ".")
+    names(benchmarks_raw) <- gsub(names(benchmarks_raw), pattern = " ", replacement = ".")
 
-    if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks.raw)))){
+    if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks_raw)))){
       stop("Can't find the expected column headers in the provided benchmark file. Check to make sure that there are no non-header rows before the headers.")
     }
   } else {
@@ -52,20 +52,20 @@ read_benchmarks <- function(filename = "",
   }
 
   ## Strip out the extraneous columns and rows, which includes if they left the example in there. The pattern to look for is "e.g"
-  benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), !grepl(names(benchmarks.raw), pattern = "__\\d+$")]
+  benchmarks <- benchmarks_raw[!grepl(x = benchmarks_raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks_raw$Indicator), !grepl(names(benchmarks_raw), pattern = "__\\d+$")]
 
   ## Create the evaluations strings if asked to!
-  if (!is.null(eval.strings)) {
+  if (!is.null(eval_strings)) {
     # Figure out if any are missing (the character "x" is fine though because it's the indicator stand-in)
-    varnames <- unlist(eval.strings)[unlist(eval.strings) != "x"]
+    varnames <- unlist(eval_strings)[unlist(eval_strings) != "x"]
     missing.varnames <- varnames[!(varnames %in% names(benchmarks))]
     if (length(missing.varnames) > 0) {
       stop(paste("The following expected variables for constructing eval strings are missing:", paste0(missing.varnames, collapse = ", ")))
     }
     # If none were missing, rename each of the vectors with "evalstring" and a suffix number. This will be their variable names in the data frame
-    names(eval.strings) <- paste0("evalstring", 1:length(eval.strings))
+    names(eval_strings) <- paste0("evalstring", 1:length(eval_strings))
     # Construct the strings. For each vector in the list
-    strings <- lapply(eval.strings, benchmarks = benchmarks, FUN = function(X, benchmarks){
+    strings <- lapply(eval_strings, benchmarks = benchmarks, FUN = function(X, benchmarks){
       # For each character string in the vector, grab the values in the matching variable in the benchmarks (or just return the "x")
       vectors <- lapply(X, benchmarks = benchmarks, FUN = function(X, benchmarks){
         if (X %in% names(benchmarks)) {

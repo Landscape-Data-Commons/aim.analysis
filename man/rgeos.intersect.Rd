@@ -11,7 +11,7 @@ rgeos.intersect(spdf1, spdf2, crs = NULL)
 
 \item{spdf2}{Spatial polygons data frame.}
 
-\item{crs}{Optional \code{sp::CRS()} call. USed to reproject both \code{spdf1} and \code{spdf2} using \code{sp::spTransform()}. Defaults to \code{NULL}.}
+\item{crs}{Optional \code{sp::CRS()} call. Used to reproject both \code{spdf1} and \code{spdf2} using \code{sp::spTransform()}. Defaults to \code{NULL}.}
 }
 \description{
 This uses \code{rgeos::ginstersect} and assumes that the row names in both \code{spdf1} and \code{spdf2} DO NOT HAVE SPACES.

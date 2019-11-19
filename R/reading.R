@@ -1,46 +1,51 @@
 #' Reading in the benchmarks from the Data Explorer
 #'
-#' @param data.path Character string. The path to the folder containing the file \code{filename} with the benchmarks. Defaults to the working directory as retrieved by \code{getwd()}.
 #' @param filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
-#' @param sheet.name Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.
-#' @param eval.strings Optional list of character vectors. If \code{NULL}, nothing will be done. Otherwise, each character vector should contain one or more variable/column names from the benchmarks. The only other string allowed is \code{"x"} which can be used as a placeholder for indicator values. As an example, \code{list(c("lower.relationship", "lower.limit", "x"))} would add a column to the output called \code{"evalstring1"} that contains the results of \code{paste(benchmarks$lower.limit, benchmarks$lower.relationship, "x")}. Defaults to \code{list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Required.Relation", "Required.Proportion"))}, appropriate for use with the AIM "Benchmark Tool".
+#' @param filepath Optional character string. The filepath to the location where the file matching \code{filename} is stored. Used to locate the file by combining with the filename. Will be ignored if \code{NULL}. Defaults to \code{NULL}.
+#' @param sheet_name Optional character string. The sheet name of the spreadsheet in the Excel workbook specified by \code{filename}. Only used if \code{filename} is an Excel workbook. Defaults to \code{"Monitoring Objectives"}.
+#' @param eval_strings Optional list of character vectors. If \code{NULL}, nothing will be done. Otherwise, each character vector should contain one or more variable/column names from the benchmarks. The only other string allowed is \code{"x"} which can be used as a placeholder for indicator values. As an example, \code{list(c("lower.relationship", "lower.limit", "x"))} would add a column to the output called \code{"evalstring1"} that contains the results of \code{paste(benchmarks$lower.limit, benchmarks$lower.relationship, "x")}. Defaults to \code{list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Required.Relation", "Required.Proportion"))}, appropriate for use with the AIM "Benchmark Tool".
 #' @return A data frame of the benchmarks from the specified file with fields containing evaluation strings to use in testing indicator values against the benchmarks.
 #' @examples
-#' read.benchmarks()
+#' read_benchmarks()
 #' @export
 
 ## TODO: Add capitalization sanitization stuff
-read.benchmarks <- function(data.path = getwd(),
-                            filename = "",
-                            sheet.name = "Monitoring Objectives",
-                            eval.strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
-){
+read_benchmarks <- function(filename = "",
+                            filepath = NULL,
+                            sheet_name = "Monitoring Objectives",
+                            eval_strings = list(c("Lower.Limit", "LL.Relation", "x"),
+                                                c("x", "UL.Relation", "Upper.Limit"),
+                                                c("x", "Proportion.Relation", "Required.Proportion"))){
   ## Check for the file extension
   if (!grepl(filename, pattern = "\\.((xlsx)|(csv)|(xls)|(xlsm))$", ignore.case = TRUE)) {
     stop("The benchmark filename needs to have a valid file extension (xlsx, csv, xls, or xlsm). The most likely extension is xlsx.")
   }
 
   # Make the full filepath
-  filepath <- paste0(data.path, "/", filename)
+  if (is.null(filepath)) {
+    filepath <- filename
+  } else {
+    filepath <- paste(filepath, filename, sep = "/")
+  }
 
   # Check to see if it exists
   if (file.exists(filepath)) {
     if (grepl(filepath, pattern = "\\.csv", ignore.case = TRUE)) {
-      benchmarks.raw <- read.csv(filepath, stringsAsFactors = FALSE)
+      benchmarks_raw <- read.csv(filepath, stringsAsFactors = FALSE)
     } else {
-      benchmarks.raw <- readxl::read_excel(path = filepath,
-                                           sheet = sheet.name)
+      benchmarks_raw <- readxl::read_excel(path = filepath,
+                                           sheet = sheet_name)
       # Check to make sure that there's not a weird row up top we need to skip (very possible with the way the workbooks get formatted)
-      if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks.raw)))){
-        benchmarks.raw <- readxl::read_excel(path = filepath,
-                                             sheet = sheet.name,
+      if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks_raw)))){
+        benchmarks_raw <- readxl::read_excel(path = filepath,
+                                             sheet = sheet_name,
                                              skip = 1)
       }
     }
     ## Change all the header names to use "." instead of " " for consistency
-    names(benchmarks.raw) <- gsub(names(benchmarks.raw), pattern = " ", replacement = ".")
+    names(benchmarks_raw) <- gsub(names(benchmarks_raw), pattern = " ", replacement = ".")
 
-    if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks.raw)))){
+    if (!all(c("INDICATOR", "UNIT") %in% toupper(names(benchmarks_raw)))){
       stop("Can't find the expected column headers in the provided benchmark file. Check to make sure that there are no non-header rows before the headers.")
     }
   } else {
@@ -48,20 +53,20 @@ read.benchmarks <- function(data.path = getwd(),
   }
 
   ## Strip out the extraneous columns and rows, which includes if they left the example in there. The pattern to look for is "e.g"
-  benchmarks <- benchmarks.raw[!grepl(x = benchmarks.raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks.raw$Indicator), !grepl(names(benchmarks.raw), pattern = "__\\d+$")]
+  benchmarks <- benchmarks_raw[!grepl(x = benchmarks_raw$Management.Question, pattern = "^[Ee].g.") & !is.na(benchmarks_raw$Indicator), !grepl(names(benchmarks_raw), pattern = "__\\d+$")]
 
   ## Create the evaluations strings if asked to!
-  if (!is.null(eval.strings)) {
+  if (!is.null(eval_strings)) {
     # Figure out if any are missing (the character "x" is fine though because it's the indicator stand-in)
-    varnames <- unlist(eval.strings)[unlist(eval.strings) != "x"]
+    varnames <- unlist(eval_strings)[unlist(eval_strings) != "x"]
     missing.varnames <- varnames[!(varnames %in% names(benchmarks))]
     if (length(missing.varnames) > 0) {
       stop(paste("The following expected variables for constructing eval strings are missing:", paste0(missing.varnames, collapse = ", ")))
     }
     # If none were missing, rename each of the vectors with "evalstring" and a suffix number. This will be their variable names in the data frame
-    names(eval.strings) <- paste0("evalstring", 1:length(eval.strings))
+    names(eval_strings) <- paste0("evalstring", 1:length(eval_strings))
     # Construct the strings. For each vector in the list
-    strings <- lapply(eval.strings, benchmarks = benchmarks, FUN = function(X, benchmarks){
+    strings <- lapply(eval_strings, benchmarks = benchmarks, FUN = function(X, benchmarks){
       # For each character string in the vector, grab the values in the matching variable in the benchmarks (or just return the "x")
       vectors <- lapply(X, benchmarks = benchmarks, FUN = function(X, benchmarks){
         if (X %in% names(benchmarks)) {
@@ -75,7 +80,9 @@ read.benchmarks <- function(data.path = getwd(),
       return(output)
     })
     # Add the strings as variables to the benchmarks data frame
-    benchmarks <- cbind(benchmarks, data.frame(strings))
+    benchmarks <- cbind(benchmarks, data.frame(strings, stringsAsFactors = FALSE))
+
+    names(benchmarks)[ncol(benchmarks)] <- "evalstring_threshhold"
   }
 
   return(benchmarks)
@@ -86,15 +93,15 @@ read.benchmarks <- function(data.path = getwd(),
 #' @description This will read in a table of benchmark group membership formatted like the Evaluation Information spreadsheet in the Data Explorer Excel workbook (wide, one variable per benchmark group with \code{"X"} designating membership and \code{NA} indicating no membership). Returns a tall version as a data frame with the unique identifier variables intact and
 #' @param path Character string. The path to the folder containing the file \code{filename} OR the full filepath to the file itself if \code{filename = NULL}. Defaults to the working directory as retrieved by \code{getwd()}.
 #' @param filename Character string. The full filename plus extension for the file containing the benchmark groups, if it is not part of the string provided as \code{path}. Normally this will be a \code{.xls}, \code{.xlsx}, or \code{.xlsm} file, although a \code{.csv} file will also work. Defaults to \code{NULL}.
-#' @param id.fields Vector of character strings. One or more character strings corresponding to the variable(s) that contain the unique identifiers for the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("TerrADat Primary Key/LMF Plot Key")}.
+#' @param id_var Vector of character strings. One or more character strings corresponding to the variable(s) that contain the unique identifiers for the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("TerrADat Primary Key/LMF Plot Key")}.
 #' @param sheet Optional character string. A character string corresponding to the name of the spreadsheet to read from an Excel workbook if that's the target filetype. Ignored if the target file is a \code{.csv}. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("Evaluation Information")}.
-#' @param ignore.fields Vector of character strings. One or One or more character strings corresponding to the variable(s) that contain NEITHER the unique identifiers NOR benchmark group membership in the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("GlobalID")}.
+#' @param ignore_var Vector of character strings. One or One or more character strings corresponding to the variable(s) that contain NEITHER the unique identifiers NOR benchmark group membership in the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("GlobalID")}.
 #' @export
-read.benchmarkgroups <- function(path = getwd(),
+read_benchmarkgroups <- function(path = getwd(),
                                  filename = NULL,
-                                 id.fields = c("TerrADat Primary Key/LMF Plot Key"),
+                                 id_var = c("TerrADat Primary Key/LMF Plot Key"),
                                  sheet = "Evaluation Information",
-                                 ignore.fields = c("GlobalID")){
+                                 ignore_var = c("GlobalID")){
   if (!is.null(filename)) {
     path <- paste0(path, "/", filename)
   }
@@ -115,26 +122,32 @@ read.benchmarkgroups <- function(path = getwd(),
     stop ("The target file must include the file extension. Valid file extensions are .csv, .xls, .xlsx, and .xlsm")
   }
 
-  if (!all(id.fields %in% names(df))) {
-    stop(paste("The following variable names in id.fields were not found in the data:", paste(id.fields[!(id.fields %in% names(df))], collapse = ", ")))
+  if (!all(id_var %in% names(df))) {
+    stop(paste("The following variable names in id_var were not found in the data:", paste(id_var[!(id_var %in% names(df))], collapse = ", ")))
   }
 
   # Each variable in the data frame that isn't an id field or explicitly ignored should be a benchmark group with "X" the rows with membership
   # The lapply makes a data frame for each of those variables
   # Then they're combined with rbind()
   df.tall <- do.call(rbind,
-                     lapply(names(df)[!(names(df) %in% c(id.fields, ignore.fields))],
+                     lapply(names(df)[!(names(df) %in% c(id_var, ignore_var))],
                             df = df,
-                            id.fields = id.fields,
-                            FUN = function(X, df, id.fields){
+                            id_var = id_var,
+                            FUN = function(X, df, id_var){
                               group <- X
-                              output.df <- df[!is.na(df[[group]]), id.fields]
+                              output.df <- df[!is.na(df[[group]]), id_var]
                               if(nrow(output.df) < 1) {
                                 return(NULL)
                               }
                               output.df$benchmark.group <- group
                               return(output.df)
                             }))
+
+  output <- df.tall
+
+  names(output) <- c("PrimaryKey", "Benchmark.Group")
+
+  return(output)
 }
 
 #' Importing Sample Design Databases for AIM Sample Designs
@@ -310,11 +323,12 @@ dd.split <- function(dd.list) {
       }
 
       # Get all of this database's stuff
-      subset <- lapply(X = split.list,
-                       FUN = function(X, df) {
-                         X[[df]]
-                       },
-                       df = df) %>% setNames(paste0(frame, "_", unique(dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID)))
+      subset <- setNames(lapply(X = split.list,
+                                FUN = function(X, df) {
+                                  X[[df]]
+                                },
+                                df = df),
+                         paste0(frame, "_", unique(dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID)))
 
       # And mash it together!
       dd.list[[df]] <- c(head, subset, tail)
@@ -365,3 +379,113 @@ fate.lookup <- function(){
   return(read.csv(paste0(path.package("aim.analysis"), "/defaults/fates.csv"), stringsAsFactors = FALSE))
 }
 
+#' Read in a shapefile
+#' @description Using \code{rgdal::readOGR()}, read in a shapefile.
+#' @param filename Character string. The filename of the shapefile to read in. May be the full filepath to the shapefile, in which case use \code{filepath = NULL}. Does not need to include the file extension.
+#' @param filepath Optional character string. The filepath to the location where the shapefile matching \code{filename} is stored. Used to locate the file by combining with the filename. Will be ignored if \code{NULL}. Defaults to \code{NULL}.
+#' @param projection Optional CRS object. The projection to return the shapefile in as a CRS object, e.g. \code{sp::CRS("+proj=aea")}. Will be ignored if \code{NULL} or if it matches the shapefile's existing projection. Defaults to \code{NULL}.
+#' @param stringsAsFactors Logical. To be passed to \code{rgdal::readOGR(stringsAsFactors)}. Defaults to \code{FALSE}.
+#' @return Spatial data frame.
+#' @export
+read_shapefile <- function(filename,
+                           filepath = NULL,
+                           projection = NULL,
+                           stringsAsFactors = FALSE) {
+  if (!is.null(projection)) {
+    if (length(projection) > 1) {
+      stop("Projection must be a CRS object, e.g. sp::CRS('+proj=aea')")
+    }
+    if (class(projection) != "CRS") {
+      stop("Projection must be a CRS object, e.g. sp::CRS('+proj=aea')")
+    }
+  }
+
+  if (class(filename) != "character") {
+    stop("The filename must be a single character string")
+  }
+  if (length(filename) > 1) {
+    stop("The filename must be a single character string")
+  }
+
+  filename_has_suffix <- grepl(filename,
+                               pattern = "\\.shp",
+                               ignore.case = TRUE)
+
+  if (is.null(filepath)) {
+    if (filename_has_suffix) {
+      filepath_full <- filename
+    } else {
+      filepath_full <- paste0(filename, ".shp")
+    }
+  } else {
+    filepath <- gsub(filepath,
+                     pattern = "/+$",
+                     replacement = "")
+    if (filename_has_suffix) {
+      filepath_full <- paste(filepath, filename, sep = "/")
+    } else {
+      filepath_full <- paste(filepath, paste0(filename, ".shp"), sep = "/")
+    }
+  }
+
+  # Can't ask if a layer inside a .gdb exists :/
+  if (grepl(filepath_full, pattern = "\\.gdb/", ignore.case = TRUE)) {
+    split <- stringr::str_split(filepath_full,
+                                pattern = "\\.(gdb|GDB)/")[[1]]
+    shapefile <- rgdal::readOGR(dsn = paste0(split[1], ".gdb"),
+                                layer = gsub(split[2],
+                                             pattern = "\\.shp",
+                                             replacement = "",
+                                             ignore.case = TRUE),
+                                stringsAsFactors = stringsAsFactors)
+  } else {
+    if (file.exists(filepath_full)) {
+      shapefile <- rgdal::readOGR(dsn = filepath_full,
+                                  stringsAsFactors = stringsAsFactors)
+    } else {
+      stop(paste0("Cannot find the file ", filepath_full))
+    }
+  }
+
+
+  if (!is.null(projection)) {
+    if (!identical(projection, shapefile@proj4string)) {
+      shapefile <- sp::spTransform(shapefile,
+                                   CRSobj = projection)
+    }
+  }
+
+  return(shapefile)
+}
+
+#' Read in multiple shapefiles
+#' @description Using \code{rgdal::readOGR()}, read in one or more shapefiles.
+#' @param filenames Character string or vector of character strings. The filename(s) of the shapefile(s) to read in. May be the full filepath(s) to the shapefile(s), in which case use \code{filepath = NULL}. Does not need to include the file extension.
+#' @param filepaths Optional character string or vector of character strings. The filepath(s) to the location(s) where the shapefile(s) matching \code{filename} is/are stored. Used to locate the file(s) by combining with the filename(s). Must be \code{NULL} (will be ignored), a single character vector (if only reading one shapefile or if all shapefiles are in the same location), or the same length as \code{filenames} (if the filenames are stored in different locations; the filenames and filepaths are paired by index in \code{filenames} and \code{filepaths}). Defaults to \code{NULL}.
+#' @param projection Optional CRS object. The projection to return the shapefile(s) in as a CRS object, e.g. \code{sp::CRS("+proj=aea")}. Will be ignored if \code{NULL} or if it matches the shapefile's existing projection. Defaults to \code{NULL}.
+#' @param stringsAsFactors Logical. To be passed to \code{rgdal::readOGR(stringsAsFactors)}. Defaults to \code{FALSE}.
+#' @return Spatial data frame.
+#' @export
+read_shapefiles <- function(filenames,
+                            filepaths = NULL,
+                            projection = NULL,
+                            stringsAsFactors = FALSE) {
+
+  if (is.null(filepaths)) {
+    output <- lapply(X = filenames,
+                     projection = projection,
+                     stringsAsFactors = stringsAsFactors,
+                     FUN = read_shapefile)
+  } else {
+    if (length(filepaths) == 1 | length(filenames) == length(filepaths)) {
+      output <- lapply(X = paste(filepaths, filenames, sep = "/"),
+                       projection = projection,
+                       stringsAsFactors = stringsAsFactors,
+                       FUN = read_shapefile)
+    } else {
+      stop("The number of filepaths provided must be none (if the filenames contain the full paths to the shapefiles), one (if all shapfiles are at the same filepath), or equal to the number of filenames (if one or more shapefile is at a different filepath).")
+    }
+  }
+
+  return(output)
+}

@@ -35,19 +35,84 @@ add_coords <- function(spdf,
   return(spdf)
 }
 
-#' Filtering data frames by dates
-#' @description Given a date field and a lower date, an upper date, or both, filter data.
-#' @param data Data frame. So long as \code{[]} will work on it, it's fine so spatial data frames are valid.
-#' @param date.field Character string. The name of the column/variable in the data frame containing the date values. The date values must be interpretable by \code{lubridate::as_date()}.
-#' @param after Optional character string expressing a date in the format \code{YYYY-MM-DD} (or \code{MM-DD} if \code{ignore.year = TRUE}). The earliest date (inclusive) to return data from. Rows containing earlier dates will not be returned.
-#' @param before Optional character string expressing a date in the format \code{YYYY-MM-DD} (or \code{MM-DD} if \code{ignore.year = TRUE}). The latest date (inclusive) to return data from. Rows containing later dates will not be returned.
-#' @param ignore.year Logical. If \code{TRUE} then years will be ignored in comparisons, e.g. If \code{after = "1986-10-30"} or \code{after = "10-30"} then all rows containing dates from October 30 to December 31 would be returned, regardless of the year. Defaults to \code{FALSE}.
-#' @export filter.date
-filter.date <- function(data,
-                        date.field,
-                        after = NULL,
-                        before = NULL,
-                        ignore.year = FALSE){
+# #' Adding sampling years based on date of visit and panel
+# #'
+# #' @description For the given SPDF, this adds the year extracted from the values in \code{source.field}, then overwrites that with the year extracted from \code{date.field} if possible, then for all remaining observations still missing a YEAR value it makes a best guess based on the YEAR values in the other observations with the same \code{source.field} value. Note that strings in \code{source.field} must begin or end with a four-digit year in order for this to work.
+# #' @param pts The SPDF or data frame to add the field \code{YEAR} to.
+# #' @param date.field Character string. The name of the field in \code{pts} that contains the dates to reference.
+# #' @param source.field Character string. The name of the field in \code{pts} that contains the strings starting or ending with the year.
+# #' @return \code{pts} with the additional column \code{YEAR}.
+# #' @export
+
+# add.year <- function(pts,
+#                      date.field = NULL,
+#                      source.field = NULL){
+#   if (class(pts) != "data.frame" & !grepl(class(pts),  pattern = "^Spatial.{4,15}DataFrame$")) {
+#     stop("pts must either be a data frame or a spatial points data frame.")
+#   }
+#   if (grepl(class(pts), pattern = "^Spatial.{4,15}DataFrame$")){
+#     pts.df <- pts@data
+#   } else {
+#     pts.df <- pts
+#   }
+#   if (is.null(date.field) & is.null(source.field)) {
+#     stop("At least one of either date.field and source.field must be a string corresponding to a variable name in pts.")
+#   }
+#   if (!is.null(date.field)) {
+#     if (!(date.field %in% names(pts.df))) {
+#       stop(paste0("Variable ", date.field, " is missing from pts"))
+#     }
+#   }
+#   if (!is.null(source.field)) {
+#     if (!(source.field %in% names(pts.df))) {
+#       stop(paste0("Variable ", source.field, " is missing from pts"))
+#     }
+#   }
+#
+#   ## Check to see if the values in source.field contain the intended year (either at the beginning or end of the panel name) and use those to populate the YEAR
+#   if (!is.null(source.field)) {
+#     pts.df$YEAR[grepl(x = pts.df[[source.field]], pattern = "(^\\d{4})|(\\d{4}$)")] <- pts.df[[source.field]] %>%
+#       stringr::str_extract(string = ., pattern = "(^\\d{4})|(\\d{4}$)") %>% na.omit() %>% as.numeric()
+#   }
+#
+#   ## Use the sampling date if we can. This obviously only works for points that were sampled. It overwrites an existing YEAR value from the panel name if it exists
+#   if (!is.null(date.field)) {
+#     pts.df$YEAR[!is.na(pts.df[[date.field]])] <- lubridate::as_date(pts.df[[date.field]][!is.na(pts.df[[date.field]])]) %>% format("%Y") %>% as.numeric()
+#   }
+#
+#   ## For some extremely mysterious reasons, sometimes there are duplicate fields here. This will remove them
+#   if (length(grep(x = names(pts.df), pattern = ".1$")) > 0) {
+#     pts.df <- pts.df[, (1:length(names(pts.df)))] %>% dplyr::select(-ends_with(match = ".1"))
+#   }
+#
+#
+#   ## To create a lookup table in the case that we're working solely from sampling dates. Let's get the most common sampling year for each panel
+#   panel.years <- dplyr::group_by_(.data = pts.df,
+#                                   source.field) %>% dplyr::summarize(YEAR = names(sort(summary(as.factor(YEAR)),
+#                                                                                        decreasing = TRUE)[1]))
+#
+#   ## If we still have points without dates at this juncture, we can use that lookup table to make a good guess at what year they belong to
+#   for (p in panel.years[[source.field]]) {
+#     pts.df$YEAR[is.na(pts.df$YEAR) & pts.df$PANEL == p] <- panel.years$YEAR[panel.years[[source.field]] == p]
+#   }
+#
+#   pts$YEAR <- as.numeric(pts.df$YEAR)
+#   return(pts)
+# }
+
+# #' Filtering data frames by dates
+# #' @description Given a date field and a lower date, an upper date, or both, filter data.
+# #' @param data Data frame. So long as \code{[]} will work on it, it's fine so spatial data frames are valid.
+# #' @param date.field Character string. The name of the column/variable in the data frame containing the date values. The date values must be interpretable by \code{lubridate::as_date()}.
+# #' @param after Optional character string expressing a date in the format \code{YYYY-MM-DD} (or \code{MM-DD} if \code{ignore.year = TRUE}). The earliest date (inclusive) to return data from. Rows containing earlier dates will not be returned.
+# #' @param before Optional character string expressing a date in the format \code{YYYY-MM-DD} (or \code{MM-DD} if \code{ignore.year = TRUE}). The latest date (inclusive) to return data from. Rows containing later dates will not be returned.
+# #' @param ignore.year Logical. If \code{TRUE} then years will be ignored in comparisons, e.g. If \code{after = "1986-10-30"} or \code{after = "10-30"} then all rows containing dates from October 30 to December 31 would be returned, regardless of the year. Defaults to \code{FALSE}.
+# #' @export filter.date
+# filter.date <- function(data,
+#                         date.field,
+#                         after = NULL,
+#                         before = NULL,
+#                         ignore.year = FALSE){
   # A few validity checks
   if (is.null(after) & is.null(before)) {
     stop("At least one bounding date must be provided.")
@@ -157,28 +222,27 @@ filter.date <- function(data,
 
   return(output)
 }
-
-
-#' Apply project tracking Excel files to imported Design Databases.
-#' @description Imports plot tracking worksheets used during an AIM project and uses them to assigns statuses to imported Design Databases.
-#' @return Returns \code{dd.list} with sampling dates and statuses added from the plot tracking Excel files.
-#' @param filenames A character vector of the filenames (including extension) of the project tracking Excel files to import. If not using the \code{path} argument, the filename should include the entire filepath.
-#' @param path Optional string specifying a common filepath containing the project tracking sheets to read in. This will be prepended to the values in \code{filenames}. If the tracking sheets are in different folder paths, do not provide this.
-#' @param dd.list Output from \code{read.dd()}.
-#' @param dd.names An optional character string vector of Design Database names from \code{dd.list} to compare against the plot tracking Excel files. If not provided, all of the Design Databases represented in \code{dd.list} will be compared and updated.
-#' @param tdat Output from \code{read.tdat()}.
-#' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
-#' @param deleteoverdraw Logical. If \code{TRUE} then unsampled overdraw points will be dropped. Defaults to \code{TRUE}.
-#' @export
-apply.tracking <- function(filenames,
-                           path = "",
-                           dd.list,
-                           dd.names = c(""),
-                           tdat,
-                           target.values = c("Target Sampled",
-                                             "TS"),
-                           deleteoverdraw = T
-) {
+#
+#
+# #' Apply project tracking Excel files to imported Design Databases.
+# #' @description Imports plot tracking worksheets used during an AIM project and uses them to assigns statuses to imported Design Databases.
+# #' @return Returns \code{dd.list} with sampling dates and statuses added from the plot tracking Excel files.
+# #' @param filenames A character vector of the filenames (including extension) of the project tracking Excel files to import. If not using the \code{path} argument, the filename should include the entire filepath.
+# #' @param path Optional string specifying a common filepath containing the project tracking sheets to read in. This will be prepended to the values in \code{filenames}. If the tracking sheets are in different folder paths, do not provide this.
+# #' @param dd.list Output from \code{read.dd()}.
+# #' @param dd.names An optional character string vector of Design Database names from \code{dd.list} to compare against the plot tracking Excel files. If not provided, all of the Design Databases represented in \code{dd.list} will be compared and updated.
+# #' @param tdat Output from \code{read.tdat()}.
+# #' @param target.values Character string or character vector. This defines what values in the point fate field count as target points. The function always looks for "Target Sampled" and "TS", so this argument is only necessary if there are additional values in the sample design databases. This is case insensitive
+# #' @param deleteoverdraw Logical. If \code{TRUE} then unsampled overdraw points will be dropped. Defaults to \code{TRUE}.
+# #' @export
+# apply.tracking <- function(filenames,
+#                            path = "",
+#                            dd.list,
+#                            dd.names = c(""),
+#                            tdat,
+#                            target.values = c("Target Sampled",
+#                                              "TS"),
+#                            deleteoverdraw = TRUE){
 
   ## If the provided TerrADat is an SPDF, just take the data frame
   if (class(tdat) == "SpatialPointsDataFrame") {
@@ -297,16 +361,19 @@ apply.tracking <- function(filenames,
   ## Return the modified dd pts file(s) contained in the named list
   return(dd.list)
 }
-
-#' Quickly drop observations from a data frame based on the values of a single variable
-#' @description This wrapper for \code{dplyr::filter()} will take a data frame (or Spatial Data Frame if the package \code{spdplyr} is installed) and remove all observations where the given variable meets the value of the argument \code{dropvalue}.
-#' @param df A data frame or, if \code{spdplyr} is installed, spatial data frame to manipulate.
-#' @param variable A character string specifying the name of the variable to base the filtering on.
-#' @param dropvalue The value to drop observations based on. Can be either a regular expression as a character string to be passed to \code{grepl()} or \code{NA}. All observations where the variable \code{variable} return \code{TRUE} when checked against this will be dropped. Defaults to \code{NA}.
-#' @param ignore.case Logical. If \code{dropvalue} is a regular expression, then this argument is passed to \code{grepl()} to decide if the search is case sensitive or not. Defaults to \code{TRUE}.
-#' @return The data frame \code{df} without the observations where \code{variable} matched \code{dropvalue}.
-#' @export
-drop.values <- function(df, variable = "", dropvalue = NA, ignore.case = TRUE) {
+#
+# #' Quickly drop observations from a data frame based on the values of a single variable
+# #' @description This wrapper for \code{dplyr::filter()} will take a data frame (or Spatial Data Frame if the package \code{spdplyr} is installed) and remove all observations where the given variable meets the value of the argument \code{dropvalue}.
+# #' @param df A data frame or, if \code{spdplyr} is installed, spatial data frame to manipulate.
+# #' @param variable A character string specifying the name of the variable to base the filtering on.
+# #' @param dropvalue The value to drop observations based on. Can be either a regular expression as a character string to be passed to \code{grepl()} or \code{NA}. All observations where the variable \code{variable} return \code{TRUE} when checked against this will be dropped. Defaults to \code{NA}.
+# #' @param ignore.case Logical. If \code{dropvalue} is a regular expression, then this argument is passed to \code{grepl()} to decide if the search is case sensitive or not. Defaults to \code{TRUE}.
+# #' @return The data frame \code{df} without the observations where \code{variable} matched \code{dropvalue}.
+# #' @export
+# drop.values <- function(df,
+#                         variable = "",
+#                         dropvalue = NA,
+#                         ignore.case = TRUE){
   if (!grepl(x = class(df), pattern = "(data.frame)|(DataFrame)$")) {
     stop("Please provide a valid data frame.")
   }

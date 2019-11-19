@@ -62,9 +62,8 @@ weight.gen <- function(pts,
 
 
   ## Here's the summary by key and pts.groupfield and year.field as appropriate
-  pts.summary.fields <- c(pts.groupfield[!is.null(pts.groupfield)])#, additional.point.groups)
-  # pts.summary <- eval(parse(text = paste0("working.pts %>% ungroup() %>% group_by(key,", paste(pts.summary.fields, collapse = ","), ") %>%
-  #                                         dplyr::summarize(count = n())")))
+  pts.summary.fields <- c(pts.groupfield[!is.null(pts.groupfield)])
+
   pts.summary <- eval(parse(text = paste0("dplyr::summarize(.data = group_by(.data = ungroup(working.pts), key, ", paste(pts.summary.fields, collapse = ", "),"), count = n())")))
 
   ## Spreading that

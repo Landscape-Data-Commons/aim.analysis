@@ -141,6 +141,12 @@ read_benchmarkgroups <- function(path = getwd(),
                               output.df$benchmark.group <- group
                               return(output.df)
                             }))
+
+  output <- df.tall
+
+  names(output) <- c("PrimaryKey", "Benchmark.Group")
+
+  return(output)
 }
 
 #' Importing Sample Design Databases for AIM Sample Designs

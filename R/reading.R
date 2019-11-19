@@ -377,3 +377,81 @@ fate.lookup <- function(){
   return(read.csv(paste0(path.package("aim.analysis"), "/defaults/fates.csv"), stringsAsFactors = FALSE))
 }
 
+#' Read in a shapefile
+#' @description Using \code{rgdal::readOGR()}, read in a shapefile.
+#' @param filename Character string. The filename of the shapefile to read in. May be the full filepath to the shapefile, in which case use \code{filepath = NULL}. Does not need to include the file extension.
+#' @param filepath Optional character string. The filepath to the location where the shapefile matching \code{filename} is stored. Used to locate the file by combining with the filename. Will be ignored if \code{NULL}. Defaults to \code{NULL}.
+#' @param projection Optional CRS object. The projection to return the shapefile in as a CRS object, e.g. \code{sp::CRS("+proj=aea")}. Will be ignored if \code{NULL} or if it matches the shapefile's existing projection. Defaults to \code{NULL}.
+#' @param stringsAsFactors Logical. To be passed to \code{rgdal::readOGR(stringsAsFactors)}. Defaults to \code{FALSE}.
+#' @return Spatial data frame.
+#' @export
+read_shapefile <- function(filename,
+                           filepath = NULL,
+                           projection = NULL,
+                           stringsAsFactors = FALSE) {
+  if (!is.null(projection)) {
+    if (length(projection) > 1) {
+      stop("Projection must be a CRS object, e.g. sp::CRS('+proj=aea')")
+    }
+    if (class(projection) != "CRS") {
+      stop("Projection must be a CRS object, e.g. sp::CRS('+proj=aea')")
+    }
+  }
+
+  if (class(filename) != "character") {
+    stop("The filename must be a single character string")
+  }
+  if (length(filename) > 1) {
+    stop("The filename must be a single character string")
+  }
+
+  filename_has_suffix <- grepl(filename,
+                               pattern = "\\.shp",
+                               ignore.case = TRUE)
+
+  if (is.null(filepath)) {
+    if (filename_has_suffix) {
+      filepath_full <- filename
+    } else {
+      filepath_full <- paste0(filename, ".shp")
+    }
+  } else {
+    filepath <- gsub(filepath,
+                     pattern = "/+$",
+                     replacement = "")
+    if (filename_has_suffix) {
+      filepath_full <- paste(filepath, filename, sep = "/")
+    } else {
+      filepath_full <- paste(filepath, paste0(filename, ".shp"), sep = "/")
+    }
+  }
+
+  # Can't ask if a layer inside a .gdb exists :/
+  if (grepl(filepath_full, pattern = "\\.gdb/", ignore.case = TRUE)) {
+    split <- stringr::str_split(filepath_full,
+                                pattern = "\\.(gdb|GDB)/")[[1]]
+    shapefile <- rgdal::readOGR(dsn = paste0(split[1], ".gdb"),
+                                layer = gsub(split[2],
+                                             pattern = "\\.shp",
+                                             replacement = "",
+                                             ignore.case = TRUE),
+                                stringsAsFactors = stringsAsFactors)
+  } else {
+    if (file.exists(filepath_full)) {
+      shapefile <- rgdal::readOGR(dsn = filepath_full,
+                                  stringsAsFactors = stringsAsFactors)
+    } else {
+      stop(paste0("Cannot find the file ", filepath_full))
+    }
+  }
+
+
+  if (!is.null(projection)) {
+    if (!identical(projection, shapefile@proj4string)) {
+      shapefile <- sp::spTransform(shapefile,
+                                   CRSobj = projection)
+    }
+  }
+
+  return(shapefile)
+}

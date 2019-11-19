@@ -92,15 +92,15 @@ read_benchmarks <- function(filename = "",
 #' @description This will read in a table of benchmark group membership formatted like the Evaluation Information spreadsheet in the Data Explorer Excel workbook (wide, one variable per benchmark group with \code{"X"} designating membership and \code{NA} indicating no membership). Returns a tall version as a data frame with the unique identifier variables intact and
 #' @param path Character string. The path to the folder containing the file \code{filename} OR the full filepath to the file itself if \code{filename = NULL}. Defaults to the working directory as retrieved by \code{getwd()}.
 #' @param filename Character string. The full filename plus extension for the file containing the benchmark groups, if it is not part of the string provided as \code{path}. Normally this will be a \code{.xls}, \code{.xlsx}, or \code{.xlsm} file, although a \code{.csv} file will also work. Defaults to \code{NULL}.
-#' @param id.fields Vector of character strings. One or more character strings corresponding to the variable(s) that contain the unique identifiers for the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("TerrADat Primary Key/LMF Plot Key")}.
+#' @param id_var Vector of character strings. One or more character strings corresponding to the variable(s) that contain the unique identifiers for the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("TerrADat Primary Key/LMF Plot Key")}.
 #' @param sheet Optional character string. A character string corresponding to the name of the spreadsheet to read from an Excel workbook if that's the target filetype. Ignored if the target file is a \code{.csv}. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("Evaluation Information")}.
-#' @param ignore.fields Vector of character strings. One or One or more character strings corresponding to the variable(s) that contain NEITHER the unique identifiers NOR benchmark group membership in the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("GlobalID")}.
+#' @param ignore_var Vector of character strings. One or One or more character strings corresponding to the variable(s) that contain NEITHER the unique identifiers NOR benchmark group membership in the data frame. Because the assumption is that this function will be used on the Data Explorer Excel workbook, defaults to \code{c("GlobalID")}.
 #' @export
-read.benchmarkgroups <- function(path = getwd(),
+read_benchmarkgroups <- function(path = getwd(),
                                  filename = NULL,
-                                 id.fields = c("TerrADat Primary Key/LMF Plot Key"),
+                                 id_var = c("TerrADat Primary Key/LMF Plot Key"),
                                  sheet = "Evaluation Information",
-                                 ignore.fields = c("GlobalID")){
+                                 ignore_var = c("GlobalID")){
   if (!is.null(filename)) {
     path <- paste0(path, "/", filename)
   }
@@ -121,20 +121,20 @@ read.benchmarkgroups <- function(path = getwd(),
     stop ("The target file must include the file extension. Valid file extensions are .csv, .xls, .xlsx, and .xlsm")
   }
 
-  if (!all(id.fields %in% names(df))) {
-    stop(paste("The following variable names in id.fields were not found in the data:", paste(id.fields[!(id.fields %in% names(df))], collapse = ", ")))
+  if (!all(id_var %in% names(df))) {
+    stop(paste("The following variable names in id_var were not found in the data:", paste(id_var[!(id_var %in% names(df))], collapse = ", ")))
   }
 
   # Each variable in the data frame that isn't an id field or explicitly ignored should be a benchmark group with "X" the rows with membership
   # The lapply makes a data frame for each of those variables
   # Then they're combined with rbind()
   df.tall <- do.call(rbind,
-                     lapply(names(df)[!(names(df) %in% c(id.fields, ignore.fields))],
+                     lapply(names(df)[!(names(df) %in% c(id_var, ignore_var))],
                             df = df,
-                            id.fields = id.fields,
-                            FUN = function(X, df, id.fields){
+                            id_var = id_var,
+                            FUN = function(X, df, id_var){
                               group <- X
-                              output.df <- df[!is.na(df[[group]]), id.fields]
+                              output.df <- df[!is.na(df[[group]]), id_var]
                               if(nrow(output.df) < 1) {
                                 return(NULL)
                               }

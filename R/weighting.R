@@ -311,15 +311,15 @@ weight <- function(dd.import,
 
   ## Whatever values are provided in the function arguments get concatenated and then we keep only the unique values from that result
   target.values <- unique(toupper(c(target.values,
-                                    fate.list$'Target Sampled')))
+                                    fate.list[["Target Sampled"]])))
   unknown.values <- unique(toupper(c(unknown.values,
-                                     fate.list$'Unknown')))
+                                     fate.list[["Unknown"]])))
   nontarget.values <- unique(toupper(c(nontarget.values,
-                                       fate.list$'Non-target')))
+                                       fate.list[["Non-target"]])))
   inaccessible.values <- unique(toupper(c(inaccessible.values,
-                                          fate.list$'Inaccessible')))
+                                          fate.list[["Inaccessible"]])))
   unneeded.values <- unique(toupper(c(unneeded.values,
-                                      fate.list$'Unneeded')))
+                                      fate.list[["Unneeded"]])))
 
   ## In case the DDs are from different generations, we need to restrict them to only the shared fields
   if (length(dd.import$pts) > 1) {

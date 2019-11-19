@@ -378,7 +378,8 @@ weight <- function(dd.import,
       ## Deal with frame.spdf. This involves an intersection and therefore is slow
       frame.spdf.intersect <- flex.intersect(spdf1 = frame.spdf,
                                              ## This will use the appropriate field for strata or sample frame
-                                             spdf1.attributefieldname = c("TERRA_SAMPLE_FRAME_ID", designstratumfield)[(c("TERRA_SAMPLE_FRAME_ID", designstratumfield) %in% names(frame.spdf@data))],
+                                             spdf1.attributefieldname = c("TERRA_SAMPLE_FRAME_ID",
+                                                                          designstratumfield)[(c("TERRA_SAMPLE_FRAME_ID", designstratumfield) %in% names(frame.spdf@data))],
                                              spdf2 = reporting.units.spdf,
                                              spdf2.attributefieldname = reportingunitfield)
       ## Replace frame.spdf with this new thing, which is actually the weight categories!

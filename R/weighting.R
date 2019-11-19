@@ -334,12 +334,12 @@ weight <- function(dd.import,
   dd.order <- list()
 
   ## For each DD that was imported, bring in the points and the frame (strata if they exist, otherwise the sample frame) and clip them to reporting units if appropriate
-  for (s in names(dd.import$sf)) {
+  for (s in names(dd.import[["sf"]])) {
     ## First, bring in the relevant SPDFs
     ## Get the pts file in dd.src that corresponds to s and call it pts.spdf, then create and init the WGT attribute
-    pts.spdf <- dd.import$pts[[s]]
+    pts.spdf <- dd.import[["pts"]][[s]]
     ## Restrict only to the shared fields so there aren't rbind errors later
-    if (length(dd.import$pts) > 1) {
+    if (length(dd.import[["pts"]]) > 1) {
       pts.spdf@data <- pts.spdf@data[, fieldnames.common]
     }
     pts.spdf@data[, fatefieldname] <- toupper(pts.spdf@data[, fatefieldname])
@@ -362,7 +362,7 @@ weight <- function(dd.import,
     frame.spdf <- dd.import$strata[[s]]
     ## If the frame.spdf was actually NULL, then grab the sample frame to use instead
     if (is.null(frame.spdf)) {
-      frame.spdf <- dd.import$sf[[s]]
+      frame.spdf <- dd.import[["sf"]][[s]]
     }
 
 
@@ -396,11 +396,11 @@ weight <- function(dd.import,
     dd.order[s] <- sum(frame.spdf$AREA.HA)
 
     ## Put the manipulated SPDFs back into the dd.import for future use
-    dd.import$pts[[s]] <- pts.spdf
+    dd.import[["pts"]][[s]] <- pts.spdf
     if (!is.null(dd.import$strata[[s]])) {
       dd.import$strata[[s]] <- frame.spdf
     } else {
-      dd.import$sf[[s]] <- frame.spdf
+      dd.import[["sf"]][[s]] <- frame.spdf
     }
   }
 
@@ -424,7 +424,7 @@ weight <- function(dd.import,
     ## Bring in this DD's frame, either strata or sample frame as appropriate
     frame.spdf <- dd.import$strata[[s]]
     if (is.null(frame.spdf)) {
-      frame.spdf <- dd.import$sf[[s]]
+      frame.spdf <- dd.import[["sf"]][[s]]
     }
     if (is.null(frame.spdf)) {
       message("frame.spdf is NULL so no weight calculations will be done")
@@ -439,7 +439,7 @@ weight <- function(dd.import,
       }
 
       ## Bring in this DD's points
-      pts.spdf <- dd.import$pts[[s]]
+      pts.spdf <- dd.import[["pts"]][[s]]
 
       ## Only do this if the user wants the DDs to be considered as one unit for analysis
       if (combine & length(dd.order) > 1) {
@@ -448,7 +448,7 @@ weight <- function(dd.import,
         for (r in dd.order[!(dd.order %in% c(dd.completed, s))]) {
           print(paste("Currently r is", r))
           ## First bring in the points
-          pts.spdf.temp <- dd.import$pts[[r]]
+          pts.spdf.temp <- dd.import[["pts"]][[r]]
           if (!is.null(pts.spdf.temp)) {
             if (nrow(pts.spdf.temp@data) > 0) {
               ## Get a version of the points clipped to the current frame
@@ -474,7 +474,7 @@ weight <- function(dd.import,
                 pts.spdf <- rbind(pts.spdf, pts.spdf.temp.attribute)
                 ## Remove the points that fell in the current frame from the temporary points and write it back into dd.import
                 ## This should find all the rows
-                dd.import$pts[[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
+                dd.import[["pts"]][[r]] <- pts.spdf.temp[-as.numeric(rownames(plyr::match_df(pts.spdf.temp@data, pts.spdf.temp.attribute@data, on = c("TERRA_TERRADAT_ID", "PLOT_NM")))),]
               }
             }
           }
@@ -485,7 +485,7 @@ weight <- function(dd.import,
           frame.spdf.temp <- dd.import$strata[[r]]
           if (is.null(frame.spdf.temp)) {
             print(paste("There aren't stratification polygons for", r))
-            frame.spdf.temp <- dd.import$sf[[r]]
+            frame.spdf.temp <- dd.import[["sf"]][[r]]
             if (is.null(frame.spdf.temp)) {
               print(paste("There aren't sample frame polygons for", r))
             }
@@ -523,7 +523,7 @@ weight <- function(dd.import,
                 dd.import$strata[[r]] <- frame.spdf.temp
               } else {
                 print(paste("Writing the temp frame into the sample frame slot for", r))
-                dd.import$sf[[r]] <- frame.spdf.temp
+                dd.import[["sf"]][[r]] <- frame.spdf.temp
               }
             }
           }

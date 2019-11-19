@@ -407,7 +407,8 @@ weight <- function(dd.import,
   ## Time to reorder that list of DDs, if the user wants that, otherwise keep the order that they were fed to dd.reader() (and therefore appear in dd.import)
   if (reorder) {
     ## Turn the lsit into a vector and then sort it in ascending order
-    dd.order <- unlist(dd.order)[dd.order %>% unlist() %>% sort.list(decreasing = FALSE)]
+    dd.order <- unlist(dd.order)[sort.list(unlist(dd.order),
+                                           decreasing = FALSE)]
     ## Then take the names of the DDs assigned to those values because we want those, not the areas
     dd.order <- names(dd.order)
   } else {

@@ -10,10 +10,10 @@
 #' @export
 
 ## TODO: Add capitalization sanitization stuff
-read.benchmarks <- function(data.path = getwd(),
-                            filename = "",
-                            sheet.name = "Monitoring Objectives",
-                            eval.strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
+read_benchmarks <- function(filename = "",
+                            filepath = NULL,
+                            sheet_name = "Monitoring Objectives",
+                            eval_strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
 ){
   ## Check for the file extension
   if (!grepl(filename, pattern = "\\.((xlsx)|(csv)|(xls)|(xlsm))$", ignore.case = TRUE)) {

@@ -805,15 +805,13 @@ attribute.shapefile <- function(spdf1,
 
   if (length(attributed.dfs) > 0) {
     if (length(attributed.dfs) == 1) {
-      output <- attributed.dfs[[1]] %>%
-        sp::SpatialPointsDataFrame(data = .,
-                                   coords = .[, coord.names],
-                                   proj4string = projection)
+      output <- sp::SpatialPointsDataFrame(data = attributed.dfs[[1]],
+                                           coords = attributed.dfs[[1]][, coord.names],
+                                           proj4string = projection)
     } else {
-      output <- dplyr::bind_rows(attributed.dfs) %>%
-        sp::SpatialPointsDataFrame(data = .,
-                                   coords = .[, coord.names],
-                                   proj4string = projection)
+      output <- sp::SpatialPointsDataFrame(data = dplyr::bind_rows(attributed.dfs),
+                                           coords = dplyr::bind_rows(attributed.dfs)[, coord.names],
+                                           proj4string = projection)
     }
     if (remove.coords) {
       output <- output[, names(output)[!(names(output) %in% coord.names)]]

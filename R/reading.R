@@ -79,7 +79,7 @@ read_benchmarks <- function(filename = "",
       return(output)
     })
     # Add the strings as variables to the benchmarks data frame
-    benchmarks <- cbind(benchmarks, data.frame(strings))
+    benchmarks <- cbind(benchmarks, data.frame(strings, stringsAsFactors = FALSE))
   }
 
   return(benchmarks)

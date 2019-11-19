@@ -21,7 +21,11 @@ read_benchmarks <- function(filename = "",
   }
 
   # Make the full filepath
-  filepath <- paste0(data.path, "/", filename)
+  if (is.null(filepath)) {
+    filepath <- filename
+  } else {
+    filepath <- paste(filepath, filename, sep = "/")
+  }
 
   # Check to see if it exists
   if (file.exists(filepath)) {

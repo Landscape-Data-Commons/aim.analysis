@@ -455,3 +455,35 @@ read_shapefile <- function(filename,
 
   return(shapefile)
 }
+
+#' Read in multiple shapefiles
+#' @description Using \code{rgdal::readOGR()}, read in one or more shapefiles.
+#' @param filenames Character string or vector of character strings. The filename(s) of the shapefile(s) to read in. May be the full filepath(s) to the shapefile(s), in which case use \code{filepath = NULL}. Does not need to include the file extension.
+#' @param filepaths Optional character string or vector of character strings. The filepath(s) to the location(s) where the shapefile(s) matching \code{filename} is/are stored. Used to locate the file(s) by combining with the filename(s). Must be \code{NULL} (will be ignored), a single character vector (if only reading one shapefile or if all shapefiles are in the same location), or the same length as \code{filenames} (if the filenames are stored in different locations; the filenames and filepaths are paired by index in \code{filenames} and \code{filepaths}). Defaults to \code{NULL}.
+#' @param projection Optional CRS object. The projection to return the shapefile(s) in as a CRS object, e.g. \code{sp::CRS("+proj=aea")}. Will be ignored if \code{NULL} or if it matches the shapefile's existing projection. Defaults to \code{NULL}.
+#' @param stringsAsFactors Logical. To be passed to \code{rgdal::readOGR(stringsAsFactors)}. Defaults to \code{FALSE}.
+#' @return Spatial data frame.
+#' @export
+read_shapefiles <- function(filenames,
+                            filepaths = NULL,
+                            projection = NULL,
+                            stringsAsFactors = FALSE) {
+
+  if (is.null(filepaths)) {
+    output <- lapply(X = filenames,
+                     projection = projection,
+                     stringsAsFactors = stringsAsFactors,
+                     FUN = read_shapefile)
+  } else {
+    if (length(filepaths) == 1 | length(filenames) == length(filepaths)) {
+      output <- lapply(X = paste(filepaths, filenames, sep = "/"),
+                       projection = projection,
+                       stringsAsFactors = stringsAsFactors,
+                       FUN = read_shapefile)
+    } else {
+      stop("The number of filepaths provided must be none (if the filenames contain the full paths to the shapefiles), one (if all shapfiles are at the same filepath), or equal to the number of filenames (if one or more shapefile is at a different filepath).")
+    }
+  }
+
+  return(output)
+}

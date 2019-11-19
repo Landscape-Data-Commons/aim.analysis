@@ -22,9 +22,7 @@ weight.gen <- function(pts,
                        unknown.values = NULL,
                        nontarget.values = NULL,
                        inaccessible.values = NULL,
-                       unneeded.values = NULL#,
-                       # ...
-){
+                       unneeded.values = NULL){
   ## Sanitize
   if (class(pts) == "SpatialPointsDataFrame") {
     working.pts <- pts@data

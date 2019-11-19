@@ -1005,7 +1005,8 @@ add.area <- function(spdf,
 #' @param tdat.spdf The output from \code{read.tdat()}.
 #' @return The contents of \code{read.tdat} that overlap spatially with the sample frames in \code{dd.raw}
 #' @export
-restrict.tdat <- function(dd.raw, tdat.spdf){
+restrict.tdat <- function(dd.raw,
+                          tdat.spdf){
   ## NAD83 sp::CRS()
   nad83.prj <- sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
   ## Save this for later

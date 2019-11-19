@@ -303,9 +303,11 @@ weight <- function(dd.import,
 
   ## The fate values that we know about are brought from defaults/fates.csv with fate.lookup()
   fate.lut <- fate.lookup()
-  fate.list <- setNames(lapply(unique(fate.lut$fate), function(X, df){
-    df$fate.value[df$fate == X]
-  }, df = fate.lut), unique(fate.lut$fate))
+  fate.list <- setNames(lapply(X = unique(fate.lut$fate),
+                               df = fate.lut,
+                               function(X, df){
+                                 df$fate.value[df$fate == X]
+                               }), unique(fate.lut$fate))
 
   ## Whatever values are provided in the function arguments get concatenated and then we keep only the unique values from that result
   target.values <- unique(toupper(c(target.values,

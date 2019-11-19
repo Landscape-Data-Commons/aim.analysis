@@ -13,8 +13,9 @@
 read_benchmarks <- function(filename = "",
                             filepath = NULL,
                             sheet_name = "Monitoring Objectives",
-                            eval_strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
-){
+                            eval_strings = list(c("Lower.Limit", "LL.Relation", "x"),
+                                                c("x", "UL.Relation", "Upper.Limit"),
+                                                c("x", "Proportion.Relation", "Required.Proportion"))){
   ## Check for the file extension
   if (!grepl(filename, pattern = "\\.((xlsx)|(csv)|(xls)|(xlsm))$", ignore.case = TRUE)) {
     stop("The benchmark filename needs to have a valid file extension (xlsx, csv, xls, or xlsm). The most likely extension is xlsx.")
@@ -322,11 +323,12 @@ dd.split <- function(dd.list) {
       }
 
       # Get all of this database's stuff
-      subset <- lapply(X = split.list,
-                       FUN = function(X, df) {
-                         X[[df]]
-                       },
-                       df = df) %>% setNames(paste0(frame, "_", unique(dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID)))
+      subset <- setNames(lapply(X = split.list,
+                                FUN = function(X, df) {
+                                  X[[df]]
+                                },
+                                df = df),
+                         paste0(frame, "_", unique(dd.list$sf[[frame]]$TERRA_SAMPLE_FRAME_ID)))
 
       # And mash it together!
       dd.list[[df]] <- c(head, subset, tail)

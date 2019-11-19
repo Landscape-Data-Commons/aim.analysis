@@ -631,27 +631,6 @@ punchout <- function(polygons,
   return(output)
 }
 
-# intersect <- function(polygons){
-#   if (class(polygons) != "list") {
-#     stop("The polygons must be provided as a list of spatial polygons data frames.")
-#   }
-#   if (!all(sapply(polygons, class) == "SpatialPolygonsDataFrame")) {
-#     stop("All objects in the list polygons must be spatial polygons data frames")
-#   }
-#
-#   polygons_sf <- lapply(X = polygons,
-#                         FUN = function(X){
-#                           sf::st_union(sf::st_as_sf(X))
-#                         })
-#
-#   intersection <- sf::st_intersection(x = polygons_sf[[1]],
-#                                       y = polygons_sf[[2]])
-#
-#   types <- vapply(X = sf::st_geometry(difference),
-#                   FUN = function(X){
-#                     class(X)[2]},
-#                   "")
-# }
 
 #' Order polygons according to size
 #' @description For a spatial polygons data frame or list of spatial polygons data frames, return character vector of all the unique identifiers in either ascending or descending order of area. If the unique identifiers have more than on observation associated with them, their polygons are combined into a single observation before the areas are calculated. If no variable for unique identifiers is provided, then all polygons in each spatial polygons data frame provided are considered to be a single observation; note that this is inappropriate unless providing a list of SPDFs. In the case of a list of SPDFs either the variable containing unique identifiers must be named identically for all (in which case there can be more than one polygon identity recognized in each) or no variable provided (in which case each SPDF will be dissolved to a single observation and assigned an identity based on the list's names or if the list is unnamed using the index of the SPDF in the list).

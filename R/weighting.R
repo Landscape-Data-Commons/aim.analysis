@@ -263,7 +263,7 @@ weight <- function(dd.import,
                    sliverwarn = TRUE,
                    sliverthreshold = 0.01
 ){
-  if (!(toupper(erase) %in% c("ARCPY", "RGEOS"))) {
+  if (!(erase %in% c("arcpy", "rgeos"))) {
     stop("erase must be either 'arcpy' or 'rgeos'.")
   }
   if (erase == "arcpy" & (is.null(temp.path) | !is.character(temp.path))) {

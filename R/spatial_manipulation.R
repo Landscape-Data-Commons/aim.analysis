@@ -1270,7 +1270,8 @@ combine_tdat_design <- function(terradat_points,
 #' @param x Spatial points or polygons data frame. The geometry to restrict.
 #' @param clip_polygons Spatial polygons data frame. The geometry to restrict \code{x} to.
 #' @param scale Numeric. A value to be passed to \code{rgeos::setScale()} to use for the steps of this function. It will be returned to the previous value before the function returns its output. Defaults to \code{1e5} (precision to five decimal places).
-#' @return
+#' @export
+
 clip_rgeos <- function(x,
                        clip_polygons,
                        verbose = FALSE,

@@ -215,3 +215,94 @@ analyze <- function(benchmarked_points,
 
   return(output)
 }
+
+#' Calculate Goodman's multinomial confidence intervals
+#' @description Calculate confidence intervals for multinomial proportions using the method described by Leo Goodman in "On Simultaneous Confidence Intervals for Multinomial Proportions" in Technometrics in 1965.
+#' @param counts Numeric vector, optionally named. The counts for each of the categories being considered. If there are unequal weights, be sure to adjust these counts by proportional weight with the formula: adjusted count for a category = total observations * sum of weights of observations in the category / sum of all weights. If these values are named, those will be included in the output data frame.
+#' @param alpha Numeric value. Must be between 0 and 1. The alpha for the confidence calculation, e.g. for 80% confidence, the alpha is 0.2. Defaults to \code{0.2}.
+#' @param chisq Character string. This decides which chi squared quantile calculation to use. The accepted values are \code{"A"}, \code{"B"}, or \code{"best"} (use the one which minimizes the confidence intervals). Goodman describes A as his default, calculated as the upper alpha times 100th percentage point of the chi-square distribution with k - 1 degrees of freedom. He also notes the alternative B, calculated as the upper alpha / k times 100th percentage point of the chi-square distribution with one degree of freedom, which will produce tighter intervals when k > 2 and alpha is 0.1, 0.5, or 0.01. Defaults to \code{"best"}
+#' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.
+goodman_cis <- function(counts,
+                        alpha = 0.2,
+                        chisq = "best",
+                        verbose = FALSE){
+  if (!is.numeric(counts) | length(counts < 2)) {
+    stop("counts must be a numeric vector with at least two values")
+  }
+
+  if (!(chisq %in% c("A", "B", "best"))) {
+    stop("The only valid values for chisq are 'A', 'B', and 'best'.")
+  }
+
+  # Goodman describes the upper and lower bounds with the equations:
+  # Lower estimated pi_i = {A + 2n_i - {A[A + 4n_i(N - n_i) / N]}^0.5} / [2(N + A)]
+  # Upper estimated pi_i = {A + 2n_i + {A[A + 4n_i(N - n_i) / N]}^0.5} / [2(N + A)]
+
+  # n_i is the "observed cell frequencies in population of size N" (aka count of observations) from a category
+  # so that's the incoming argument counts. We'll rename for consistency with the original math (and statistics as a discipline)
+  n <- counts
+
+  # N is the population those counts make up, or, in lay terms, the total observation count
+  N <- sum(counts)
+
+  # k is the number of categories the population has been sorted into
+  # Useful for degrees of freedom
+  k <- length(counts)
+
+  # "A is the upper alpha * 100-th percentage point of the chi-square distribution with k - 1 degrees of freedom"
+  # and B is an alternative which uses alpha / k and one degree of freedom
+  # Goodman states that B should be less than A for situations
+  # where k > 2 AND alpha is 0.1, 0.05, or 0.01.
+  chisq_quantiles <- c("A" = stats::qchisq(p = 1 - alpha,
+                                           df = k - 1),
+                       "B" = stats::qchisq(p = 1 - (alpha / k),
+                                           df = 1))
+
+
+  # According to Goodman, A and B are both valid options for the chi-square quantile
+  # So the user can specify which they want or just ask for the one that minimizes the confidence intervals
+  chisq_quantile <- switch(chisq,
+                           "A" = {chisq_quantiles["A"]},
+                           "B" = {chisq_quantiles["B"]},
+                           "best" = {
+                             pick <- which.min(chisq_quantiles)
+                             if (verbose){
+                               switch(names(chisq_quantiles)[pick],
+                                      "A" = message("The chi-square quantile calculation that will provide the tighter confidence intervals is A, the upper alpha X 100-th percentage point of the chi-square distribution with k - 1 degrees of freedom"),
+                                      "B" = message("The chi-square quantile calculation that will provide the tighter confidence intervals is B, the upper alpha / k X 100-th percentage point of the chi-square distribution with 1 degree of freedom"))
+                             }
+                             chisq_quantiles[pick]
+                           })
+
+  # Calculate the bounds!
+  # Note that these ARE symmetrical, just not around the proportions.
+  # They're symmetrical around A + 2 * n / (2 * (N + A))
+  # The variable A has been replaced with chisq_quantile because it may be A or B, depending
+  # Since the only multi-value vector involved here is n, these will be vectors of length k,
+  # having one value for each of the values in n and in the same order as n
+  lower_bounds <- (chisq_quantile + 2 * n - sqrt(chisq_quantile * (chisq_quantile + 4 * n * (N - n) / N))) / (2 * (N + chisq_quantile))
+  upper_bounds <- (chisq_quantile + 2 * n + sqrt(chisq_quantile * (chisq_quantile + 4 * n * (N - n) / N))) / (2 * (N + chisq_quantile))
+
+  # A proportion can never be greater than 1 or less than 0 (duh)
+  # So we'll add bounds any CIs in case that happens
+  # That's definitely a thing that can happen if the magnitude of sqrt(A * (A + 4 * n * (N - n) / N))
+  # is large enough
+  lower_bounds[lower_bounds < 0] <- 0
+  upper_bounds[upper_bounds > 1] <- 1
+
+  # Build the output
+  output <- data.frame(count = n,
+                       proportion = n / N,
+                       lower_bound = lower_bounds,
+                       upper_bound = upper_bounds)
+
+  # What are the categories called? If anything, that is
+  k_names <- names(n)
+
+  if (!is.null(k_names)) {
+    output[["category"]] <- k_names
+    output <- output[, c("category", "count", "proportion", "lower_bound", "upper_bound")]
+  }
+
+  return(output)
+}

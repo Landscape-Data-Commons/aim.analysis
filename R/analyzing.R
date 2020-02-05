@@ -216,6 +216,202 @@ analyze <- function(benchmarked_points,
   return(output)
 }
 
+#' Estimation of weighted proportions of categorical data
+#' @description Given categorical data and the weights for the individual observations, calculate estimated proportions by category and Goodman's multinomial confidence intervals.
+#' @param data Data frame. Categorical data with the unique identifiers for each observation/row in the variable \code{id_var} and the assigned category for each observation/row in \code{cat_var}. Note that the unique identifiers are the link between \code{data} and \code{weights}
+#' @param weights Data frame. This must contain the weighting information using the variables \code{id_var} with a unique identifier for each observation/row and \code{wgt_var} with the relative numeric weight of each observation/row.
+#' @param id_var Character string. The name of the variable in \code{data} and \code{weights} that contains the unique identifiers for the observations. All values in \code{data$id_var} must appear in \code{weights$id_var}.
+#' @param cat_var Character string. The name of the variable in \code{data} that contains the category values as character strings.
+#' @param wgt_var Character string. The name of the variable in \code{weights} that contains the numeric weight values.
+#' @param definitions Conditionally optional character vector. The possible categories that the observation could've been classed into. This is NOT optional if there are categories that do not appear in \code{data} because no observations met their criteria because those categories must be included in the calculations. Must contain at least the values in \code{code$cat_var} but should include ALL possible categories.
+#' @param conf Numeric. The confidence level in percent. Defaults to \code{80}.
+#' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.
+#' @return A data frame containing the categories, counts of observations, weighted estimated proportions, and confidence intervals.
+#' @export
+analyze_cat <- function(data,
+                        weights,
+                        id_var,
+                        cat_var,
+                        wgt_var,
+                        definitions = NULL,
+                        conf = 80,
+                        verbose = FALSE){
+  # Make sure everything is the right class/length
+  if (!("data.frame" %in% class(data))) {
+    stop("data must be a data frame")
+  }
+  if (nrow(data) < 1) {
+    stop("There are no values in data")
+  }
+  if (!("data.frame" %in% class(weights))) {
+    stop("weights must be a data frame")
+  }
+  if (nrow(weights) < 1) {
+    stop("There are no values in weights")
+  }
+
+  if (class(id_var) != "character" | length(id_var) != 1) {
+    stop("id_var must be a single character string")
+  }
+  if (class(cat_var) != "character" | length(cat_var) != 1) {
+    stop("cat_var must be a single character string")
+  }
+  if (class(wgt_var) != "character" | length(wgt_var) != 1) {
+    stop("wgt_var must be a single character string")
+  }
+  if (conf <= 0 | conf >= 100) {
+    stop("conf must be a value between 0 and 100")
+  }
+
+
+  # Make sure all the variables are in place
+  required_data_vars <- c(id_var, cat_var, split_vars)
+  missing_data_vars <- required_data_vars[!(required_data_vars %in% names(data))]
+  if (length(missing_data_vars) > 0) {
+    stop("The following variables are missing from data: ", paste(missing_data_vars, collapse = , ", "))
+  }
+  data <- data[, required_data_vars]
+  category_class <- class(data[[cat_var]])
+  # What categories were observed?
+  present_categories <- unique(data[[cat_var]])
+
+  if (!is.null(definitions)) {
+    if (!(category_class %in% class(definitions))) {
+      stop("definitions must be the same class as the category values in data")
+    }
+    if (length(definitions) < 1) {
+      stop("There are no values in definitions")
+    }
+  }
+
+  # Check to make sure the unique identifiers are, in fact, unique
+  non_unique_ids <- any(table(data[[id_var]]) > 1)
+  if (any(non_unique_ids)) {
+    stop("There are non-unique values in ", id_var, " in data.")
+  }
+
+
+  required_weights_vars <- c(id_var, wgt_var)
+  missing_weights_vars <- required_weights_vars[!(required_weights_vars %in% names(weights))]
+  if (length(missing_weights_vars) > 0) {
+    stop("The following variables are missing from weights: ", paste(missing_weights_vars, collapse = , ", "))
+  }
+  non_unique_ids <- any(table(weights[[id_var]]) > 1)
+  if (non_unique_ids) {
+    stop("There are non-unique values in ", id_var, " in weights.")
+  }
+  weights <- weights[, required_weights_vars]
+
+  # And what if the user provided definitions?
+  # This is important for if there are categories that have no data that qualified!
+  if (!is.null(definitions)) {
+    missing_categories <- !(present_categories %in% definitions)
+    if (any(missing_categories)) {
+      stop("The following categories appear in data but not in categories: ",
+           paste(present_categories[missing_categories], collapse = ", "))
+    }
+  }
+
+  # Make sure the IDs line up
+  data_ids_in_weights_indices <- data[[id_var]] %in% weights[[id_var]]
+  if (!all(data_ids_in_weights_indices)) {
+    stop("Not all unique IDs in data appear in weights")
+  }
+  weight_ids_in_weights_indices <- weights[[id_var]] %in% data[[id_var]]
+  if (verbose & !all(weight_ids_in_weights_indices)) {
+    message("Not all unique IDs in weights appear in data, just so you know.")
+  }
+  weights <- weights[weight_ids_in_weights_indices, ]
+
+
+  # Get each observation with just its category and weight
+  weighted_categories <- merge(x = data[, c(id_var, cat_var)],
+                               y = weights,
+                               by = id_var,
+                               all.y = FALSE)
+
+  # Calculate the sum of the weights for each of the observed categories
+  category_weight_sums <- sapply(X = present_categories,
+                                 data = weighted_categories,
+                                 cat_var = cat_var,
+                                 wgt_var = wgt_var,
+                                 USE.NAMES = TRUE,
+                                 FUN = function(X,
+                                                data,
+                                                cat_var,
+                                                wgt_var){
+                                   relevant_indices <- data[[cat_var]] == X
+                                   current_weights <- data[relevant_indices, wgt_var]
+                                   weight_sum <- sum(current_weights)
+                                   return(weight_sum)
+                                 })
+  # Calculate the weighted proportions for each category
+  category_weighted_proportions <- category_weight_sums / sum(category_weight_sums)
+  # Get the pure counts of the categories
+  category_counts <- table(weighted_categories[[cat_var]])
+  # And the total number of observations. This should be the same as nrow(weighted_categories)
+  total_observations <- sum(category_counts)
+  # Using the total number of observations and the weighted proportions to calculate "adjusted counts"
+  adjusted_counts <- category_weighted_proportions * total_observations
+
+  # Okay, so if we have definitions to catch categories with zero observations, add those
+  # Because it should matter for calculating confidence intervals
+  if (!is.null(definitions)) {
+    defined_categories <- definitions[[cat_var]]
+    missing_categories <- defined_categories[!(defined_categories %in% present_categories)]
+    # Looping because it's easy, not because it's the best solution
+    # But we want to populate the 0s for all of these!
+    for (category in missing_categories) {
+      category_weighted_proportions[[category]] <- 0
+      category_weight_sums[[category]] <- 0
+      category_counts[[category]] <- 0
+      adjusted_counts[[category]] <- 0
+    }
+  }
+
+  # Finally ready to calculate confidence intervals!
+  # But first we need the alpha value for our confidence level
+  alpha <- 1 - (conf / 100)
+
+  confidence_intervals <- goodman_cis(counts = adjusted_counts,
+                                      alpha = alpha,
+                                      chisq = "best",
+                                      verbose = verbose)
+  confidence_interval_vars <- c("category", "weighted_observation_count", "weighted_observation_proportion",
+                                "weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound")
+  names(confidence_intervals) <- confidence_interval_vars
+
+  # And now it's a matter of combining and formatting
+  # Yeah, yeah, yeah. It's not """best practice""" to calculate within the data frame construction
+  # but I don't care. I'll do math and slicing wherever I want to. Deal with it.
+  results <- data.frame(category = names(category_counts),
+                        observation_count = as.vector(category_counts[names(category_counts)]),
+                        observation_proportion = as.vector(category_counts[names(category_counts)] / total_observations),
+                        total_observation_weight = category_weight_sums[names(category_counts)],
+                        weighted_observation_proportion = category_weighted_proportions[names(category_counts)],
+                        row.names = NULL,
+                        stringsAsFactors = FALSE)
+
+  confidence_interval_keep_vars <- c("category",
+                                     "weighted_observation_proportion_lower_bound",
+                                     "weighted_observation_proportion_upper_bound")
+
+  # Combine the results and confidence intervals
+  output <- merge(x = results,
+                  y = confidence_intervals[, confidence_interval_keep_vars],
+                  by = c("category"))
+
+  # Get the variables restricted to what we care about and ordered properly
+  output_vars <- c("category", "observation_count", "observation_proportion", "total_observation_weight", "weighted_observation_proportion",
+                   paste0(c("weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound"),
+                          "_", conf, "pct"))
+
+  output <- output[, output_vars]
+
+  return(output)
+}
+
+
 #' Estimation of weighted proportions of multiple subsets of categorical data
 #' @description Given categorical data, subsetting information, and the weights for the individual observations, calculate estimated proportions by category and Goodman's multinomial confidence intervals for each subset. This can be done with data without subsetting by not providing values for \code{split_vars}. An example of using \code{split_vars} would be if the data ratings of indicators where the indicators each need to be estimated separately and the indicator information  is stored in \code{data$indicator} in which case you would use \code{split_var = "indicator"}. If indicators appear more than once with different ratings because there were different criteria for different objectives and the objective was stored in \code{data$objective} then you would use \code{split_vars = c("indicator", "objective")}.
 #' @param data Data frame. Categorical data with the unique identifiers for each observation/row in the variable \code{id_var} and the assigned category for each observation/row in \code{cat_var}. If the data are being subset by unique combinations of values in one or more additional variables, those variables must be specified in \code{split_vars}. Note that the unique identifiers do not have to be unique for the whole of \code{data} so long as they are unique within each subset of \code{data}.

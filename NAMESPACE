@@ -3,6 +3,8 @@
 export(add.area)
 export(add_coords)
 export(analyze)
+export(analyze_cat)
+export(analyze_cat_multi)
 export(apply_benchmarks)
 export(attribute.shapefile)
 export(clip_rgeos)

@@ -467,9 +467,8 @@ analyze_cat_multi <- function(data,
   }
   if (conf <= 0 | conf >= 100) {
     stop("conf must be a value between 0 and 100")
-  } else {
-    conf <- conf / 100
   }
+
   if (!is.null(split_vars)) {
     if (class(split_vars) != "character" | length(split_vars) < 1) {
       stop("split_vars must be a vector of one or more character strings")

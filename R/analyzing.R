@@ -624,7 +624,9 @@ goodman_cis <- function(counts,
   output <- data.frame(count = n,
                        proportion = n / N,
                        lower_bound = lower_bounds,
-                       upper_bound = upper_bounds)
+                       upper_bound = upper_bounds,
+                       stringsAsFactors = FALSE,
+                       row.names = NULL)
 
   # What are the categories called? If anything, that is
   k_names <- names(n)

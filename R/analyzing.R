@@ -556,7 +556,7 @@ goodman_cis <- function(counts,
                         alpha = 0.2,
                         chisq = "best",
                         verbose = FALSE){
-  if (!is.numeric(counts) | length(counts < 2)) {
+  if (!is.numeric(counts) | length(counts) < 2) {
     stop("counts must be a numeric vector with at least two values")
   }
 

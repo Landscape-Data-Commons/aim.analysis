@@ -4,9 +4,13 @@
 \alias{weight.adjust}
 \title{Adjusting Weights Calculated from AIM Sample Designs}
 \usage{
-weight.adjust(points, wgtcat.spdf, spdf.area.field = "AREA.HA.UNIT.SUM",
+weight.adjust(
+  points,
+  wgtcat.spdf,
+  spdf.area.field = "AREA.HA.UNIT.SUM",
   spdf.wgtcat.field = "UNIQUE.IDENTIFIER",
-  projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
+  projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+)
 }
 \arguments{
 \item{points}{Data frame output from \code{weight()}, equivalent to \code{weight()[["point.weights"]]} or \code{weight()[[2]]}.}

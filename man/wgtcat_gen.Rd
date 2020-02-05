@@ -4,8 +4,14 @@
 \alias{wgtcat_gen}
 \title{Generate weight category polygons}
 \usage{
-wgtcat_gen(polygons, idvar, makevalid = TRUE, force = FALSE,
-  verbose = FALSE, scale = 1e+05)
+wgtcat_gen(
+  polygons,
+  idvar,
+  makevalid = TRUE,
+  force = FALSE,
+  verbose = FALSE,
+  scale = 1e+05
+)
 }
 \arguments{
 \item{polygons}{List of spatial polygons data frames. These are the polygons to intersect and should be the same as the polygons used to draw the designs being combined. They must all have a the \code{idvar} variable containing the identities of the individual polygons (e.g. stratum). If you are combining designs that used the same polygons (e.g. two different designs using the exact same sample frame and stratification) ONLY INCLUDE ONE OF THEM. Including duplicates can result in very, very long processing times and failed intersections. They will be intersected sequentially in order, so there may be some slight speed gains if they're sorted smallest to largest, but no guarantees.}

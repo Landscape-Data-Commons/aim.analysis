@@ -4,8 +4,12 @@
 \alias{read_shapefile}
 \title{Read in a shapefile}
 \usage{
-read_shapefile(filename, filepath = NULL, projection = NULL,
-  stringsAsFactors = FALSE)
+read_shapefile(
+  filename,
+  filepath = NULL,
+  projection = NULL,
+  stringsAsFactors = FALSE
+)
 }
 \arguments{
 \item{filename}{Character string. The filename of the shapefile to read in. May be the full filepath to the shapefile, in which case use \code{filepath = NULL}. Does not need to include the file extension.}

@@ -4,8 +4,14 @@
 \alias{apply_benchmarks}
 \title{Apply benchmarks to data}
 \usage{
-apply_benchmarks(data, idvars, benchmark_group_var = NULL,
-  benchmark_group_lut = NULL, benchmarks, verbose = FALSE)
+apply_benchmarks(
+  data,
+  idvars,
+  benchmark_group_var = NULL,
+  benchmark_group_lut = NULL,
+  benchmarks,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{data}{Data frame or spatial * data frame. The data to be benchmarked. Must contain the variable(s) in \code{idvars} as unique identifiers. May be "wide" or "long" data. If wide, then each indicator name should be a variable name. If long, then the indicator names and values should be in variables named \code{"indicator_var"} and \code{"value"}.}

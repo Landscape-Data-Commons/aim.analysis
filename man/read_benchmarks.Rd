@@ -4,11 +4,13 @@
 \alias{read_benchmarks}
 \title{Reading in the benchmarks from the Data Explorer}
 \usage{
-read_benchmarks(filename = "", filepath = NULL,
+read_benchmarks(
+  filename = "",
+  filepath = NULL,
   sheet_name = "Monitoring Objectives",
-  eval_strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x",
-  "UL.Relation", "Upper.Limit"), c("x", "Proportion.Relation",
-  "Required.Proportion")))
+  eval_strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation",
+    "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
+)
 }
 \arguments{
 \item{filename}{Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".}

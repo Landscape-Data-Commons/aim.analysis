@@ -4,8 +4,14 @@
 \alias{read.dd}
 \title{Importing Sample Design Databases for AIM Sample Designs}
 \usage{
-read.dd(src = "", dd.src, split = TRUE, omitNAdesignations = FALSE,
-  projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"))
+read.dd(
+  src = "",
+  dd.src,
+  split = TRUE,
+  omitNAdesignations = FALSE,
+ 
+    projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
+)
 }
 \arguments{
 \item{src}{Character string defining the filepath containing the sample design database[s].}

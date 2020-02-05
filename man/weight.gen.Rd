@@ -4,10 +4,18 @@
 \alias{weight.gen}
 \title{Calculate sample weights for points using design polygons}
 \usage{
-weight.gen(pts, pts.fatefield = NULL, pts.groupfield = NULL,
-  frame.spdf, frame.groupfield = NULL, target.values = NULL,
-  unknown.values = NULL, nontarget.values = NULL,
-  inaccessible.values = NULL, unneeded.values = NULL)
+weight.gen(
+  pts,
+  pts.fatefield = NULL,
+  pts.groupfield = NULL,
+  frame.spdf,
+  frame.groupfield = NULL,
+  target.values = NULL,
+  unknown.values = NULL,
+  nontarget.values = NULL,
+  inaccessible.values = NULL,
+  unneeded.values = NULL
+)
 }
 \arguments{
 \item{pts}{Data frame or spatial points data frame. This should be the points information. At minimum, it must contain a field matching the string \code{pts.fatefield} containing string values matching those in \code{target.values}, \code{unknown.values}, etc. If providing \code{pts.groupfield} it must also have a field matching that containing values matching values found in \code{frame.spdf$frame.groupfield}. If \code{date.field} or \code{year.source.field} is provided, then fields matching those must exist.}

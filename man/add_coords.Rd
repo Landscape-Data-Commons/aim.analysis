@@ -4,8 +4,13 @@
 \alias{add_coords}
 \title{Adding coordinate variables to the data frame of a SpatialPointsDataFrame}
 \usage{
-add_coords(spdf, current.proj = TRUE, xynames = NULL, nad83 = FALSE,
-  albers = FALSE)
+add_coords(
+  spdf,
+  current.proj = TRUE,
+  xynames = NULL,
+  nad83 = FALSE,
+  albers = FALSE
+)
 }
 \arguments{
 \item{spdf}{A SpatialPointsDataFrame to add the coordinates to}

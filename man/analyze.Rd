@@ -4,10 +4,19 @@
 \alias{analyze}
 \title{Categorical Analysis of AIM Data}
 \usage{
-analyze(benchmarked_points, point_weights, id_var,
-  indicator_var = "indicator", value_var, weight_var = "wgt",
-  x_var = "x", y_var = "y", reporting_var, split_var = NULL,
-  conf = 80)
+analyze(
+  benchmarked_points,
+  point_weights,
+  id_var,
+  indicator_var = "indicator",
+  value_var,
+  weight_var = "wgt",
+  x_var = "x",
+  y_var = "y",
+  reporting_var,
+  split_var = NULL,
+  conf = 80
+)
 }
 \arguments{
 \item{benchmarked_points}{Data frame. This should be the output from \code{apply_benchmarks()} or an equivalent and must contain the variables specified in the arguments \code{id_var}, \code{value_var}, \code{indicator_var}, \code{x_var}, and \code{x_var}. If \code{split_var} is not \code{NULL} then that variable must also be in the data frame.}

@@ -5,8 +5,7 @@
 \title{Plotting Indicator Category Distributions For Multiple Indicators/Benchmarks/Reporting Units
 A wrapper for plot_indicator_distribution to apply it across multiple combinations of values in Type, Subpopulation, MANAGEMENT.QUESTION, and Indicator simulataneously.}
 \usage{
-multiplot_indicator_distribution(analysis.df, benchmarks,
-  indicator.lut = NULL)
+multiplot_indicator_distribution(analysis.df, benchmarks, indicator.lut = NULL)
 }
 \arguments{
 \item{analysis.df}{Data frame. The output from \code{spsurvey::cat.analysis()} sliced to a single combination of the values in Type, Subpopulation, MANAGEMENT.QUESTION, and Indicator.}

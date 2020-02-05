@@ -4,9 +4,16 @@
 \alias{intersect_rgeos}
 \title{Creating the Intersection of Two Spatial Polygons Data Frames}
 \usage{
-intersect_rgeos(polygons1, polygons2, keep_outer = FALSE,
-  projection = NULL, makevalid = TRUE, force = FALSE,
-  verbose = FALSE, scale = 1e+05)
+intersect_rgeos(
+  polygons1,
+  polygons2,
+  keep_outer = FALSE,
+  projection = NULL,
+  makevalid = TRUE,
+  force = FALSE,
+  verbose = FALSE,
+  scale = 1e+05
+)
 }
 \arguments{
 \item{polygons1}{Spatial polygons data frame. One of the set of polygons to intersect. If \code{crs} is \code{NULL} the projection from \code{polygons1@proj4string} will be used for the output.}

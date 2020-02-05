@@ -4,9 +4,13 @@
 \alias{attribute.shapefile}
 \title{Attributing a spatial data frame using another spatial data frame}
 \usage{
-attribute.shapefile(spdf1, spdf2, attributefield = NULL,
+attribute.shapefile(
+  spdf1,
+  spdf2,
+  attributefield = NULL,
   newfield = NULL,
-  projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
+  projection = sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
+)
 }
 \arguments{
 \item{spdf1}{A SpatialPoints/PolygonsDataFrame containing the geometry to add an attribute to}

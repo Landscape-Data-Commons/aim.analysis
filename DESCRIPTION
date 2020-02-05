@@ -1,15 +1,15 @@
 Package: aim.analysis
-Date: 2019-11-19
+Date: 2020-02-05
 Type: Package
 Title: Analysis and Reporting of Terrestrial AIM Data Using TerrADat and Sample Design Documentation
-Version: 0.8.0
+Version: 0.8.5
 Authors@R: c(person(given = c("Nelson", "G."), family = "Stauffer", email = "nelson.stauffer@ars.usda.gov", role = c("aut", "cre")), person("Steve", "Garman", email = "sgarman@blm.gov", role = c("aut")), person("Jason", "Karl", email = "jakal14@gmail.com", role = c("aut")))
 Description: Provides functions for importing sample design geodatabases used for recording and tracking terrestrial Assessment, Inventory, and Monitoring (AIM) projects; importing management benchmark criteria for AIM projects; importing Terrestrial AIM Database (TerrADat) spatial data; evaluating TerrADat values using management benchmarks; calculating analysis weights for field data based on sample designs, reporting units, and management objectives; and reporting weighted categorical analyses.
 Depends: R (>= 3.1.0)
 License: MIT License
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Imports: dplyr,
   tidyr,
   purrr,

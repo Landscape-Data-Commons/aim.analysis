@@ -637,74 +637,16 @@ analyze_cat_multi <- function(data,
                                         verbose){
                            # Get the data frame for this subset
                            data <- data_list[[X]]
-                           # What categories were observed?
-                           present_categories <- unique(data[[cat_var]])
-                           # Get each observation with just its category and weight
-                           weighted_categories <- merge(x = data[, c(id_var, cat_var)],
-                                                        y = weights,
-                                                        by = id_var,
-                                                        all.y = FALSE)
-                           # Calculate the sum of the weights for each of the observed categories
-                           category_weight_sums <- sapply(X = present_categories,
-                                                          data = weighted_categories,
-                                                          cat_var = cat_var,
-                                                          wgt_var = wgt_var,
-                                                          USE.NAMES = TRUE,
-                                                          FUN = function(X,
-                                                                         data,
-                                                                         cat_var,
-                                                                         wgt_var){
-                                                            relevant_indices <- data[[cat_var]] == X
-                                                            current_weights <- data[relevant_indices, wgt_var]
-                                                            weight_sum <- sum(current_weights)
-                                                            return(weight_sum)
-                                                          })
-                           # Calculate the weighted proportions for each category
-                           category_weighted_proportions <- category_weight_sums / sum(category_weight_sums)
-                           # Get the pure counts of the categories
-                           category_counts <- table(weighted_categories[[cat_var]])
-                           # And the total number of observations. This should be the same as nrow(weighted_categories)
-                           total_observations <- sum(category_counts)
-                           # Using the total number of observations and the weighted proportions to calculate "adjusted counts"
-                           adjusted_counts <- category_weighted_proportions * total_observations
+                           definitions <- definitions_list[[X]][[cat_var]]
 
-                           # Okay, so if we have definitions to catch categories with zero observations, add those
-                           # Because it should matter for calculating confidence intervals
-                           if (!is.null(definitions_list)) {
-                             defined_categories <- definitions_list[[X]][[cat_var]]
-                             missing_categories <- defined_categories[!(defined_categories %in% present_categories)]
-                             # Looping because it's easy, not because it's the best solution
-                             # But we want to populate the 0s for all of these!
-                             for (category in missing_categories) {
-                               category_weighted_proportions[[category]] <- 0
-                               category_weight_sums[[category]] <- 0
-                               category_counts[[category]] <- 0
-                               adjusted_counts[[category]] <- 0
-                             }
-                           }
-
-                           # Finally ready to calculate confidence intervals!
-                           # But first we need the alpha value for our confidence level
-                           alpha <- 1 - conf
-
-                           confidence_intervals <- goodman_cis(counts = adjusted_counts,
-                                                               alpha = alpha,
-                                                               chisq = "best",
-                                                               verbose = verbose)
-                           confidence_interval_vars <- c("category", "weighted_observation_count", "weighted_observation_proportion",
-                                                         "weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound")
-                           names(confidence_intervals) <- confidence_interval_vars
-
-                           # And now it's a matter of combining and formatting
-                           # Yeah, yeah, yeah. It's not great form to calculate within the data frame construction
-                           # But I don't care. I'll do math and slicing wherever I want to.
-                           results <- data.frame(category = names(category_counts),
-                                                 observation_count = as.vector(category_counts[names(category_counts)]),
-                                                 observation_proportion = as.vector(category_counts[names(category_counts)] / total_observations),
-                                                 total_observation_weight = category_weight_sums[names(category_counts)],
-                                                 weighted_observation_proportion = category_weighted_proportions[names(category_counts)],
-                                                 row.names = NULL,
-                                                 stringsAsFactors = FALSE)
+                           results <- analyze_cat(data = data,
+                                                  weights = weights,
+                                                  id_var = id_var,
+                                                  cat_var = cat_var,
+                                                  wgt_var = wgt_var,
+                                                  definitions = definitions,
+                                                  conf = conf,
+                                                  verbose = verbose)
 
                            # Add in the splitting vars if there are any
                            # I refuse to be ashamed of looping here
@@ -713,24 +655,7 @@ analyze_cat_multi <- function(data,
                              results[[var]] <- var_value
                            }
 
-                           confidence_interval_keep_vars <- c("category",
-                                                              "weighted_observation_proportion_lower_bound",
-                                                              "weighted_observation_proportion_upper_bound")
-
-                           # Combine the results and confidence intervals
-                           output <- merge(x = results,
-                                           y = confidence_intervals[, confidence_interval_keep_vars],
-                                           by = c("category"))
-
-                           # Get the variables restricted to what we care about and ordered properly
-                           output_vars <- c("category", "observation_count", "observation_proportion", "total_observation_weight", "weighted_observation_proportion",
-                                            paste0(c("weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound"),
-                                                   "_", 100 * conf, "pct"),
-                                            split_vars)
-
-                           output <- output[, output_vars]
-
-                           return(output)
+                           return(results)
                          })
 
   # OKAY. So all those are analyzed and stuff. Time to combine everything into a single output

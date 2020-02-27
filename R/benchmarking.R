@@ -6,6 +6,7 @@
 #' @param benchmark_group_lut Optional data frame. The lookup table used to assign benchmark group membership to \code{data}. Must contain all of the variables in \code{idvar} and one additional variable with the benchmark group memberships.
 #' @param benchmarks Data frame. The benchmarks in the format produced by \code{read.benchmarks()}. If the benchmark group membership variable in other data frames is not \code{"Benchmark.Group"} then it must be renamed here.
 #' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes.
+#' @param tdat_version Version of TerrADat used in the analysis for use in \code{indicator lookup()}. Defaults to \code{"2"}.
 #' @return A long data frame of each point/benchmarked indicator combination with the assigned condition category.
 #' @export
 apply_benchmarks <- function(data,
@@ -13,7 +14,8 @@ apply_benchmarks <- function(data,
                              benchmark_group_var = NULL,
                              benchmark_group_lut = NULL,
                              benchmarks,
-                             verbose = FALSE) {
+                             verbose = FALSE,
+                             tdat_version = "2") {
   if (grepl(class(data)[1], pattern = "^Spatial.*DataFrame$")) {
     data <- data@data
   } else if (class(data) != "data.frame") {
@@ -86,7 +88,7 @@ apply_benchmarks <- function(data,
   }
 
   # Get the benchmarks merged to the points
-  indicator_lut <- indicator.lookup()
+  indicator_lut <- indicator.lookup(tdat_version)
   names(indicator_lut) <- c("indicator_var", "indicator_name")
   benchmarks <- merge(x = benchmarks,
                       y = indicator_lut,

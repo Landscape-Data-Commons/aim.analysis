@@ -1,0 +1,66 @@
+indicator.tdat,indicator.name
+BareSoilCover_FH,Bare Soil (%)
+TotalFoliarCover_FH,Foliar Cover (%)
+GapPct_25_50,Percent in Gaps 25-50 cm
+GapPct_51_100,Percent in Gaps 51-100 cm
+GapPct_101_200,Percent in Gaps 101-200 cm
+GapPct_200_plus,Percent in Gaps > 200 cm
+GapPct_25_plus,Percent in Gaps > 25 cm
+NonInvPerenForbCover_AH,"Non-invasive Perennial Forb Cover (%, any hit)"
+NonInvAnnForbCover_AH,"Non-invasive Annual Forb Cover (%, any hit)"
+NonInvPerenGrassCover_AH,"Non-invasive Perennial Grass Cover (%, any hit)"
+NonInvAnnGrassCover_AH,"Non-invasive Annual Grass Cover (%, any hit)"
+NonInvAnnForbGrassCover_AH,"Non-invasive Annual Forb/Grass Cover (%, any hit)"
+NonInvPerenForbGrassCover_AH,"Non-invasive Perennial Forb/Grass Cover (%, any hit)"
+NonInvSucculentCover_AH,"Non-invasive Succulent Cover (%, any hit)"
+NonInvShrubCover_AH,"Non-invasive Shrub Cover (%, any hit)"
+NonInvSubShrubCover_AH,"Non-invasive Sub-shrub Cover (%, any hit)"
+NonInvTreeCover_AH,"Non-invasive Tree Cover (%, any hit)"
+InvPerenForbCover_AH,"Invasive Perennial Forb Cover (%, any hit)"
+InvAnnForbCover_AH,"Invasive Annual Forb Cover (%, any hit)"
+InvPerenGrassCover_AH,"Invasive Perennial Grass Cover (%, any hit)"
+InvAnnGrassCover_AH,"Invasive Annual Grass Cover (%, any hit)"
+InvAnnForbGrassCover_AH,"Invasive Annual Forb/Grass Cover (%, any hit)"
+InvPerenForbGrassCover_AH,"Invasive Perennial Forb/Grass Cover (%, any hit)"
+InvSucculentCover_AH,"Invasive Succulent Cover (%, any hit)"
+InvShrubCover_AH,"Invasive Shrub Cover (%, any hit)"
+InvSubShrubCover_AH,"Invasive Sub-shrub Cover (%, any hit)"
+InvTreeCover_AH,"Invasive Tree Cover (%, any hit)"
+SagebrushCover_AH,"Sagebrush Cover (%, any hit)"
+WoodyHgt_Avg,Average Woody Height (cm)
+HerbaceousHgt_Avg,Average Herbaceous Height (cm)
+SagebrushHgt_Avg,Average Sagebrush Height (cm)
+OtherShrubHgt_Avg,Averge Non-Sagebrush Shrub Height (cm)
+NonInvPerenGrassHgt_Avg,Average Non-invasive Perennial Grass Height (cm)
+InvPerenGrassHgt_Avg,Average Invasive Perennial Grass Height (cm)
+InvPlantCover_AH,"Invasive Plant Cover (%, any hit)"
+InvPlant_NumSp,Number of Invasive Plant Species
+SoilStability_All,Overall Soil Stability Rating
+SoilStability_Protected,Protected Surface Soil Stability Rating
+SoilStability_Unprotected,Unprotected Surface Soil Stability Rating
+HerbLitterCover_FH,Between-Canopy Herbaceous Litter Cover (%)
+WoodyLitterCover_FH,Between-Canopy Woody Litter (%)
+TotalLitterCover_FH,Between-Canopy Herbaceous and Woody Litter (%)
+RockCover_FH,Between-Canopy Rock Cover (%)
+BiologicalCrustCover_FH,Between-Canopy Biological Crust Cover (%)
+VagrLichenCover_FH,Between-Canopy Vagrant Lichen Cover (%)
+LichenMossCover_FH,Between-Canopy Lichen and Moss Cover (%)
+DepSoilCover_FH,Between-Canopy Deposited Soil Cover (%)
+WaterCover_FH,Between-Canopy Water Cover (%)
+NonInvPerenForbCover_FH,"Non-invasive Perennial Forb Cover (%, first hit)"
+NonInvAnnForbCover_FH,"Non-invasive Annual Forb Cover (%, first hit)"
+NonInvPerenGrassCover_FH,"Non-invasive Perennial Grass Cover (%, first hit)"
+NonInvAnnGrassCover_FH,"Non-invasive Annual Grass Cover (%, first hit)"
+NonInvSucculentCover_FH,"Non-invasive Succulent Cover (%, first hit)"
+NonInvShrubCover_FH,"Non-invasive Shrub Cover (%, first hit)"
+NonInvSubShrubCover_FH,"Non-invasive Sub-shrub Cover (%, first hit)"
+NonInvTreeCover_FH,"Non-invasive Tree Cover (%, first hit)"
+InvPerenForbCover_FH,"Invasive Perennial Forb Cover (%, first hit)"
+InvAnnForbCover_FH,"Invasive Annual Forb Cover (%, first hit)"
+InvPerenGrassCover_FH,"Invasive Perennial Grass Cover (%, first hit)"
+InvAnnGrassCover_FH,"Invasive Annual Grass Cover (%, first hit)"
+InvSucculentCover_FH,"Invasive Succulent Cover (%, first hit)"
+InvShrubCover_FH,"Invasive Shrub Cover (%, first hit)"
+InvSubShrubCover_FH,"Invasive Sub-shrub Cover (%, first hit)"
+InvTreeCover_FH,"Invasive Tree Cover (%, first hit)"
+SageBrushCover_FH,"Sagebrush Cover (%, first hit)"

@@ -1,0 +1,100 @@
+indicator.tdat,indicator.name,old.name,old.name.fate,new.name.comment
+BareSoilCover,Bare Soil (%),BareSoilCover_FH,modify,
+TotalFoliarCover,Foliar Cover (%),TotalFoliarCover_FH,modify,
+GapPct_25_50,Percent in Gaps 25-50 cm,GapPct_25_50,keep,
+GapPct_51_100,Percent in Gaps 51-100 cm,GapPct_51_100,keep,
+GapPct_101_200,Percent in Gaps 101-200 cm,GapPct_101_200,keep,
+GapPct_200_plus,Percent in Gaps > 200 cm,GapPct_200_plus,keep,
+GapPct_25_plus,Percent in Gaps > 25 cm,GapPct_25_plus,keep,
+AH_NonNoxPerenForbCover,"Non-noxious Perennial Forb Cover (%, any hit)",NonInvPerenForbCover_AH,modify,
+AH_NonNoxAnnForbCover,"Non-noxious Annual Forb Cover (%, any hit)",NonInvAnnForbCover_AH,modify,
+AH_NonNoxPerenGrassCover,"Non-noxious Perennial Grass Cover (%, any hit)",NonInvPerenGrassCover_AH,modify,
+AH_NonNoxAnnGrassCover,"Non-noxious Annual Grass Cover (%, any hit)",NonInvAnnGrassCover_AH,modify,
+AH_NonNoxAnnForbGrassCover,"Non-noxious Annual Forb/Grass Cover (%, any hit)",NonInvAnnForbGrassCover_AH,modify,
+AH_NonNoxPerenForbGrassCover,"Non-noxious Perennial Forb/Grass Cover (%, any hit)",NonInvPerenForbGrassCover_AH,modify,
+AH_NonNoxSucculentCover,"Non-noxious Succulent Cover (%, any hit)",NonInvSucculentCover_AH,modify,
+AH_NonNoxShrubCover,"Non-noxious Shrub Cover (%, any hit)",NonInvShrubCover_AH,modify,
+AH_NonNoxSubShrubCover,"Non-noxious Sub-shrub Cover (%, any hit)",NonInvSubShrubCover_AH,modify,
+AH_NonNoxTreeCover,"Non-noxious Tree Cover (%, any hit)",NonInvTreeCover_AH,modify,
+AH_NoxPerenForbCover,"Noxious Perennial Forb Cover (%, any hit)",InvPerenForbCover_AH,modify,
+AH_NoxAnnForbCover,"Noxious Annual Forb Cover (%, any hit)",InvAnnForbCover_AH,modify,
+AH_NoxPerenGrassCover,"Noxious Perennial Grass Cover (%, any hit)",InvPerenGrassCover_AH,modify,
+AH_NoxAnnGrassCover,"Noxious Annual Grass Cover (%, any hit)",InvAnnGrassCover_AH,modify,
+AH_NoxAnnForbGrassCover,"Noxious Annual Forb/Grass Cover (%, any hit)",InvAnnForbGrassCover_AH,modify,
+AH_NoxPerenForbGrassCover,"Noxious Perennial Forb/Grass Cover (%, any hit)",InvPerenForbGrassCover_AH,modify,
+AH_NoxSucculentCover,"Noxious Succulent Cover (%, any hit)",InvSucculentCover_AH,modify,
+AH_NoxShrubCover,"Noxious Shrub Cover (%, any hit)",InvShrubCover_AH,modify,
+AH_NoxSubShrubCover,"Noxious Sub-shrub Cover (%, any hit)",InvSubShrubCover_AH,modify,
+AH_NoxTreeCover,"Noxious Tree Cover (%, any hit)",InvTreeCover_AH,modify,
+AH_SagebrushCover,"Sagebrush Cover (%, any hit)",SagebrushCover_AH,modify,
+Hgt_Woody_Avg,Average Woody Height (cm),WoodyHgt_Avg,modify,
+Hgt_Herbaceous_Avg,Average Herbaceous Height (cm),HerbaceousHgt_Avg,modify,
+Hgt_Sagebrush_Live_Avg,Averge Live Sagebrush Shrub Height (cm),SagebrushHgt_Avg,modify,
+Hgt_NonSagebrushShrub_Avg,Averge Non-Sagebrush Shrub Height (cm),OtherShrubHgt_Avg,modify,
+Hgt_NonNoxPerenGrass_Avg,Average Non-noxious Perennial Grass Height (cm),NonInvPerenGrassHgt_Avg,modify,
+Hgt_NoxPerenGrass_Avg,Average noxious Perennial Grass Height (cm),InvPerenGrassHgt_Avg,modify,
+NumSpp_NoxPlant,Number of noxious Plant Species,InvPlant_NumSp,modify,
+SoilStability_All,Overall Soil Stability Rating,SoilStability_All,keep,
+SoilStability_Protected,Protected Surface Soil Stability Rating,SoilStability_Protected,keep,
+SoilStability_Unprotected,Unprotected Surface Soil Stability Rating,SoilStability_Unprotected,keep,
+FH_HerbLitterCover,Between-Canopy Herbaceous Litter Cover (%),HerbLitterCover_FH,modify,
+FH_WoodyLitterCover,Between-Canopy Woody Litter (%),WoodyLitterCover_FH,modify,
+FH_TotalLitterCover,Between-Canopy Herbaceous and Woody Litter (%),TotalLitterCover_FH,modify,
+FH_RockCover,Between-Canopy Rock Cover (%),RockCover_FH,modify,
+FH_CyanobacteriaCover,Between-Canopy Biological Crust Cover (%),BiologicalCrustCover_FH,modify,
+FH_VagrLIchenCover,Between-Canopy Vagrant Lichen Cover (%),VagrLichenCover_FH,modify,
+FH_LichenCover,Between-Canopy Lichen and Moss Cover (%),LichenMossCover_FH,modify,
+FH_DepSoilCover,Between-Canopy Deposited Soil Cover (%),DepSoilCover_FH,modify,
+FH_WaterCover,Between-Canopy Water Cover (%),WaterCover_FH,modify,
+FH_NonNoxPerenForbCover,"Non-noxious Perennial Forb Cover (%, first hit)",NonInvPerenForbCover_FH,modify,
+FH_NonNoxAnnForbCover,"Non-noxious Annual Forb Cover (%, first hit)",NonInvAnnForbCover_FH,modify,
+FH_NonNoxPerenGrassCover,"Non-noxious Perennial Grass Cover (%, first hit)",NonInvPerenGrassCover_FH,modify,
+FH_NonNoxAnnGrassCover,"Non-noxious Annual Grass Cover (%, first hit)",NonInvAnnGrassCover_FH,modify,
+FH_NonNoxSucculentCover,"Non-noxious Succulent Cover (%, first hit)",NonInvSucculentCover_FH,modify,
+FH_NonNoxShrubCover,"Non-noxious Shrub Cover (%, first hit)",NonInvShrubCover_FH,modify,
+FH_NonNoxSubShrubCover,"Non-noxious Sub-shrub Cover (%, first hit)",NonInvSubShrubCover_FH,modify,
+FH_NonNoxTreeCover,"Non-noxious Tree Cover (%, first hit)",NonInvTreeCover_FH,modify,
+FH_NoxPerenForbCover,"Noxious Perennial Forb Cover (%, first hit)",InvPerenForbCover_FH,modify,
+FH_NoxAnnForbCover,"Noxious Annual Forb Cover (%, first hit)",InvAnnForbCover_FH,modify,
+FH_NoxPerenGrassCover,"Noxious Perennial Grass Cover (%, first hit)",InvPerenGrassCover_FH,modify,
+FH_NoxAnnGrassCover,"Noxious Annual Grass Cover (%, first hit)",InvAnnGrassCover_FH,modify,
+FH_NoxSucculentCover,"Noxious Succulent Cover (%, first hit)",InvSucculentCover_FH,modify,
+FH_NoxShrubCover,"Noxious Shrub Cover (%, first hit)",InvShrubCover_FH,modify,
+FH_NoxSubShrubCover,"Noxious Sub-shrub Cover (%, first hit)",InvSubShrubCover_FH,modify,
+FH_NoxTreeCover,"Noxious Tree Cover (%, first hit)",InvTreeCover_FH,modify,
+FH_SagebrushCover,"Sagebrush Cover (%, first hit)",SageBrushCover_FH,modify,
+FH_MossCover,"Moss Cover (%, first hit)",NA,,new
+FH_DuffCover,"Duff Cover (%, first hit)",NA,,new
+AH_NonNoxCover,"Non-noxious Cover (%, any hit)",NA,,new
+AH_SagebrushCover_Live,"Sagebrush Cover Live (%, any hit)",NA,,new
+SagebrushShape_Live_ColumnCount,Live Columnar Sagebrush Shape Count(number of hits),NA,,new
+SagebrushShape_Live_SpreadCount,Live Spreading Sagebrush Shape Count (number of hits),NA,,new
+SagebrushShape_All_ColumnCount,All Sagebrush Shapes Count (number of hits),NA,,new
+SagebrushShape_All_SpreadCount,All Spreading Sagebrush Shapes Count (number of hits),NA,,new
+SagebrushShape_Live_Predominant,Most Frequent Live Sagebrush Shape,NA,,new
+SagebrushShape_All_Predominant,Most Frequent Sagebrush Shape,NA,,new
+AH_PerenGrassCover,"Perennial Grass Cover (%, any hit)",NA,,new
+AH_PerenForbCover,"Perennial Forb Cover (%, any hit)",NA,,new
+AH_PerenForbGrassCover,"Perennial Grass/Forb Cover (%, any hit)",NA,,new
+Hgt_PerenForbGrass_Avg,Average Perennial Forb/Grass Height (cm),NA,,new
+Hgt_PerenForb_Avg,Average Perennial Forb Height (cm),NA,,new
+Hgt_PerenGrass_Avg,Average Perennial Grass Height (cm),NA,,new
+AH_ShrubCover,"Shrub Cover (%, any hit)",NA,,new
+AH_NonSagebrushShrubCover,"Non-sagebrush Shrub Cover (%, any hit)",NA,,new
+Spp_PreferredForb,Preferred Forb Species List,NA,,new
+AH_PreferredForb,"Preferred Forb (%, any hit)",NA,,new
+NumSpp_PreferredForb,Preferred Forb Count,NA,,new
+AH_AnnGrassCover,"Annual Grass Cover (%, any hit)",NA,,new
+AH_GrassCover,"Grass Cover (%, any hit)",NA,,new
+AH_ForbCover,"Forb Cover (%, any hit)",NA,,new
+AH_TallPerenGrassCover,"Tall Perennial Grass Cover (%, any hit)",NA,,new
+AH_ShortPerenGrassCover,"Short Perennial Grass Cover (%, any hit)",NA,,new
+Spp_TallPerenGrass,Tall Perennial Grass Species List,NA,,new
+Spp_ShortPerenGrass,Short Perennial Grass Species List,NA,,new
+Hgt_TallPerenGrass_Avg,Average Tall Perennial Grass Height (cm),NA,,new
+Hgt_ShortPerenGrass_Avg,Average Short Perennial Grass Height (cm),NA,,new
+Hgt_Grass_Avg,Average Grass Height (cm),NA,,new
+Hgt_Forb_Avg,Average Forb Height (cm),NA,,new
+Spp_Sagebrush,Sagebrush Species List,NA,,new
+AH_NoxCover,"Noxious Cover (%, any hit)",InvPlantCover_AH,modify,
+Spp_Nox,Noxious Species List,NA,,new

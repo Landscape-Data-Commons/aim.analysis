@@ -29,7 +29,7 @@ analyze_cat_multi(
 
 \item{split_vars}{Optional character vector. One or more character strings corresponding to variable names in \code{data} and (if being used) \code{definitions}. The data will be subset for the calculations by unique combinations of values in these variables. Each subset must have only unique values in the variable \code{id_var}. If \code{NULL} then no subsetting will take place. Defaults to \code{NULL}.}
 
-\item{definitions}{Optional data frame. The possible categories for the observations to be classed into, which may include categories that do not appear in \code{data} because no observations met their criteria. Must contain at least the variable \code{cat_var} with ALL possible categories. If \code{split_vars = NULL} then it must also contain all variables in \code{split_vars} and will be subset in the same way as \code{data}, in which case each subset must contain ALL possible categories for that subset.}
+\item{definitions}{Optional data frame. The possible categories for the observations to be classed into, which may include categories that do not appear in \code{data} because no observations met their criteria. Must contain at least the variable \code{cat_var} with ALL possible categories. If \code{split_vars != NULL} then it must also contain all variables in \code{split_vars} and will be subset in the same way as \code{data}, in which case each subset must contain ALL possible categories for that subset.}
 
 \item{conf}{Numeric. The confidence level in percent. Defaults to \code{80}.}
 

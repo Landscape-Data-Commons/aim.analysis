@@ -420,7 +420,7 @@ analyze_cat <- function(data,
 #' @param cat_var Character string. The name of the variable in \code{data} and (if being used) \code{definitions} that contains the category values.
 #' @param wgt_var Character string. The name of the variable in \code{weights} that contains the numeric weight values.
 #' @param split_vars Optional character vector. One or more character strings corresponding to variable names in \code{data} and (if being used) \code{definitions}. The data will be subset for the calculations by unique combinations of values in these variables. Each subset must have only unique values in the variable \code{id_var}. If \code{NULL} then no subsetting will take place. Defaults to \code{NULL}.
-#' @param definitions Optional data frame. The possible categories for the observations to be classed into, which may include categories that do not appear in \code{data} because no observations met their criteria. Must contain at least the variable \code{cat_var} with ALL possible categories. If \code{split_vars = NULL} then it must also contain all variables in \code{split_vars} and will be subset in the same way as \code{data}, in which case each subset must contain ALL possible categories for that subset.
+#' @param definitions Optional data frame. The possible categories for the observations to be classed into, which may include categories that do not appear in \code{data} because no observations met their criteria. Must contain at least the variable \code{cat_var} with ALL possible categories. If \code{split_vars != NULL} then it must also contain all variables in \code{split_vars} and will be subset in the same way as \code{data}, in which case each subset must contain ALL possible categories for that subset.
 #' @param conf Numeric. The confidence level in percent. Defaults to \code{80}.
 #' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.
 #' @return A data frame containing the categories, counts of observations, weighted estimated proportions, and confidence intervals. If subset using \code{split_vars} then all those variables will be included and the estimates will be per unique combination of values within those variables.
@@ -672,6 +672,7 @@ analyze_cat_multi <- function(data,
 #' @param alpha Numeric value. Must be between 0 and 1. The alpha for the confidence calculation, e.g. for 80% confidence, the alpha is 0.2. Defaults to \code{0.2}.
 #' @param chisq Character string. This decides which chi squared quantile calculation to use. The accepted values are \code{"A"}, \code{"B"}, or \code{"best"} (use the one which minimizes the confidence intervals). Goodman describes A as his default, calculated as the upper alpha times 100th percentage point of the chi-square distribution with k - 1 degrees of freedom. He also notes the alternative B, calculated as the upper alpha / k times 100th percentage point of the chi-square distribution with one degree of freedom, which will produce tighter intervals when k > 2 and alpha is 0.1, 0.5, or 0.01. Defaults to \code{"best"}
 #' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.
+#' @export
 goodman_cis <- function(counts,
                         alpha = 0.2,
                         chisq = "best",
@@ -758,3 +759,6 @@ goodman_cis <- function(counts,
 
   return(output)
 }
+
+# wilson_cis
+

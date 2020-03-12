@@ -45,7 +45,7 @@ apply_benchmarks <- function(data,
     stop("Either benchmark_group_var or benchmark_group_lut must not be NULL")
   } else if (!is.null(benchmark_group_var) & !is.null(benchmark_group_lut)) {
     if (verbose) {
-      message("Both a banchmark variable and a benchmark group lookup table have been provided. Assuming that the benchmark_group_var is in the lookup table and will be applied to the data from there.")
+      message("Both a benchmark variable and a benchmark group lookup table have been provided. Assuming that the benchmark_group_var is in the lookup table and will be applied to the data from there.")
     }
     if (!(benchmark_group_var) %in% names(benchmark_group_lut)) {
       stop(paste0("The variable ", benchmark_group_var, " does not appear in the names of benchmark_group_lut"))

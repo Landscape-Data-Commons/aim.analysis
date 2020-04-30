@@ -4,7 +4,7 @@
 \alias{plot.date.distribution}
 \title{Plotting Date Distributions}
 \usage{
-plot.date.distribution(points.benchmarked)
+\method{plot}{date.distribution}(points.benchmarked)
 }
 \arguments{
 \item{points.benchmarked}{Data frame. The output from \code{benchmark()}.}

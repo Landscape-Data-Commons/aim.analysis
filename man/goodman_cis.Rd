@@ -16,5 +16,5 @@ goodman_cis(counts, alpha = 0.2, chisq = "best", verbose = FALSE)
 \item{verbose}{Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.}
 }
 \description{
-Calculate confidence intervals for multinomial proportions using the method described by Leo Goodman in "On Simultaneous Confidence Intervals for Multinomial Proportions" in Technometrics in 1965.
+Calculate confidence intervals for multinomial proportions using the method described by Leo Goodman in "On Simultaneous Confidence Intervals for Multinomial Proportions" in Technometrics in 1965. This function can only handle one group of categorical counts at a time, so if you want to calculate confidence intervals for multiple groups, you need to do each separately.
 }

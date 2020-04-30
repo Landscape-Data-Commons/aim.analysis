@@ -4,7 +4,10 @@
 \alias{indicator.lookup}
 \title{Return the default indicator lookup table}
 \usage{
-indicator.lookup()
+indicator.lookup(tdat_version = "2")
+}
+\arguments{
+\item{tdat_version}{Version of TerrADat used in the analysis. Defaults to \code{"2"} for AIM 2.0. Also accepts \code{"1"} for AIM 1.0.}
 }
 \description{
 The default lookup table for combining the BLM Benchmark Tool table with the data from TerrADat

@@ -4,8 +4,13 @@
 \alias{vmessage}
 \title{Display the message if criteria are met}
 \usage{
-vmessage(string, criteria = NULL, criteria_relationship = "all",
-  type = "message", verbose = TRUE)
+vmessage(
+  string,
+  criteria = NULL,
+  criteria_relationship = "all",
+  type = "message",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{string}{Character string. The text to display.}

@@ -4,8 +4,13 @@
 \alias{combine_tdat_design}
 \title{Combine spatial points data frames from TerrADat and sample design databases}
 \usage{
-combine_tdat_design(terradat_points, design_points, by = "key",
-  add_coords = TRUE, projection = NULL)
+combine_tdat_design(
+  terradat_points,
+  design_points,
+  by = "key",
+  add_coords = TRUE,
+  projection = NULL
+)
 }
 \arguments{
 \item{design_points}{Spatial points data frame or list of spatial points data frames. These must be points with the variables from AIM terrestrial sample design databases.}

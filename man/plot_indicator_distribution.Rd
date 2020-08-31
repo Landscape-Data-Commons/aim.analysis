@@ -4,9 +4,13 @@
 \alias{plot_indicator_distribution}
 \title{Plotting Indicator Category Distributions}
 \usage{
-plot_indicator_distribution(analysis.df, benchmarks,
-  indicator.lut = NULL, indicator.variable = "INDICATOR.TDAT",
-  indicator.name = "INDICATOR.NAME")
+plot_indicator_distribution(
+  analysis.df,
+  benchmarks,
+  indicator.lut = NULL,
+  indicator.variable = "INDICATOR.TDAT",
+  indicator.name = "INDICATOR.NAME"
+)
 }
 \arguments{
 \item{analysis.df}{Data frame. The output from \code{spsurvey::cat.analysis()} sliced to a single combination of the values in Type, Subpopulation, MANAGEMENT.QUESTION, and Indicator.}

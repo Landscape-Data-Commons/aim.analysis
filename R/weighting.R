@@ -512,23 +512,34 @@ weight_aimlmf <- function(aim_points,
                                        FUN = function(X){
                                          # These are the count of AIM points with any valid fate
                                          aim_count <- sum(X[["aim"]])
-                                         # and the count of LMF points (we only have sampled plots, so no fate filtering was needed)
-                                         lmf_count <- sum(X[["lmf"]])
+
+                                         # We also need the count of LMF points with any valid fate, but that's complicated
+                                         # We only have the sampled LMF points so we can count those
+                                         lmf_sampled_count <- sum(X[["lmf"]])
+                                         # To get the number of evaluated but not sampled points:
+                                         # The LMF plot keys end in a digit that represents the intended sampling order within a segment
+                                         # 1 and 2 are considered base points and were intended to be sampled
+                                         # If a sampled LMF plot's plot key ends in 3, that means that one or both of the base points
+                                         # were evaluated and rejected rather than sampled, which brings the evaluated LMF plot count
+                                         # to three for the segment.
+                                         # This just asks if the third point was used
+                                         lmf_oversample_used <- any(grepl(X[["unique_id"]][X[["lmf"]]],
+                                                                          pattern = "\\D3$"))
+
+                                         # Likewise, if only one LMF plot was sampled in a segment, that means the other two were
+                                         # evalurated and rejected rather than sampled, also bringing the total to three.
+                                         # So if there was only one sampled or if the oversample was used, there were three evaluated
+                                         if (sum(X[["lmf"]]) == 1 | lmf_oversample_used) {
+                                           lmf_count <- 3
+                                         } else {
+                                           # This will fire only if there sampled count was 2, but better to be safe here
+                                           lmf_count <- lmf_sampled_count
+                                         }
+
 
                                          # The relative weight for points falling within a segment is calculated as
                                          # 1 / (number of points)
                                          relative_weight <- 1 / sum(aim_count, lmf_count)
-
-                                         # That said, if there was only one of the planned two LMF points sampled in the segment
-                                         # and no AIM points fell in it either, the relative weight is 0.5
-                                         # because the unsampled second point counts, making the math 1 / 2.
-                                         # This bit is inherited from Steve Garman and I think the rationale is this:
-                                         # The sample design for LMF drew three potential sampling locations per segment.
-                                         # In order for only one point of a planned two to be sampled, BOTH other points had to be rejected.
-                                         # The third LMF design point doesn't also get factored in has a design weight of 0?
-                                         if (aim_count == 0 & lmf_count == 1) {
-                                           relative_weight <- 0.5
-                                         }
 
                                          output <- data.frame("segment" = X[["segment"]][1],
                                                               "relwgt" = relative_weight,

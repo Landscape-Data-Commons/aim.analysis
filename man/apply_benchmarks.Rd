@@ -4,8 +4,25 @@
 \alias{apply_benchmarks}
 \title{Apply benchmarks to data}
 \usage{
-apply_benchmarks(data, idvars, benchmark_group_var = NULL,
-  benchmark_group_lut = NULL, benchmarks, verbose = FALSE)
+apply_benchmarks(
+  data,
+  idvars,
+  benchmark_group_var = NULL,
+  benchmark_group_lut = NULL,
+  benchmarks,
+  verbose = FALSE,
+  tdat_version = "2"
+)
+
+apply_benchmarks(
+  data,
+  idvars,
+  benchmark_group_var = NULL,
+  benchmark_group_lut = NULL,
+  benchmarks,
+  verbose = FALSE,
+  tdat_version = "2"
+)
 }
 \arguments{
 \item{data}{Data frame or spatial * data frame. The data to be benchmarked. Must contain the variable(s) in \code{idvars} as unique identifiers. May be "wide" or "long" data. If wide, then each indicator name should be a variable name. If long, then the indicator names and values should be in variables named \code{"indicator_var"} and \code{"value"}.}
@@ -19,10 +36,16 @@ apply_benchmarks(data, idvars, benchmark_group_var = NULL,
 \item{benchmarks}{Data frame. The benchmarks in the format produced by \code{read.benchmarks()}. If the benchmark group membership variable in other data frames is not \code{"Benchmark.Group"} then it must be renamed here.}
 
 \item{verbose}{Logical. If \code{TRUE} then the function will generate additional messages as it executes.}
+
+\item{tdat_version}{Version of TerrADat used in the analysis for use in \code{indicator lookup()}. Defaults to \code{"2"}.}
 }
 \value{
 A long data frame of each point/benchmarked indicator combination with the assigned condition category.
+
+A long data frame of each point/benchmarked indicator combination with the assigned condition category.
 }
 \description{
+Using data that has unique identifier and indicator value variables, apply benchmarks. The benchmarks are applied to the data based on the benchmark group(s) that the data belong to, which may already be assigned in the data or may be added with a benchmark group lookup table.
+
 Using data that has unique identifier and indicator value variables, apply benchmarks. The benchmarks are applied to the data based on the benchmark group(s) that the data belong to, which may already be assigned in the data or may be added with a benchmark group lookup table.
 }

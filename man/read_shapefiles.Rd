@@ -4,8 +4,12 @@
 \alias{read_shapefiles}
 \title{Read in multiple shapefiles}
 \usage{
-read_shapefiles(filenames, filepaths = NULL, projection = NULL,
-  stringsAsFactors = FALSE)
+read_shapefiles(
+  filenames,
+  filepaths = NULL,
+  projection = NULL,
+  stringsAsFactors = FALSE
+)
 }
 \arguments{
 \item{filenames}{Character string or vector of character strings. The filename(s) of the shapefile(s) to read in. May be the full filepath(s) to the shapefile(s), in which case use \code{filepath = NULL}. Does not need to include the file extension.}

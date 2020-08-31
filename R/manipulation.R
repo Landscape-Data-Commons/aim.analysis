@@ -14,7 +14,7 @@ add_coords <- function(spdf,
                        nad83 = FALSE,
                        albers = FALSE){
   projNAD83 <- sp::CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs")
-  projAL <- sp::CRS("+proj=aea")
+  projAL <- sp::CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs")
   if (current.proj) {
     coords <- as.data.frame(spdf@coords)
     if(!is.null(xynames)) {

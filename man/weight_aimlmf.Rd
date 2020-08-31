@@ -4,10 +4,22 @@
 \alias{weight_aimlmf}
 \title{Calculate weights for analyses combining AIM and LMF data}
 \usage{
-weight_aimlmf(aim_points, lmf_points, aim_idvar, lmf_idvar,
-  aim_fatevar = NULL, observed_fates = c("TS"), invalid_fates = NULL,
-  wgtcats = NULL, wgtcat_var, wgtcat_area_var = NULL,
-  segments = NULL, segment_var, projection = NULL, verbose = FALSE)
+weight_aimlmf(
+  aim_points,
+  lmf_points,
+  aim_idvar,
+  lmf_idvar,
+  aim_fatevar = NULL,
+  observed_fates = c("TS"),
+  invalid_fates = NULL,
+  wgtcats = NULL,
+  wgtcat_var,
+  wgtcat_area_var = NULL,
+  segments = NULL,
+  segment_var,
+  projection = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{aim_points}{Data frame or spatial points data frame. The AIM point information, including unique identities in the variable \code{aim_idvar}. If this is just a data frame OR if \code{wgtcats} is not a spatial polygons data frame then it must already have the weight category and LMF segment memberships assigned in the variables \code{wgtcat_var} and \code{segment_var} (there should be an \code{NA} for any observation that does not fall in an LMF segment). If this is spatial and so are either \code{wgtcats} or \code{segments}, then the points will be attributed with the memberships useing \code{sp::over()}. This must also include \code{aim_fate_var} if any of the points were not observed/sampled, e.g. rejected, inaccessible, or had an unknown fate, otherwise they will all be assumed to've been observed/sampled.}

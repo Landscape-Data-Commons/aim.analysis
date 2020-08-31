@@ -4,9 +4,15 @@
 \alias{sf_intersect}
 \title{Creating the Intersection of Two Spatial Polygons Data Frames using sf functions}
 \usage{
-sf_intersect(polygons1, polygons2, polygons1_attribute,
-  polygons2_attribute, polygons1_attribute_output = NULL,
-  polygons2_attribute_output = NULL, projection = NULL)
+sf_intersect(
+  polygons1,
+  polygons2,
+  polygons1_attribute,
+  polygons2_attribute,
+  polygons1_attribute_output = NULL,
+  polygons2_attribute_output = NULL,
+  projection = NULL
+)
 }
 \arguments{
 \item{polygons1}{Spatial polygons data frame. One of the two sets of geometry to intersect. \code{polygons1@data} must contain a variable with the name given as \code{polygons1_attribute}.}

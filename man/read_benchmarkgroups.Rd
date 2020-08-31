@@ -4,9 +4,13 @@
 \alias{read_benchmarkgroups}
 \title{Reading in benchmark groups from the Data Explorer}
 \usage{
-read_benchmarkgroups(path = getwd(), filename = NULL,
+read_benchmarkgroups(
+  path = getwd(),
+  filename = NULL,
   id_var = c("TerrADat Primary Key/LMF Plot Key"),
-  sheet = "Evaluation Information", ignore_var = c("GlobalID"))
+  sheet = "Evaluation Information",
+  ignore_var = c("GlobalID")
+)
 }
 \arguments{
 \item{path}{Character string. The path to the folder containing the file \code{filename} OR the full filepath to the file itself if \code{filename = NULL}. Defaults to the working directory as retrieved by \code{getwd()}.}

@@ -982,7 +982,7 @@ add.area <- function(spdf,
                      byid = TRUE
 ){
   ## Create a version in Albers Equal Area
-  spdf.albers <- sp::spTransform(x = spdf, CRSobj = sp::CRS("+proj=aea"))
+  spdf.albers <- sp::spTransform(x = spdf, CRSobj = sp::CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
 
   ## Add the area in hectares, stripping the IDs from gArea() output
   spdf@data$AREA.HA <- unname(rgeos::gArea(spdf.albers, byid = byid) * 0.0001)
@@ -1071,11 +1071,11 @@ erase.rgeos <- function(spdf,
   message(paste0("Attempting using rgeos::set_RGEOS_dropslivers(", sliverdrop, ") and rgeos::set_RGEOS_warnslivers(", sliverwarn, ") and set_REGOS_polyThreshold(", sliverthreshold, ")"))
   ## Making this Albers for right now for gBuffer()
   ## The gbuffer() is a common hack to deal with ring self-intersections, which it seems to do just fine here?
-  sp.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(spdf, sp::CRS("+proj=aea")),
+  sp.temp <- rgeos::gDifference(spgeom1 = rgeos::gBuffer(sp::spTransform(spdf, sp::CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs")),
                                                          byid = TRUE,
                                                          width = 0.1),
                                 spgeom2 = rgeos::gBuffer(sp::spTransform(spdf.erase,
-                                                                         sp::CRS("+proj=aea")),
+                                                                         sp::CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs")),
                                                          byid = TRUE,
                                                          width = 0.1),
                                 drop_lower_td = TRUE)

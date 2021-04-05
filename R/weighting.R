@@ -293,24 +293,26 @@ weight.adjust <- function(points,
 #' @param wgtcat_area_var Optional character string. The name of the variable in \code{wgtcats} that contains the AREAS IN HECTARES. Only optional if \code{wgtcats} is spatial. Defaults to \code{NULL}
 #' @param segments Optional spatial polygons data frame. The information about the LMF segments, this is only optional if \code{segment_var} is not already assigned to \code{aim_points} and \code{lmf_points}. This must contain the weight category identities in a variable named \code{segment_var}. Defaults to \code{NULL}
 #' @param segment_var Character string. The name of the variable in \code{segments} (or, if \code{segments} is not provided, \code{aim_points} and \code{lmf_points}) that contains the LMF segment identities.
+#' @param segment_var Character string. The name of the variable in \code{segments} (or, if \code{segments} is not provided, \code{aim_points} and \code{lmf_points}) that contains the proportion of the LMF segment which was sampled. If \code{segments} is \code{NULL} then each point in \code{aim_points} and \code{lmf_points} must have the proportion of the segment they belong to, which is untidy but works. Defaults to \code{NULL}.
 #' @param projection Optional CRS object. Used to reproject all spatial data. If \code{NULL} then the projection is taken from \code{wgtcats} unless it's not spatial in which case it's taken from \code{segments} unless it's not provided in which case no reprojection occurs. Defaults to \code{NULL}
 #' @param verbose Logical. If \code{TRUE} then the function will produce informative messages as it executes its steps. Useful for debugging. Defaults to \code{FALSE}.
 #' @return A list of two data frames: point_weights which contains information for each point that did not have a fate in \code{invalid_fates} and wgtcat_summary which contains information about each weight category.
 #' @export
 weight_aimlmf <- function(aim_points,
-                            lmf_points,
-                            aim_idvar,
-                            lmf_idvar,
-                            aim_fatevar = NULL,
-                            observed_fates = c("TS"),
-                            invalid_fates = NULL,
-                            wgtcats = NULL,
-                            wgtcat_var,
-                            wgtcat_area_var = NULL,
-                            segments = NULL,
-                            segment_var,
-                            projection = NULL,
-                            verbose = FALSE){
+                          lmf_points,
+                          aim_idvar,
+                          lmf_idvar,
+                          aim_fatevar = NULL,
+                          observed_fates = c("TS"),
+                          invalid_fates = NULL,
+                          wgtcats = NULL,
+                          wgtcat_var,
+                          wgtcat_area_var = NULL,
+                          segments = NULL,
+                          segment_var,
+                          segment_prop_var = NULL,
+                          projection = NULL,
+                          verbose = FALSE){
   if (length(wgtcat_var) != 1 | class(wgtcat_var) != "character") {
     stop("wgtcat_var must be a single character string")
   }
@@ -345,6 +347,28 @@ weight_aimlmf <- function(aim_points,
     if (!(segment_var %in% names(segments))) {
       stop(paste("The variable", segment_var, "does not appear in segments@data"))
     }
+  }
+
+  if (!is.null(segment_prop_var)) {
+    if (is.null(segments)) {
+      if (!(segment_prop_var %in% names(aim_points))) {
+        stop(paste("The variable", segment_prop_var, "does not appear in aim_points"))
+      }
+      if (!(segment_prop_var %in% names(lmf_points))) {
+        stop(paste("The variable", segment_prop_var, "does not appear in lmf_points"))
+      }
+      aim_points[["segment_proportion_sampled"]] <- aim_points[[segment_prop_var]]
+      lmf_points[["segment_proportion_sampled"]] <- lmf_points[[segment_prop_var]]
+    } else {
+      if (!(segment %in% names(segments))) {
+        stop(paste("The variable", segment_prop_var, "does not appear in segments"))
+      } else {
+        segments[["segment_proportion_sampled"]] <- segments[[segment_prop_var]]
+      }
+    }
+  } else {
+    aim_points[["segment_proportion_sampled"]] <- 1
+    lmf_points[["segment_proportion_sampled"]] <- 1
   }
 
   if (is.null(aim_fatevar)) {
@@ -454,6 +478,8 @@ weight_aimlmf <- function(aim_points,
     }
     aim_points[["segment"]] <- sp::over(aim_points, segments)[[segment_var]]
     lmf_points[["segment"]] <- sp::over(lmf_points, segments)[[segment_var]]
+    aim_points[["segment_proportion_sampled"]] <- sp::over(aim_points, segments)[[segment_prop_var]]
+    lmf_points[["segment_proportion_sampled"]] <- sp::over(lmf_points, segments)[[segment_prop_var]]
   }
 
 
@@ -485,12 +511,12 @@ weight_aimlmf <- function(aim_points,
 
   # NOTE THAT THIS FILTERS OUT ANYTHING FLAGGED AS NOT NEEDED IN THE FATE
   # So that'd be unused oversamples or points from the FUTURE that no one would've sampled anyway
-  aim_df <- aim_df[!(aim_df[["fate"]] %in% invalid_fates), c("unique_id", "fate", "wgtcat", "segment")]
+  aim_df <- aim_df[!(aim_df[["fate"]] %in% invalid_fates), c("unique_id", "fate", "wgtcat", "segment", "segment_proportion_sampled")]
   aim_df[["aim"]] <- TRUE
   aim_df[["lmf"]] <- FALSE
 
   # We only have target sampled LMF points available to us, so we don't need to filter them
-  lmf_df <- lmf_df[, c("unique_id", "fate", "wgtcat", "segment")]
+  lmf_df <- lmf_df[, c("unique_id", "fate", "wgtcat", "segment", "segment_proportion_sampled")]
   lmf_df[["aim"]] <- FALSE
   lmf_df[["lmf"]] <- TRUE
 
@@ -556,6 +582,10 @@ weight_aimlmf <- function(aim_points,
   # Anywhere there's an NA associated with an AIM point, that's just one that fell outside the segments
   combined_df[is.na(combined_df[["relwgt"]]) & combined_df[["aim"]], "relwgt"] <- 1
 
+  #### THIS IS BIG!!! THE ADJUSTMENT FOR SEGMENT SIZE
+  # The segments may not be entirely sampled (e.g. cut off by the AOI)
+  # This bit adjusts the relative weights accordingly using segment_sampled_proportion
+  combined_df[["relwgt"]][!is.na(combined_df[["relwgt"]])] <- combined_df[["relwgt"]][!is.na(combined_df[["relwgt"]])] * combined_df[["segment_proportion_sampled"]][!is.na(combined_df[["relwgt"]])]
 
 
   ####### NOTE!!!!!!!!! ##############################################
@@ -729,3 +759,4 @@ weight_aimlmf <- function(aim_points,
   return(list(point_weights = point_weights,
               wgtcat_summary = wgtcat_summary))
 }
+

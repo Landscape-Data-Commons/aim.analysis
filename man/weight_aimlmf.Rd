@@ -17,6 +17,7 @@ weight_aimlmf(
   wgtcat_area_var = NULL,
   segments = NULL,
   segment_var,
+  segment_prop_var = NULL,
   projection = NULL,
   verbose = FALSE
 )
@@ -45,6 +46,8 @@ weight_aimlmf(
 \item{segments}{Optional spatial polygons data frame. The information about the LMF segments, this is only optional if \code{segment_var} is not already assigned to \code{aim_points} and \code{lmf_points}. This must contain the weight category identities in a variable named \code{segment_var}. Defaults to \code{NULL}}
 
 \item{segment_var}{Character string. The name of the variable in \code{segments} (or, if \code{segments} is not provided, \code{aim_points} and \code{lmf_points}) that contains the LMF segment identities.}
+
+\item{segment_prop_var}{Character string. The name of the variable in \code{segments} (or, if \code{segments} is not provided, \code{aim_points} and \code{lmf_points}) that contains the proportion of the LMF segment which was sampled. If \code{segments} is \code{NULL} then each point in \code{aim_points} and \code{lmf_points} must have the proportion of the segment they belong to, which is untidy but works. Defaults to \code{NULL}.}
 
 \item{projection}{Optional CRS object. Used to reproject all spatial data. If \code{NULL} then the projection is taken from \code{wgtcats} unless it's not spatial in which case it's taken from \code{segments} unless it's not provided in which case no reprojection occurs. Defaults to \code{NULL}}
 

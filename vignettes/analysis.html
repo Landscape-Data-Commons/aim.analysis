@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Nelson Stauffer" />
+
+<meta name="date" content="2017-07-24" />
+
+<title>A Basic Analysis Workflow For AIM: this is a test</title>
+
+
+
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">A Basic Analysis Workflow For AIM: this is a test</h1>
+<h4 class="author"><em>Nelson Stauffer</em></h4>
+<h4 class="date"><em>2017-07-24</em></h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#minimum-software-requirements">Minimum Software Requirements</a></li>
+<li><a href="#minimum-data-requirements">Minimum Data Requirements</a></li>
+<li><a href="#optional-additional-data">Optional Additional Data</a></li>
+</ul></li>
+<li><a href="#procedure">Procedure</a><ul>
+<li><a href="#initialization">Initialization</a></li>
+<li><a href="#importing-your-data">Importing Your Data</a></li>
+<li><a href="#setting-up-relationships-and-prepping-data">Setting Up Relationships and Prepping Data</a></li>
+<li><a href="#calculating-weights">Calculating Weights</a></li>
+<li><a href="#running-the-weighted-analysis">Running The Weighted Analysis</a></li>
+<li><a href="#exporting-results">Exporting Results</a></li>
+</ul></li>
+<li><a href="#addenda">Addenda</a><ul>
+<li><a href="#using-reporting-units">Using Reporting Units</a></li>
+<li><a href="#how-weight-works">How weight() Works</a><ul>
+<li><a href="#calculating-weights-1">Calculating Weights</a></li>
+<li><a href="#combining-multiple-designs">Combining Multiple Designs</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Raw data and even indicators derived from them are relatively useless without some kind of analysis to guide interpretation. Likewise, it is difficult to responsibly use data without knowing the “how” of gathering them, computing derived indicators from them, and weighting and combining them. In the interest of reproducibility, full documentation or even the code executed for each step should be produced, stored, and served out as appropriate.</p>
+<p>This is a sketch of a simple workflow for a basic analysis for AIM data from TerrADat. For more complicated analyses, there may be additional steps needed. There are also a number of assumed geospatial manipulation steps omitted here which could either be done in R or in the GIS software of your choice, <em>e.g.</em> combining all evaluation groups into a single shapefile.</p>
+<p>The general steps this will cover are:</p>
+<ol style="list-style-type: decimal">
+<li>Initialization</li>
+<li>Importing data</li>
+<li>Setting up relationships between data</li>
+<li>Calculating weights</li>
+<li>Running a weighted analysis</li>
+<li>Exporting results</li>
+</ol>
+<div id="minimum-software-requirements" class="section level2">
+<h2>Minimum Software Requirements</h2>
+<p>Although <strong>R</strong> has very robust data manipulation package support, there are some difficulties with reliably handling small slivers of spatial geometry which inevitably occur when combining multiple designs. The spatial manipulation here is by default handled by programmatically creating a <code>.py</code> script and executing a call to <code>ArcPy</code> because ESRI has written it in such a way that it will successfully execute where <strong>R</strong> won’t. So, a valid install of <code>ArcPy</code> and its dependencies is very strongly recommended.</p>
+</div>
+<div id="minimum-data-requirements" class="section level2">
+<h2>Minimum Data Requirements</h2>
+<ul>
+<li>The terrestrial and/or remote sensing feature classes from TerrADat (<code>SV_IND_TERRESTRIALAIM</code>, <code>SV_IND_REMOTESENSING</code>). Which feature class depends on what indicators are being included in the analysis. It’s easiest if this is a file geodatabase (<code>.gdb</code>).</li>
+<li>The relevant sample design databases describing the designs included in the analysis. These are maintained and stored by the Bureau of Land Management National Operations Center.</li>
+<li>A DataExplorer<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <code>.xlsx</code> workbook with the Management Objectives sheet populated.</li>
+<li>Evaluation groups/strata as a polygon shapefile. This is used to connect the values from TerrADat to specific benchmarks in the DataExplorer workbook. The polygons can be multipart and overlapping.</li>
+</ul>
+</div>
+<div id="optional-additional-data" class="section level2">
+<h2>Optional Additional Data</h2>
+<ul>
+<li>Reporting units as a polygon shapefile. A single analysis pass can include multiple reporting units, but they must be spatially discrete.</li>
+</ul>
+</div>
+</div>
+<div id="procedure" class="section level1">
+<h1>Procedure</h1>
+<div id="initialization" class="section level2">
+<h2>Initialization</h2>
+<p>Many of the <code>aim.analysis::</code> functions are written to take a filepath argument separate from a filename argument because a number of different source files may be stored in the same folder and you may want to recycle the body of an analysis script without having to find and replace every instance of a filepath. A typical script starts with establishing the sources for the data that will be used, including TerrADat, the design database[s], the benchmarks, and evaluation groups.</p>
+<p>For example:</p>
+<pre><code>###############################################################
+## Setting initial values
+###############################################################
+project.name &lt;- &quot;Jornada_example&quot;
+output.path &lt;- &quot;C:/Projects/AIM/results/Jornada&quot;
+
+terradat.path &lt;- &quot;C:/Projects/AIM/data&quot;
+terradat.filename &lt;- &quot;TerrADat_current.gdb&quot;
+
+data.source &lt;- &quot;C:/Projects/AIM/data/Jornada&quot;
+
+benchmarks.file &lt;- &quot;DataExplorer_Jornada.xlsx&quot;
+
+evaluation.groups.filename &lt;- &quot;ecosites_eval_groups&quot;
+evaluation.groups.field &lt;- &quot;EVAL_STRAT&quot;
+
+designdatabases &lt;- c(&quot;Jornada_2014.gdb&quot;,
+                     &quot;Jornada_2015-2017.gdb&quot;,
+                     &quot;Jornada_south_well_project.gdb&quot;)</code></pre>
+</div>
+<div id="importing-your-data" class="section level2">
+<h2>Importing Your Data</h2>
+<p>Importing data is straightforward, so long as the data are correctly formatted. <code>aim.analysis::</code> has a family of functions written to import AIM-specific datasets: <code>read.tdat()</code>, <code>read.dd()</code>, and <code>read.benchmarks()</code>.</p>
+<p><code>read.tdat()</code> will read in whichever of the feature classes <code>SV_IND_TERRESTRIALAIM</code> and <code>SV_IND_REMOTESENSING</code> it finds in the <code>.gdb</code> it’s directed to. These are combined into a single, wide-format spatial points data frame. <code>read.benchmarks()</code> will read in the benchmark information from a DataExplorer workbook as stored in the sheet “Management Objectives” into a data frame. This process is actually why the requirements for populating that particular sheet are so stringent. <code>read.dd()</code> will read in one or more sample design database and produce a list of lists of their contents as spatial points/polygons data frames. The sub-lists are <code>'sf'</code> containing whatever sample frame feature classes were found, <code>'pts'</code> containing whatever point feature classes were found, an <code>'strata'</code> containing any stratification polygon feeature classes that were found. If a design database was missing any feature class, a <code>NULL</code> value is inserted into the relevant list as a placeholder.</p>
+<p>There is not an AIM-specific function for importing shapefiles containing evaluation groups or reporting units, so those need to be imported using something like <code>rgdal::readOGR()</code>. The shapefile you use should not have polygons included that don’t have values in the attribute field containing the evaluation group identities. If they do, then another step to filter the resulting spatial polygons data frame to remove the unattributed polygons is necessary.</p>
+<p>For example:</p>
+<pre><code>###############################################################
+## Reading in data
+###############################################################
+tdat.spdf &lt;- read.tdat(terradat.path,
+                       terradat.filename)
+
+# In this case the DataExplorer workbook, evaluation group polygons, and sample design databases are all found in the filepath stored as data.source
+
+benchmarks.df &lt;- read.benchmarks(data.path = data.source,
+                                 benchmarks.filename = benchmarks.file)
+
+# This reads in the evaluation group polygons
+eval.groups.spdf &lt;- rgdal::readOGR(dsn = data.source,
+                                   layer = eval.groups.filename,
+                                   stringsAsFactors = F)
+
+dd.data &lt;- read.dd(src = data.source,
+                   dd.src = designdatabases,
+                   func = &quot;readogr&quot;)</code></pre>
+<p>This is also an excellent place to check to make sure that the imported data are complete and correct before using them. Currently, <code>aim.analysis::</code> has only one quality control check function, <code>validate.keys()</code> which will take the output from <code>read.dd()</code> and report on issues with sampling status and keys in the <code>pts</code> list. Running that check is as simple as <code>validate.keys(dd.data)</code>.</p>
+</div>
+<div id="setting-up-relationships-and-prepping-data" class="section level2">
+<h2>Setting Up Relationships and Prepping Data</h2>
+<p>The datasets used for AIM analysis have a number of relationships, but at this point at least one more needs to be established. The TerrADat data need to be assigned to their evaluation groups, which in this case can be done using <code>attribute.shapefile()</code> to add values from and attribute in a spatial polygons data frame to the spatial points data frame. An important thing to note here is that each point could belong to more than one evaluation group, and so the resulting spatial points data frame may have more than one entry for each point (although no more than one for each unique combination of point and evaluation group).</p>
+<pre><code>###############################################################
+## Manipulating and prepping data
+###############################################################
+# Internally, &quot;evaluation stratum&quot; and &quot;evaluation group&quot; are used interchangeably. Use whichever terminology you'd prefer.
+tdat.spdf.attribute &lt;- attribute.shapefile(spdf1 = tdat.spdf,
+                                           spdf2 = eval.groups.spdf,
+                                           newfield = &quot;Evaluation.Stratum&quot;,
+                                           attributefield = eval.group.field)</code></pre>
+<p>Note that you could populate an attribute field called <code>&quot;Evaluation.Stratum&quot;</code> by non-spatial means as well if there are other relationships you need to use. This is merely the most common kind of evaluation group assignment.</p>
+<p>Because the analysis will be done based on classifications from benchmarks, the new relationship between the version of the TerrADat points and benchmarks needs to be used to apply the benchmarks to the indicator values. The function for this is <code>benchmark()</code>.</p>
+<pre><code>points.benchmarked &lt;- benchmark(benchmarks = benchmarks.df,
+                                tdat = tdat.spdf.attribute,
+                                evalstratumfield = &quot;Evaluation.Stratum&quot;)</code></pre>
+</div>
+<div id="calculating-weights" class="section level2">
+<h2>Calculating Weights</h2>
+<p>Weight calculations are mostly automated by <code>weight()</code> which produces a list of three data frames, the one directly relevant being <code>weight()$point.weights</code>. The default values for all of <code>weight()</code>’s arguments are already set up for a standard AIM analysis run, and include combining the designs that are provided, starting from the smallest design provided, using an external <code>ArcPy</code> call to do some spatial manipulations that are unstable in <strong>R</strong>, and all the field names as they appear in the standard sample design database schema. So, for a standard analysis run where the full extent of all the designs that have been imported should be considered and the designs should be combined, the call is as simple as:</p>
+<pre><code>###############################################################
+## Weight
+###############################################################
+weights.design &lt;- weight(dd.import = dd.data)</code></pre>
+</div>
+<div id="running-the-weighted-analysis" class="section level2">
+<h2>Running The Weighted Analysis</h2>
+<p>Once point weights are calculated and the TerrADat indicators have been benchmarked to sort them into evaluation categories, that information can be provided to <code>spsurvey::cat.analysis()</code>. The function <code>analyze()</code> will take the outputs already created and format them correctly for <code>cat.analysis()</code> for you. <code>analyze()</code> assumes that there is some sort of reporting unit applied to the points being analyzed, so in the case that they were not, the reporting unit is assumed to be the study area and the weights of the points will be used without adjustment. The argument <code>default.reportingunit</code> is for those times when the data weren’t clipped by reporting units in <code>weight()</code> but <code>reportingunit.type</code> should always be provided.</p>
+<pre><code>###############################################################
+## Analyze
+###############################################################
+analysis.design &lt;- analyze(evaluated.points = points.benchmarked,
+                           point.weights = weights.design$point.weights,
+                           default.reportingunit = &quot;Study Area&quot;,
+                           reportingunit.type = &quot;Study Area&quot;)</code></pre>
+</div>
+<div id="exporting-results" class="section level2">
+<h2>Exporting Results</h2>
+<p>In most cases, you’ll want to export the results from these steps for use elsewhere like producing maps. <code>aim.analysis::</code> has a family of functions dedicated to writing out these datasets in standard format with a consistent naming convention. Writing out the analysis output itself is simple:</p>
+<pre><code>###############################################################
+## Write
+###############################################################
+write.analysis(analysis.output = analysis.design$analyses,
+               name = project.name,
+               out.path = output.path)</code></pre>
+<p>Writing out the benchmark table as a <code>.csv</code> can take advantage of the naming function in <code>aim.analysis::</code>.</p>
+<pre><code>benchmarks.filename &lt;- paste0(output.path, &quot;/&quot;, filename.aim(name = project.name,
+                                                             type = &quot;benchmark_table&quot;,
+                                                             extension = &quot;csv&quot;))
+write.csv(benchmarks, benchmarks.filename)</code></pre>
+<p>Writing out ESRI shapefiles of several varieties is done with the same function. <code>write.shapefile</code> can take a single spatial points/polygons data frame or it can write out a set of them from the imported sample design databases.</p>
+<pre><code># This combines all of the spatial polygons data frames in dd.data$sf. Because union = TRUE they'll be combined into one polygon in the shapefile
+write.shapefile(spdf = dd.data,
+                dd = TRUE,
+                dd.list = &quot;sf&quot;,
+                union = TRUE,
+                name = project.name,
+                type = &quot;complete_boundary&quot;,
+                out.path = output.path)
+
+# This combines all of the spatial polygons data frames in dd.data$strata. Because union = FALSE there'll be many polygons in the shapefile
+write.shapefile(spdf = dd.data,
+                dd = TRUE,
+                dd.list = &quot;strata&quot;,
+                union = FALSE,
+                name = project.name,
+                type = &quot;all_strata&quot;,
+                out.path = output.path)
+
+# This writes out the spatial polygons data frame eval.groups.spdf. None of the dd* arguments are used because spdf != an output from read.dd()
+write.shapefile(spdf = eval.groups.spdf,
+                name = project.name,
+                type = &quot;evaluation_groups&quot;,
+                out.path = output.path)</code></pre>
+<p>One of the most frequently asked for outputs from TerrADat is a map of the data points attributed with their evaluation category (“Meeting”, “Not Meeting”, “Marginal”, <em>etc.</em>). The formatting of attribute tables for those kinds of point shapefiles rapidly becomes complicated due to how many evaluation groups a point can belong to across multiple managment questions and therefore how many indicators are evaluated for a given point, <em>e.g.</em> a single point might have three different benchmarks for “percent foliar cover” to answer three different management questions. The solution is to write out one point shapefile for each management question so that there isn’t duplicate geometry within a shapefile. This is automated with <code>write.benchmarkshp()</code> which joins the data frame of points with their evaluation categories to the TerrADat geometry and writes ESRI shapefiles.</p>
+<pre><code>write.benchmarkshp(points.benchmarked = points.benchmarked,
+                   tdat = tdat.spdf,
+                   out.path = output.path,
+                   name = project.name)</code></pre>
+<p>If you are running a standard AIM report using the <code>RMarkdown</code> template, then the minimum set of files required are the results of <code>analyze()</code>, the boundary polygon shapefile for the data, and the benchmark table as a <code>.csv</code>.</p>
+</div>
+</div>
+<div id="addenda" class="section level1">
+<h1>Addenda</h1>
+<div id="using-reporting-units" class="section level3">
+<h3>Using Reporting Units</h3>
+<p>If you have a spatial polygons data frame defining the reporting units extents, <code>weight()</code> takes two additional arguments: one for the spatial polygons data frame and one for the name of the attribute in it that contains the identities of the reporting units. The points and the sample frames and/or strata polygons will be clipped using that spatial polygons data frame and an additional step of adjusting weights to reflect the new extents using <code>weight.adjust()</code> which is a wrapper for <code>spsurvey::adjwgt</code>. So, to include reporting units, the code might look like:</p>
+<pre><code>reportingunits.spdf &lt;- rgdal::readOGR(dsn = data.source,
+                                      layer = &quot;priority_watersheds&quot;,
+                                      stringsAsFactors = F)
+                                      
+# Note that reportingunitfield should be the name of the actual field in reporting.units.spdf that contains the reporting unit identities
+weights.reportingunits &lt;- weight(dd.import = dd.data,
+                                 reporting.units.spdf = reportingunits.spdf,
+                                 reportingunitfield = &quot;WATERSHED NAME&quot;)
+
+# adjustedweights should be TRUE because the weights have been adjusted by reporting unit
+# reportingunit.type needs to meaningfully describe the reporting units, e.g. &quot;Watershed&quot;, &quot;Grazing Allotment&quot;, &quot;Seasonal Habitat&quot;
+analysis.reportingunits &lt;- analyze(evaluated.points = points.benchmarked,
+                                   point.weights = weights.design$point.weights,
+                                   reportingunit.type = &quot;Watershed&quot;,
+                                   adjustedweights = TRUE)
+
+write.analysis(analysis.output = analysis.reportingunits$analyses,
+               name = project.name,
+               out.path = output.path)
+
+write.shapefile(spdf = reportingunits.spdf,
+                name = project.name,
+                type = &quot;reporting_units&quot;,
+                out.path = output.path)</code></pre>
+</div>
+<div id="how-weight-works" class="section level2">
+<h2>How weight() Works</h2>
+<div id="calculating-weights-1" class="section level3">
+<h3>Calculating Weights</h3>
+<p>Weights of points are calculated using the point fates and the area they are associated with.</p>
+<p>Points are considered sampled only if their point fate is in the vector <code>target.values</code> which by default contains “TS” and “Target Sampled”. These are points that were drawn as part of the design and a field crew gathered data at because they met the sampling criteria. Other point fates are classified into “Non-target”, “Inaccessible”, “Unneeded”, and “Unknown”, but for the purposes of calculating the weight are grouped into a single “unsampled” category.</p>
+<p>Because not all of the intended points are sampled within an area, the proportion of the area that <em>was</em> sampled needs to be calculated.</p>
+<blockquote>
+<p><span class="math inline">\(\text{proportion of area sampled} = \text{area} * \frac{\text{number of sampled points}}{\text{number of sampled points + number of unsampled points}}\)</span></p>
+</blockquote>
+<p>Then weight given to any sampled point’s data expressed as units of area per point is calculated with:</p>
+<blockquote>
+<p><span class="math inline">\(\text{weight} = \frac{\text{proportion of area sampled}}{\text{number of sampled points}}\)</span></p>
+</blockquote>
+</div>
+<div id="combining-multiple-designs" class="section level3">
+<h3>Combining Multiple Designs</h3>
+<p>When combining multiple designs, points are reassigned to design sample frames and the design sample frames themselves are modified before the weights are calculated. This process is dependent on the order that the designs are considered, but the standard approach is to order the designs from smallest extent to largest extent. These factors can be controlled in <code>weight()</code> with the logical arguments <code>combine</code> and <code>reorder</code>.</p>
+<p>For the first sample frame, all of the points from all of the designs are compared against it to determine if they fall within its boundary. Those points that do are assigned to that sample frame and are not considered again in the combining process. Then the geometry of the sample frame is removed from the geometries of all other sample frames being combined.</p>
+<p>Each subsequent sample frame is compared against the remaining points to see which will be reassigned to it and then its geometry is erased from the remaining sample frames.</p>
+<p>The end result is that there is no spatial overlap between the design sample frames and points are assigned to the polygons they fall within regardless of whether or not that was the design they originated from. Because the geometries of the sample frames have been modified, the areas are changed and must be recalculated before moving into the weighting process.</p>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>INSERT LINK HERE FOR DATA EXPLORER STUFF<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

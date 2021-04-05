@@ -664,7 +664,8 @@ weight_aimlmf <- function(aim_points,
                                                         weight_adjustment = weight_adjustment,
                                                         point_count = sum(points[["observed"]]),
                                                         observed_point_count = nrow(points),
-                                                        stringsAsFactors = FALSE)
+                                                        stringsAsFactors = FALSE,
+                                                        row.names = NULL)
 
                             # But much more importantly add the calculated weights to the points
                             output_points <- points
@@ -702,7 +703,8 @@ weight_aimlmf <- function(aim_points,
                                                         weight_adjustment = NA,
                                                         point_count = 0,
                                                         observed_point_count = 0,
-                                                        stringsAsFactors = FALSE)
+                                                        stringsAsFactors = FALSE,
+                                                        row.names = NULL)
                             output_points <- NULL
                           }
 

@@ -585,7 +585,7 @@ weight_aimlmf <- function(aim_points,
   #### THIS IS BIG!!! THE ADJUSTMENT FOR SEGMENT SIZE
   # The segments may not be entirely sampled (e.g. cut off by the AOI)
   # This bit adjusts the relative weights accordingly using segment_sampled_proportion
-  combined_df[["relwgt"]][!is.na(combined_df[["relwgt"]])] <- combined_df[["relwgt"]][!is.na(combined_df[["relwgt"]])] * combined_df[["segment_proportion_sampled"]][!is.na(combined_df[["relwgt"]])]
+  combined_df[["relwgt"]][!is.na(combined_df[["segment_proportion_sampled"]])] <- combined_df[["relwgt"]][!is.na(combined_df[["segment_proportion_sampled"]])] * combined_df[["segment_proportion_sampled"]][!is.na(combined_df[["segment_proportion_sampled"]])]
 
 
   ####### NOTE!!!!!!!!! ##############################################

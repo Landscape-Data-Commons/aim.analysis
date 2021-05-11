@@ -10,6 +10,7 @@
 #' @param output_path Character string. The filepath to the folder into which the resulting feature classes will be written.
 #' @param verbose Logical. If \code{TRUE} then diagnostic messages will be returned throughout processing. Defaults to \code{FALSE}.
 #' @return Nothing. Writes out polygon shapefiles to a specified location.
+#' @export
 
 sdd_clip <- function(reportingunit,
                      reportingunit_path = NULL,
@@ -356,6 +357,7 @@ sdd_clip <- function(reportingunit,
 #' @param output Character string. Determines the output format and must be either \code{"sf"} for an sf object or \code{"spdf"} for a Spatial Polygons Data Frame. Defaults to \code{"sf"}
 #' @param verbose Logical. If \code{TRUE} then diagnostic messages will be returned throughout processing. Defaults to \code{FALSE}.
 #' @return An sf polygon object with the attributed "unique_is" and "area_ha" (area in hectares) projected in Albers Equal Area Conic
+#' @export
 
 wgtcat_gen <- function(reportingunit,
                        reportingunit_path = NULL,

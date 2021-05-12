@@ -356,7 +356,7 @@ sdd_clip <- function(reportingunit,
 #' @param pointvisits_path Optional character string. If \code{pointvisits} is a character string naming a feature class then this must be the path to the folder or geodatabase containing that feature class. Defaults to \code{NULL}.
 #' @param output Character string. Determines the output format and must be either \code{"sf"} for an sf object or \code{"spdf"} for a Spatial Polygons Data Frame. Defaults to \code{"sf"}
 #' @param verbose Logical. If \code{TRUE} then diagnostic messages will be returned throughout processing. Defaults to \code{FALSE}.
-#' @return An sf polygon or Spatial Polygons Data Frame object with the attributed "unique_id" and "area_ha" (area in hectares) projected in Albers Equal Area Conic
+#' @return An sf polygon or Spatial Polygons Data Frame object with the attributes "unique_id" and "area_ha" (area in hectares) projected in Albers Equal Area Conic
 #' @export
 
 wgtcat_gen <- function(reportingunit,

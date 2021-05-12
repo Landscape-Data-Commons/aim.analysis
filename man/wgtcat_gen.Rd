@@ -60,7 +60,7 @@ wgtcat_gen(
 \value{
 A spatial polygons data frame with the single variable \code{"wgt_cat"} in the data slot containing the unique weight categories.
 
-An sf polygon or Spatial Polygons Data Frame object with the attributed "unique_id" and "area_ha" (area in hectares) projected in Albers Equal Area Conic
+An sf polygon or Spatial Polygons Data Frame object with the attributes "unique_id" and "area_ha" (area in hectares) projected in Albers Equal Area Conic
 }
 \description{
 Create weight category polygons from the intersection of multiple spatial polygons data frames. When combining overlapping designs, weight categories are the unique combinations of the sample frame (or stratification) identities from the designs. This takes a list of spatial polygons data frames which have a common variable containing their unique weighting identifier (e.g. three stratification schemes that all contain a variable named "wgt_cat" that holds the stratum identities) and intersects them to find the weight categories. This is extremely vulnerable to malformed/invalid geometry and so it is highly recommended that you use the argument \code{makevalid = TRUE} to prompt the function to check and attempt to repair geometry as needed after every geoprocessing step. This is slower, but the intersections will almost certainly fail without it. If you are feeling especially paranoid, you can also use \code{force = TRUE} to force repair actions even on valid geometry.

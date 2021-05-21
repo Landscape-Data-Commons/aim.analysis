@@ -71,8 +71,6 @@ SagebrushShape_Live_ColumnCount,Live Columnar Sagebrush Shape Count(number of hi
 SagebrushShape_Live_SpreadCount,Live Spreading Sagebrush Shape Count (number of hits),NA,,new
 SagebrushShape_All_ColumnCount,All Sagebrush Shapes Count (number of hits),NA,,new
 SagebrushShape_All_SpreadCount,All Spreading Sagebrush Shapes Count (number of hits),NA,,new
-SagebrushShape_Live_Predominant,Most Frequent Live Sagebrush Shape,NA,,new
-SagebrushShape_All_Predominant,Most Frequent Sagebrush Shape,NA,,new
 AH_PerenGrassCover,"Perennial Grass Cover (%, any hit)",NA,,new
 AH_PerenForbCover,"Perennial Forb Cover (%, any hit)",NA,,new
 AH_PerenForbGrassCover,"Perennial Grass/Forb Cover (%, any hit)",NA,,new
@@ -81,7 +79,6 @@ Hgt_PerenForb_Avg,Average Perennial Forb Height (cm),NA,,new
 Hgt_PerenGrass_Avg,Average Perennial Grass Height (cm),NA,,new
 AH_ShrubCover,"Shrub Cover (%, any hit)",NA,,new
 AH_NonSagebrushShrubCover,"Non-sagebrush Shrub Cover (%, any hit)",NA,,new
-Spp_PreferredForb,Preferred Forb Species List,NA,,new
 AH_PreferredForb,"Preferred Forb (%, any hit)",NA,,new
 NumSpp_PreferredForb,Preferred Forb Count,NA,,new
 AH_AnnGrassCover,"Annual Grass Cover (%, any hit)",NA,,new
@@ -89,12 +86,8 @@ AH_GrassCover,"Grass Cover (%, any hit)",NA,,new
 AH_ForbCover,"Forb Cover (%, any hit)",NA,,new
 AH_TallPerenGrassCover,"Tall Perennial Grass Cover (%, any hit)",NA,,new
 AH_ShortPerenGrassCover,"Short Perennial Grass Cover (%, any hit)",NA,,new
-Spp_TallPerenGrass,Tall Perennial Grass Species List,NA,,new
-Spp_ShortPerenGrass,Short Perennial Grass Species List,NA,,new
 Hgt_TallPerenGrass_Avg,Average Tall Perennial Grass Height (cm),NA,,new
 Hgt_ShortPerenGrass_Avg,Average Short Perennial Grass Height (cm),NA,,new
 Hgt_Grass_Avg,Average Grass Height (cm),NA,,new
 Hgt_Forb_Avg,Average Forb Height (cm),NA,,new
-Spp_Sagebrush,Sagebrush Species List,NA,,new
 AH_NoxCover,"Noxious Cover (%, any hit)",InvPlantCover_AH,modify,
-Spp_Nox,Noxious Species List,NA,,new

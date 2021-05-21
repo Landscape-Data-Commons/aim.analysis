@@ -10,5 +10,5 @@ indicator.lookup(tdat_version = "2")
 \item{tdat_version}{Version of TerrADat used in the analysis. Defaults to \code{"2"} for AIM 2.0. Also accepts \code{"1"} for AIM 1.0.}
 }
 \description{
-The default lookup table for combining the BLM Benchmark Tool table with the data from TerrADat
+The default lookup table for combining the BLM Benchmark Tool table with the data from TerrADat. Note! This only includes numeric indicators.
 }

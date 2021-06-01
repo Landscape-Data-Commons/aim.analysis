@@ -380,7 +380,8 @@ analyze_cat <- function(data,
                                       chisq = "best",
                                       verbose = verbose)
   confidence_interval_vars <- c("category", "weighted_observation_count", "weighted_observation_proportion",
-                                "weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound")
+                                paste0(c("weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound"),
+                                       "_", conf, "pct"))
   names(confidence_intervals) <- confidence_interval_vars
 
   # And now it's a matter of combining and formatting
@@ -395,8 +396,8 @@ analyze_cat <- function(data,
                         stringsAsFactors = FALSE)
 
   confidence_interval_keep_vars <- c("category",
-                                     "weighted_observation_proportion_lower_bound",
-                                     "weighted_observation_proportion_upper_bound")
+                                     paste0(c("weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound"),
+                                            "_", conf, "pct"))
 
   # Combine the results and confidence intervals
   output <- merge(x = results,

@@ -359,7 +359,7 @@ analyze_cat <- function(data,
   # Okay, so if we have definitions to catch categories with zero observations, add those
   # Because it should matter for calculating confidence intervals
   if (!is.null(definitions)) {
-    defined_categories <- definitions[[cat_var]]
+    defined_categories <- definitions
     missing_categories <- defined_categories[!(defined_categories %in% present_categories)]
     # Looping because it's easy, not because it's the best solution
     # But we want to populate the 0s for all of these!

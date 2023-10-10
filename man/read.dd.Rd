@@ -9,8 +9,7 @@ read.dd(
   dd.src,
   split = TRUE,
   omitNAdesignations = FALSE,
- 
-    projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
+  projection = sp::CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
 )
 }
 \arguments{

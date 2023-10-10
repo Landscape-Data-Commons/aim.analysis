@@ -4,7 +4,12 @@
 \alias{repair_geometry}
 \title{Identify and repair invalid geometry in spatial polygons data frames}
 \usage{
-repair_geometry(polygons, verbose = FALSE, force = FALSE)
+repair_geometry(
+  polygons,
+  verbose = FALSE,
+  force = FALSE,
+  use_spherical_geometry = TRUE
+)
 }
 \arguments{
 \item{polygons}{Spatial polygons (either sf or spatial polygons data frame). The polygons to be checked. Note that the function will halt if the geometry is corrupt and not return a value.}
@@ -12,6 +17,8 @@ repair_geometry(polygons, verbose = FALSE, force = FALSE)
 \item{verbose}{Logical. If \code{TRUE} then the function will produce informative messages as it executes its steps. Useful for debugging. Defaults to \code{FALSE}.}
 
 \item{force}{Logical. If \code{TRUE} then both valid and invalid polygons will be buffered by 0. This shouldn't be necessary, but is a feature for the paranoid.}
+
+\item{use_spherical_geometry}{Logical. USE AT YOUR OWN RISK. Controls if sf uses spherical geometry or not. For particularly wonky sf objects, this may be necessary to effect any kind of repair but can have unintended consequences for the resulting geometry. If \code{TRUE} then \code{sf::sf_use_s2()} will be set to \code{TRUE} which is the default for the package. Defaults to \code{TRUE}.}
 }
 \value{
 The spatial polygons data frame \code{polygons1}. This will be unchanged if the geometry was valid or repaired if it was invalid.

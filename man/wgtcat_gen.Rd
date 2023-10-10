@@ -55,6 +55,8 @@ wgtcat_gen(
 
 \item{force}{Logical. This is passed to \code{repair_geometry()} if \code{makevalid = TRUE}. If \code{TRUE} this will force the function to attempt to repair geometry even if there are no errors. This is for the paranoid. Defaults to \code{FALSE}.}
 
+\item{use_spherical_geometry}{Logical. USE AT YOUR OWN RISK. Controls if sf uses spherical geometry or not. For particularly wonky sf objects, this may be necessary to effect any kind of repair but can have unintended consequences for the resulting geometry. If \code{TRUE} then \code{sf::sf_use_s2()} will be set to \code{TRUE} which is the default for the package. Defaults to \code{TRUE}.}
+
 \item{scale}{Numeric. A value to be passed to \code{rgeos::setScale()} to use for the steps of this function. It will be returned to the previous value before the function returns its output. Defaults to \code{1e5} (precision to five decimal places).}
 }
 \value{

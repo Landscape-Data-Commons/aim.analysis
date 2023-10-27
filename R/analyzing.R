@@ -267,7 +267,8 @@ analyze_cat <- function(data,
 
 
   # Make sure all the variables are in place
-  required_data_vars <- c(id_var, cat_var)
+  required_data_vars <- c(id_var,
+                          cat_var)
   missing_data_vars <- required_data_vars[!(required_data_vars %in% names(data))]
   if (length(missing_data_vars) > 0) {
     stop("The following variables are missing from data: ", paste(missing_data_vars, collapse = , ", "))

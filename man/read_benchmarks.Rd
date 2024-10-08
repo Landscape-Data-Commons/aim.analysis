@@ -8,8 +8,8 @@ read_benchmarks(
   filename = "",
   filepath = NULL,
   sheet_name = "Monitoring Objectives",
-  eval_strings = list(c("Lower.Limit", "LL.Relation", "x"), c("x", "UL.Relation",
-    "Upper.Limit"), c("x", "Proportion.Relation", "Required.Proportion"))
+  eval_strings = list(c("Lower_Limit", "LL_Relation", "x"), c("x", "UL_Relation",
+    "Upper_Limit"), c("x", "Proportion_Relation", "Required_Proportion"))
 )
 }
 \arguments{

@@ -45,13 +45,9 @@ The purpose of this report is to purpose of this report is to present monitoring
 ## Report Organization
 
 This report has four main sections.
-
 1. The **introduction** sets the stage.
-
-2. The **data summary** provides contextual information that is helpful for interpreting the results, including the list of indicators, timing of data collection, and maps.
-
+2. The **data summary** provides contextual information that is helpful for interpreting the results, including the list of indicators, time period, timing of data collection, and maps.
 3. The **goals, monitoring objectives, benchmarks, and results summary** section is where results begin. This contains tables of which indicators met specified objectives by reporting unit and a summary of the stated objectives.  These tables can be used by BLM land managers to evaluate whether management goals were were achieved based on monitoring objectives.
-
 4. The **indicator estimates by reporting unit for monitoring objectives** section identifies the condition of each indicator for each monitoring objective in each area of interest (i.e., reporting unit). This section provides more detail about the information in the previous section and can be used as supporting information for the conclusions drawn from those tables.
 
 These are finally followed by the **appendices** contain additional background information on AIM, the core indicators and methods, and the analysis approaches used to generate this report.
@@ -66,7 +62,7 @@ This report summarizes and analyzes information collected from a terrestrial AIM
 * Spatial data files defining the reporting units for which estimates were generated from the AIM data. This was provided by the user.
 * (OPTIONAL) - Additional sample points from the BLM Landscape Monitoring Framework to supplement the AIM project data.
 
-The original, narrative description of the project design and monitoring objectives were captured in the project's Monitoring Design Worksheet which was used to select or create the data sources listed above.
+The original, narrative description of the project design and monitoring objectives were captured in the project’s Monitoring Design Worksheet which was used to select or create the data sources listed above.
 
 ## Interpreting the Results
 
@@ -85,14 +81,14 @@ For additional information, please see <http://aim.landscapetoolbox.org> or cont
 
 ***
 # Data Summary {.tabset .tabset-fade .tabset-pills}
-The following tabs contain tables and graphs describing the information in this report and the data collection effort. This includes the a map of the monitoring sites and reporting units, the indicators being considered, and the timing of data collection.
+The following tabs contain tables and graphs describing the information in this report and the data collection effort. This includes the indicators being considered, the time period of data collection, descriptions of the actual data collection effort relative to the original sampling design, and a map of the monitoring sites and reporting units.
 
 ## Map of Study Area, Reporting Units, and Sample Points
-The map below is provided for general reference only. It was created from the spatial data stored in the project's Sample Design Database, the reporting units provided for this analysis, and the actual monitoring site locations recorded in TerrADat.
+The map below is provided for general reference only. It was created from the spatial data stored in the project's Sample Design Database, the reporting units provided for this analysis, and the actual monitoring site locations recorded in TerrADat. The map is dynamic - you can pan and zoom it. Layers may also be toggled on/off to view specific features.
 
 ```{r studyMap, echo=FALSE}
 # The overview map
-map.general
+map.overview
 
 ```
 
@@ -115,6 +111,17 @@ dates.plot
 
 ```
 
+## Data Collection Summary
+Some sites originally selected as part of a monitoring design will not undergo data collection. For example, selected sites may not be accessible to field crews, or safety concerns may prevent data from being collected. The [Rejection Criteria page on the AIM Landscape Toolbox website](http://aim.landscapetoolbox.org/office-sample-point-evaluation/) describes the rejection criteria and process for evaluating sites. To ensure unbiased estimates of the proportion of the landscape achieving desired conditions, it is important to know the fate of each of the originally-selected sites. The graph below summarizes the fates for every location in the sample design(s) considered in this report. Note that this includes every point that was part of a Sample Design Database used in creating the report, so the counts may be higher than might be initially expected.
+
+**Target sampled** sites are locations on BLM lands where monitoring data were collected. **Inaccessible** sites are on BLM lands, but the data collectors could not physically access the site (e.g., needed to cross private land and access was denied, road was washed out). **Non-target** sites are locations that upon further review were determined to not be on BLM-managed lands. **Unknown** sites are those for which their fate was not recorded. If the necessary information was gained (e.g., condition estimate with desired confidence) without sampling all of the selected points, then any extra points could be marked as **Unneeded** (this is not common).
+
+```{r samplingSummary, error=FALSE, message=FALSE, echo=FALSE}
+fates.plot
+
+```
+
+
 ***
 # Goals, Monitoring Objectives, Benchmarks, and Results Summary
 The following tables summarize the results of this report. They contain land management goals and whether desired conditions, stated as monitoring objectives, were achieved based on available monitoring data in the areas of interest. Monitoring objectives include key indicators of ecosystem health, benchmarks that define desired values of the indicators, and the proportion of the landscape required to meet benchmarks. Monitoring objectives were specified by field office staff in the project's Monitoring Design Worksheet and/or Terrestrial Benchmark Workbook.
@@ -128,10 +135,10 @@ These tables summarize land management goals and whether related monitoring obje
 
 ```{r lsPropsTables, echo=FALSE,messages=FALSE, warning=FALSE, results='asis'}
 # print the summary tables by whether or not meeting objectives
-for (val in c("YES", "NO", "UNCERTAIN")) {
+for (val in c("YES","NO","AT THRESHOLD")) {
   d <- reporting.unit.summary.df[grepl(paste(val,"$",sep=""),
-                           toupper(reporting.unit.summary.df$Objective.Met)),]
-  d <- d[, c("Monitoring.Objective", "Indicator", "Objective.Met", "reporting.unit")]
+                           toupper(reporting.unit.summary.df[, 9])),]
+  d <- d[, c(1, 2, 9, 11)]
   names(d) <- c("Goal/Managment Question",
                 "Indicator",
                 "Objective Met?",
@@ -184,43 +191,34 @@ This section identifies the proportion of land or water resources that is achiev
 For the details of each monitoring objective, see "Goals, Objectives, Benchmarks, and Results by Reporting Unit."  Monitoring objectives were determined by the field office in their Monitoring Design Worksheet and/or Terrestrial Benchmark Tool.
 
 
-```{r conditionResults, echo=FALSE, error=TRUE, message=TRUE, warning=TRUE, results='asis'}
+```{r conditionResults, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, results='asis'}
 cat("\n## Results by Reporting Unit {.tabset .tabset-fade .tabset-pills}\n")
-# By reporting unit type
-for (type in unique(plots.df$Type)) {
-  reporting.units.current <- unique(dplyr::filter(.data = plots.df, Type == type)[["Subpopulation"]])
-  # By reporting unit
-  for (reporting.unit in reporting.units.current) {
-    cat("\n###", type, ": ", reporting.unit, "\n")
-    current.fates <- fates.plots[[reporting.unit]]
-    gridExtra::grid.arrange(current.fates)
-    cat("\n**Target sampled** sites are locations on BLM lands where monitoring data were collected. **Inaccessible** sites are on BLM lands, but the data collectors could not physically access the site (e.g., needed to cross private land and access was denied, road was washed out). **Non-target** sites are locations that upon further review were determined to not be on BLM-managed lands. **Unknown** sites are those for which their fate was not recorded.")
-    management.questions.current <- unique(dplyr::filter(.data = plots.df,
-                                         Type == type,
-                                         Subpopulation == reporting.unit)[["MANAGEMENT.QUESTION"]])
-    # By management question
-    for (mq in management.questions.current) {
-      cat("\n")
+for (level in reporting.unit.levels) { # by reporting unit level
+
+  #cat("\n",msg1,"\n")
+  data.reporting.unit.level <- analysis %>% dplyr::filter(Type == level)
+  reporting.units <- unique(data.reporting.unit.level$Subpopulation)
+  for (reporting.unit in reporting.units) {
+    cat("\n###", level, ": ", reporting.unit, "\n")
+    data.reporting.unit <- data.reporting.unit.level %>% dplyr::filter(Subpopulation == reporting.unit)
+    mqs <- unique(data.reporting.unit$MANAGEMENT.QUESTION)
+    for (mq in mqs) { # by specific reporting unit
       cat("\n#### **Goal/Management Question: ", mq, "**\n")
       data.mq <- data.reporting.unit %>% dplyr::filter(MANAGEMENT.QUESTION == mq)
-      indicators.current <- unique(dplyr::filter(.data = plots.df,
-                                         Type == type,
-                                         Subpopulation == reporting.unit,
-                                         MANAGEMENT.QUESTION == mq)[["Indicator"]])
-      # By indicator
-      for (indicator in indicators.current) {
+      Indicators <- unique(data.mq$Indicator)
+      for (indicator in Indicators) {  # by indicator
         indicator.name <- indicator.lut$indicator.name[indicator.lut$indicator.tdat == indicator]
         cat("\n#### Indicator: ", indicator.lut$indicator.name[indicator.lut$indicator.tdat == indicator], "\n")
         ## Look up the landscape threshold value for the RU and indicator
         req.prop <- benchmarks.sum[benchmarks.sum$indicator.tdat == indicator & !is.na(benchmarks.sum$Required.Proportion), 4]
         req.prop <- as.numeric(req.prop[1, 1])
-
+        
         if (!is.na(req.prop)) {
           req.prop <- req.prop*100
         } else {
           req.prop <- 0
         }
-
+        
         plot <- indicatorPlot(df = analysis,
                               reporting.unit.level = level,
                               reporting.unit.name = reporting.unit,
@@ -228,23 +226,23 @@ for (type in unique(plots.df$Type)) {
                               indicator.lut = indicator.lut,
                               mq = mq,
                               threshold = req.prop)
-
-        map <- indicatorMap(reporting.unit.level = type,
+        
+        map <- indicatorMap(reporting.unit.level = level,
                          reporting.unit.name = reporting.unit,
                          reporting.units.spdf = reporting.units.spdf,
                          prjarea.spdf = project.area.spdf,
                          samplepts.spdf = points.benchmarked.spdf[points.benchmarked.spdf@data$MANAGEMENT.QUESTION == mq & points.benchmarked.spdf@data$INDICATOR == indicator,])
-
+        
         txt <- grid::textGrob(label = msgGrob,
                               just = "centre",
                               gp = grid::gpar(fontsize = 18,
                                               col = "red"))
-
+        
         gridExtra::grid.arrange(gridExtra::arrangeGrob(map, txt, nrow = 2),
                                 plot,
                                 ncol = 2,
                                 widths = c(1, 3))
-
+        
         cat("\n")
         cat("\n",msg1,"\n")
         cat("\n#### Results Table\n")

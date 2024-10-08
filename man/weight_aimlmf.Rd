@@ -10,21 +10,22 @@ weight_aimlmf(
   aim_idvar,
   lmf_idvar,
   aim_fatevar = NULL,
-  observed_fates = c("TS"),
+  observed_fates = NULL,
   invalid_fates = NULL,
   wgtcats = NULL,
   wgtcat_var,
   wgtcat_area_var = NULL,
   segments = NULL,
   segment_var,
+  segment_prop_var = NULL,
   projection = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{aim_points}{Data frame or spatial points data frame. The AIM point information, including unique identities in the variable \code{aim_idvar}. If this is just a data frame OR if \code{wgtcats} is not a spatial polygons data frame then it must already have the weight category and LMF segment memberships assigned in the variables \code{wgtcat_var} and \code{segment_var} (there should be an \code{NA} for any observation that does not fall in an LMF segment). If this is spatial and so are either \code{wgtcats} or \code{segments}, then the points will be attributed with the memberships useing \code{sp::over()}. This must also include \code{aim_fate_var} if any of the points were not observed/sampled, e.g. rejected, inaccessible, or had an unknown fate, otherwise they will all be assumed to've been observed/sampled.}
+\item{aim_points}{Data frame or sf points object. The AIM point information, including unique identities in the variable \code{aim_idvar}. If this is just a data frame OR if \code{wgtcats} is not a spatial polygons data frame then it must already have the weight category and LMF segment memberships assigned in the variables \code{wgtcat_var} and \code{segment_var} (there should be an \code{NA} for any observation that does not fall in an LMF segment). If this is spatial and so are either \code{wgtcats} or \code{segments}, then the points will be attributed with the memberships useing \code{sp::over()}. This must also include \code{aim_fate_var} if any of the points were not observed/sampled, e.g. rejected, inaccessible, or had an unknown fate, otherwise they will all be assumed to've been observed/sampled.}
 
-\item{lmf_points}{Data frame or spatial points data frame. The LMF point information, including unique identities in the variable \code{lmf_idvar}. If this is just a data frame OR if \code{wgtcats} is not a spatial polygons data frame then it must already have the weight category and LMF segment memberships assigned in the variables \code{wgtcat_var} and \code{segment_var} (there should be an \code{NA} for any observation that does not fall in an LMF segment). If this is spatial and so are either \code{wgtcats} or \code{segments}, then the points will be attributed with the memberships useing \code{sp::over()}. All LMF points are assumed to be observed/sampled.}
+\item{lmf_points}{Data frame or sf points object. The LMF point information, including unique identities in the variable \code{lmf_idvar}. If this is just a data frame OR if \code{wgtcats} is not a spatial polygons data frame then it must already have the weight category and LMF segment memberships assigned in the variables \code{wgtcat_var} and \code{segment_var} (there should be an \code{NA} for any observation that does not fall in an LMF segment). If this is spatial and so are either \code{wgtcats} or \code{segments}, then the points will be attributed with the memberships useing \code{sp::over()}. All LMF points are assumed to be observed/sampled.}
 
 \item{aim_idvar}{Character string. The name of the variable in \code{aim_points} that contains the unique identities for the points.}
 
@@ -45,6 +46,8 @@ weight_aimlmf(
 \item{segments}{Optional spatial polygons data frame. The information about the LMF segments, this is only optional if \code{segment_var} is not already assigned to \code{aim_points} and \code{lmf_points}. This must contain the weight category identities in a variable named \code{segment_var}. Defaults to \code{NULL}}
 
 \item{segment_var}{Character string. The name of the variable in \code{segments} (or, if \code{segments} is not provided, \code{aim_points} and \code{lmf_points}) that contains the LMF segment identities.}
+
+\item{segment_prop_var}{Character string. The name of the variable in \code{segments} (or, if \code{segments} is not provided, \code{aim_points} and \code{lmf_points}) that contains the proportion of the LMF segment which was sampled. If \code{segments} is \code{NULL} then each point in \code{aim_points} and \code{lmf_points} must have the proportion of the segment they belong to, which is untidy but works. Defaults to \code{NULL}.}
 
 \item{projection}{Optional CRS object. Used to reproject all spatial data. If \code{NULL} then the projection is taken from \code{wgtcats} unless it's not spatial in which case it's taken from \code{segments} unless it's not provided in which case no reprojection occurs. Defaults to \code{NULL}}
 

@@ -19,7 +19,4 @@ The original sf object with an additional field for each area unit calculated, a
 \description{
 This function takes a polygon or multipolygon sf object and calculates and adds area fields to the data frame. It will always add square meters, but may additionally add square kilometers and hectares as well.
 }
-\examples{
-add_area()
-}
 \keyword{area}

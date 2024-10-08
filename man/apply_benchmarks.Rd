@@ -13,16 +13,6 @@ apply_benchmarks(
   verbose = FALSE,
   tdat_version = "2"
 )
-
-apply_benchmarks(
-  data,
-  idvars,
-  benchmark_group_var = NULL,
-  benchmark_group_lut = NULL,
-  benchmarks,
-  verbose = FALSE,
-  tdat_version = "2"
-)
 }
 \arguments{
 \item{data}{Data frame or spatial * data frame. The data to be benchmarked. Must contain the variable(s) in \code{idvars} as unique identifiers. May be "wide" or "long" data. If wide, then each indicator name should be a variable name. If long, then the indicator names and values should be in variables named \code{"indicator_var"} and \code{"value"}.}
@@ -41,11 +31,7 @@ apply_benchmarks(
 }
 \value{
 A long data frame of each point/benchmarked indicator combination with the assigned condition category.
-
-A long data frame of each point/benchmarked indicator combination with the assigned condition category.
 }
 \description{
-Using data that has unique identifier and indicator value variables, apply benchmarks. The benchmarks are applied to the data based on the benchmark group(s) that the data belong to, which may already be assigned in the data or may be added with a benchmark group lookup table.
-
 Using data that has unique identifier and indicator value variables, apply benchmarks. The benchmarks are applied to the data based on the benchmark group(s) that the data belong to, which may already be assigned in the data or may be added with a benchmark group lookup table.
 }

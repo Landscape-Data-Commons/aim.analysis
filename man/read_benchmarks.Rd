@@ -8,7 +8,7 @@ read_benchmarks(
   filename = "",
   filepath = NULL,
   sheet_name = "Monitoring Objectives",
-  eval_strings = list(c("Lower_Limit", "LL_Relation", "x"), c("x", "UL_Relation",
+  eval_strings = list(c("x", "LL_Relation", "Lower_Limit"), c("x", "UL_Relation",
     "Upper_Limit"), c("x", "Proportion_Relation", "Required_Proportion"))
 )
 }

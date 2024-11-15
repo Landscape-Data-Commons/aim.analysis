@@ -1,17 +1,15 @@
 Package: aim.analysis
-Date: 2024-10-08
+Date: 2024-11-15
 Type: Package
 Title: Analysis and Reporting of Terrestrial AIM Data Using TerrADat and Sample Design Documentation
-Version: 0.9.0
+Version: 1.0.0
 Authors@R: c(person(given = c("Nelson", "G."), family = "Stauffer", email = "nelson.stauffer@ars.usda.gov", role = c("aut", "cre")), person("Steve", "Garman", email = "sgarman@blm.gov", role = c("aut")), person("Jason", "Karl", email = "jakal14@gmail.com", role = c("aut")))
-Description: Provides functions for importing sample design geodatabases used for recording and tracking terrestrial Assessment, Inventory, and Monitoring (AIM) projects; importing management benchmark criteria for AIM projects; importing Terrestrial AIM Database (TerrADat) spatial data; evaluating TerrADat values using management benchmarks; calculating analysis weights for field data based on sample designs, reporting units, and management objectives; and reporting weighted categorical analyses.
-Depends: R (>= 4.0.0)
+Description: Provides functions for analyzing data from the Bureau of Land Management's Terrestrial Assessment, Inventory, and Monitoring (AIM) projects or other similar sources.
+Depends: R (>= 4.4.0)
 License: MIT License
 Encoding: UTF-8
 LazyData: TRUE
 RoxygenNote: 7.3.1
 Imports: tidyverse,
   sf
-Suggests: knitr,
-    rmarkdown
 VignetteBuilder: knitr

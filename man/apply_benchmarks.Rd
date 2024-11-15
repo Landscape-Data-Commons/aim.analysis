@@ -6,28 +6,28 @@
 \usage{
 apply_benchmarks(
   data,
-  idvars,
-  benchmark_group_var = NULL,
-  benchmark_group_lut = NULL,
   benchmarks,
-  verbose = FALSE,
-  tdat_version = "2"
+  data_id_vars,
+  data_group_var = NULL,
+  benchmark_group_var = "Benchmark_Group",
+  benchmark_indicator_var = "Indicator",
+  use_tdat_indicator_lookup = TRUE
 )
 }
 \arguments{
-\item{data}{Data frame or spatial * data frame. The data to be benchmarked. Must contain the variable(s) in \code{idvars} as unique identifiers. May be "wide" or "long" data. If wide, then each indicator name should be a variable name. If long, then the indicator names and values should be in variables named \code{"indicator_var"} and \code{"value"}.}
+\item{data}{Data frame. The data to be benchmarked. Must contain the variable(s) in \code{data_id_vars} as unique identifiers. May be "wide" or "long" data. If wide, then each indicator name should be a variable name. If long, then the indicator names and values should be in variables named \code{"indicator_var"} and \code{"value"}.}
 
-\item{idvars}{Character string or vecor of character strings. The names of the variable(s) in \code{data} which serve as unique identifiers.}
+\item{benchmarks}{Data frame. The benchmarks in the format produced by \code{read_benchmarks()}.}
 
-\item{benchmark_group_var}{Optional character string. The name of the variable that holds the benchmark group memberships. If \code{NULL} then it defaults to the variable in \code{benchmark_group_lut} that is not in \code{idvars}. Defaults to \code{NULL}.}
+\item{data_id_vars}{Character string or vecor of character strings. The names of the variable(s) in \code{data} which serve as unique identifiers.}
 
-\item{benchmark_group_lut}{Optional data frame. The lookup table used to assign benchmark group membership to \code{data}. Must contain all of the variables in \code{idvar} and one additional variable with the benchmark group memberships.}
+\item{data_group_var}{Optional character string. The name of the variable that holds the benchmark group memberships. If \code{NULL} then it defaults to the variable in \code{benchmark_group_var}. Defaults to \code{NULL}.}
 
-\item{benchmarks}{Data frame. The benchmarks in the format produced by \code{read.benchmarks()}. If the benchmark group membership variable in other data frames is not \code{"Benchmark.Group"} then it must be renamed here.}
+\item{benchmark_group_var}{Character string. The name of the variable that holds the benchmark group memberships. Defaults to \code{"Benchmark_Group"}.}
 
-\item{verbose}{Logical. If \code{TRUE} then the function will generate additional messages as it executes.}
+\item{benchmark_indicator_var}{Character string. The name of the variable that holds the indicator names in the benchmarks. Defaults to \code{"Indicator"}.}
 
-\item{tdat_version}{Version of TerrADat used in the analysis for use in \code{indicator lookup()}. Defaults to \code{"2"}.}
+\item{use_tdat_indicator_lookup}{Logical. Set to \code{TRUE} if the the values in variable \code{benchmark_indicator_var} are the standard human-readable names for the indicators and the corresponding variables in \code{data} use the variable names from the Terrestrial AIM Database. Defaults to \code{TRUE}.}
 }
 \value{
 A long data frame of each point/benchmarked indicator combination with the assigned condition category.

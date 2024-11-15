@@ -331,7 +331,8 @@ analyze_cat <- function(data,
 
   # Paring this down too.
   weights <- dplyr::select(.data = weights,
-                           tidyselect::all_of(required_weights_vars))
+                           tidyselect::all_of(id_var),
+                           weight = tidyselect::matches(match = paste0("^", wgt_var, "$")))
 
   # What categories were observed?
   present_categories <- unique(data[[cat_var]])
@@ -374,15 +375,15 @@ analyze_cat <- function(data,
 
   # Calculate the sum of the weights for each of the observed categories
   category_weight_summary <- dplyr::summarize(.data = weighted_categories,
-                                           .by = tidyselect::matches(match = cat_var),
-                                           observation_count = dplyr::n(),
-                                           total_observation_weight = sum(wgt_var)) |>
+                                              .by = tidyselect::matches(match = cat_var),
+                                              observation_count = dplyr::n(),
+                                              total_observation_weight = sum(weight)) |>
     dplyr::rename(.data = _,
                   setNames(object = cat_var,
                            nm = "category")) |>
     dplyr::mutate(.data = _,
-                  observation_weighted_proportion = total_observation_weight / sum(weighted_categories[[wgt_var]]),
-                  observation_proportion = count / nrow(weighted_categories),
+                  observation_weighted_proportion = total_observation_weight / sum(weighted_categories$weight),
+                  observation_proportion = observation_count / nrow(weighted_categories),
                   adjusted_count = observation_count * observation_weighted_proportion)
 
   # Okay, so if we have definitions to catch categories with zero observations, add those
@@ -448,11 +449,11 @@ analyze_cat <- function(data,
 
   # Combine the results and confidence intervals
   output <- dplyr::left_join(x = category_weight_summary,
-                  y = dplyr::select(.data = confidence_intervals,
-                                    category,
-                                    weighted_observation_proportion_lower_bound,
-                                    weighted_observation_proportion_upper_bound),
-                  by = "category")
+                             y = dplyr::select(.data = confidence_intervals,
+                                               category,
+                                               weighted_observation_proportion_lower_bound,
+                                               weighted_observation_proportion_upper_bound),
+                             by = "category")
 
   # Get the variables restricted to what we care about and ordered properly
   dplyr::select(.data = output,
@@ -460,7 +461,7 @@ analyze_cat <- function(data,
                 observation_count,
                 observation_proportion,
                 total_observation_weight,
-                weighted_observation_proportion,
+                weighted_observation_proportion = observation_weighted_proportion,
                 weighted_observation_proportion_lower_bound,
                 weighted_observation_proportion_upper_bound)
 }
@@ -556,7 +557,7 @@ analyze_cat_multi <- function(data,
                            })
   non_unique_ids_subsets <- list_names[non_unique_ids]
   if (any(non_unique_ids)) {
-    if (non_unique_ids_subsets == "only") {
+    if (is.null(split_vars)) {
       stop("There are non-unique values in ", id_var, " in data. Did you intend to subset your data with split_vars?")
     } else {
       stop("There are non-unique values in ", id_var, " in data the following unique combinations of values in ",

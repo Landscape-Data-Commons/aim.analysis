@@ -1,3 +1,251 @@
+# This is literally only here for the dang boostrapping
+# special_mean <- function(data, indices) {
+#   mean(data[indices],
+#        trim = 0)
+# }
+# analyze_con_bootstrap <- function(data,
+#                         weights,
+#                         id_var,
+#                         value_var,
+#                         wgt_var,
+#                         conf = 80,
+#                         bootstrap_count = 100,
+#                         verbose = FALSE){
+#   # Make sure everything is the right class/length
+#   if (!("data.frame" %in% class(data))) {
+#     stop("data must be a data frame")
+#   }
+#   if (nrow(data) < 1) {
+#     stop("There are no values in data")
+#   }
+#   if (!("data.frame" %in% class(weights))) {
+#     stop("weights must be a data frame")
+#   }
+#   if (nrow(weights) < 1) {
+#     stop("There are no values in weights")
+#   }
+#
+#   if (class(id_var) != "character" | length(id_var) != 1) {
+#     stop("id_var must be a single character string")
+#   }
+#   if (class(cat_var) != "character" | length(value_var) != 1) {
+#     stop("value_var must be a single character string")
+#   }
+#   if (class(wgt_var) != "character" | length(wgt_var) != 1) {
+#     stop("wgt_var must be a single character string")
+#   }
+#   if (conf <= 0 | conf >= 100) {
+#     stop("conf must be a value between 0 and 100")
+#   }
+#
+#   # Make sure all the variables are in place
+#   required_data_vars <- c(id_var,
+#                           value_var)
+#   missing_data_vars <- required_data_vars[!(required_data_vars %in% names(data))]
+#   if (length(missing_data_vars) > 0) {
+#     stop("The following variables are missing from data: ",
+#          paste(missing_data_vars,
+#                collapse = , ", "))
+#   }
+#
+#   # Just want the bare minimum here.
+#   data <- dplyr::select(.data = data,
+#                         tidyselect::all_of(required_data_vars))
+#
+#   # Check to make sure the unique identifiers are, in fact, unique
+#   non_unique_ids <- any(table(data[[id_var]]) > 1)
+#   if (non_unique_ids) {
+#     stop("There are non-unique values in ", id_var, " in data.")
+#   }
+#
+#   required_weights_vars <- c(id_var,
+#                              wgt_var)
+#   missing_weights_vars <- required_weights_vars[!(required_weights_vars %in% names(weights))]
+#   if (length(missing_weights_vars) > 0) {
+#     stop("The following variables are missing from weights: ",
+#          paste(missing_weights_vars,
+#                collapse = , ", "))
+#   }
+#
+#   non_unique_ids <- any(table(weights[[id_var]]) > 1)
+#   if (non_unique_ids) {
+#     stop("There are non-unique values in ", id_var, " in weights.")
+#   }
+#
+#   # Paring this down too.
+#   weights <- dplyr::select(.data = weights,
+#                            tidyselect::all_of(required_weights_vars))
+#
+#   if (!all(data[[id_var]] %in% weights[[id_var]])) {
+#     warning("Not all data have corresponding weights. They will be dropped from the calculations.")
+#   }
+#   if (!all(weights[[id_var]] %in% data[[id_var]])) {
+#     warning("Not all weights have corresponding data. Depending on your situation, this may be expected or may be indicative of an issue with the unique IDs.")
+#   }
+#
+#   data <- dplyr::inner_join(x = data,
+#                             y = weights,
+#                             by = id_var,
+#                             relationship = "one-to-one")
+#   data <- dplyr::mutate(.data = data,
+#                         weighted_value = value_var * wgt_var / sum(data[[wgt_var]]))
+#
+# estimate <- mean(data$weighted_value)
+#
+# bootstrap_results <- boot::boot(data = data$weighted_value,
+#                                 statistic = special_mean,
+#                                 R = bootstrap_count)
+#
+# if (length(unique(bootstrap_results$t)) == 1) {
+#   data.frame(mean = estimate,
+#              alpha = 1 - conf / 100,
+#              n = nrow(data),
+#              booststrap_replicates = bootstrap_count,
+#              mean_bootstrap = bootstrap_results$t[1],
+#              lower_bound = bootstrap_results$t[1],
+#              upper_bound = bootstrap_results$t[1])
+# } else {
+#   bootstrap_cis <- boot::boot.ci(boot.out = bootstrap_results,
+#                                  conf = conf / 100,
+#                                  type = "basic")
+#   data.frame(mean = estimate,
+#              alpha = 1 - conf / 100,
+#              n = nrow(data),
+#              booststrap_replicates = bootstrap_count,
+#              mean_bootstrap = bootstrap_results$t[1],
+#              lower_bound = bootstrap_cis$basic[1, 4],
+#              upper_bound = bootstrap_cis$basic[1, 5])
+# }
+# }
+
+#' Estimation of weighted means of continuous data
+#' @description Given continuous data and the weights for the individual observations, calculate estimated mean and confidence intervals.
+#' @param data Data frame. Continuous data (e.g., numeric) with the unique identifiers for each observation/row in the variable \code{id_var} and the value for each observation/row in \code{value_var}. Note that the unique identifiers are the link between \code{data} and \code{weights}
+#' @param weights Data frame. This must contain the weighting information using the variables \code{id_var} with a unique identifier for each observation/row and \code{wgt_var} with the relative numeric weight of each observation/row.
+#' @param id_var Character string. The name of the variable in \code{data} and \code{weights} that contains the unique identifiers for the observations. All values in \code{data$id_var} must appear in \code{weights$id_var}.
+#' @param value_var Character string. The name of the variable in \code{data} that contains the values as character strings.
+#' @param wgt_var Character string. The name of the variable in \code{weights} that contains the numeric weight values.
+#' @param conf Numeric. The confidence level in percent. Defaults to \code{80}.
+#' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.
+#' @return A data frame containing the count of observations, weighted mean, and confidence intervals.
+#' @export
+analyze_con <- function(data,
+                        weights,
+                        id_var,
+                        value_var,
+                        wgt_var,
+                        conf = 80,
+                        verbose = FALSE){
+  # Make sure everything is the right class/length
+  if (!("data.frame" %in% class(data))) {
+    stop("data must be a data frame")
+  }
+  if (nrow(data) < 1) {
+    stop("There are no values in data")
+  }
+  if (!("data.frame" %in% class(weights))) {
+    stop("weights must be a data frame")
+  }
+  if (nrow(weights) < 1) {
+    stop("There are no values in weights")
+  }
+
+  if (class(id_var) != "character" | length(id_var) != 1) {
+    stop("id_var must be a single character string")
+  }
+  if (class(value_var) != "character" | length(value_var) != 1) {
+    stop("value_var must be a single character string")
+  }
+  if (class(wgt_var) != "character" | length(wgt_var) != 1) {
+    stop("wgt_var must be a single character string")
+  }
+  if (conf <= 0 | conf >= 100) {
+    stop("conf must be a value between 0 and 100")
+  } else {
+    alpha <- 1 - conf / 100
+  }
+
+  # Make sure all the variables are in place
+  required_data_vars <- c(id_var,
+                          value_var)
+  missing_data_vars <- required_data_vars[!(required_data_vars %in% names(data))]
+  if (length(missing_data_vars) > 0) {
+    stop("The following variables are missing from data: ",
+         paste(missing_data_vars,
+               collapse = , ", "))
+  }
+
+  # Just want the bare minimum here.
+  data <- dplyr::select(.data = data,
+                        tidyselect::all_of(required_data_vars)) |>
+    dplyr::rename(.data = _,
+                  setNames(object = required_data_vars,
+                           nm = c("id", "value")))
+
+  # Check to make sure the unique identifiers are, in fact, unique
+  non_unique_ids <- any(table(data[[id_var]]) > 1)
+  if (non_unique_ids) {
+    stop("There are non-unique values in ", id_var, " in data.")
+  }
+
+  required_weights_vars <- c(id_var,
+                             wgt_var)
+  missing_weights_vars <- required_weights_vars[!(required_weights_vars %in% names(weights))]
+  if (length(missing_weights_vars) > 0) {
+    stop("The following variables are missing from weights: ",
+         paste(missing_weights_vars,
+               collapse = , ", "))
+  }
+
+  non_unique_ids <- any(table(weights[[id_var]]) > 1)
+  if (non_unique_ids) {
+    stop("There are non-unique values in ", id_var, " in weights.")
+  }
+
+  # Paring this down too.
+  weights <- dplyr::select(.data = weights,
+                           tidyselect::all_of(required_weights_vars)) |>
+    dplyr::rename(.data = _,
+                  setNames(object = required_weights_vars,
+                           nm = c("id", "weight")))
+
+  if (!all(data[[id_var]] %in% weights[[id_var]])) {
+    warning("Not all data have corresponding weights. They will be dropped from the calculations.")
+  }
+  if (!all(weights[[id_var]] %in% data[[id_var]])) {
+    warning("Not all weights have corresponding data. Depending on your situation, this may be expected or may be indicative of an issue with the unique IDs.")
+  }
+
+  data <- dplyr::inner_join(x = data,
+                            y = weights,
+                            by = "id",
+                            relationship = "one-to-one") |>
+    dplyr::mutate(.data = _,
+                  weighted_value = value * weight)
+
+  n <- nrow(data)
+  # Weighted mean is the sum of the weight-adjusted values divided by the sum of all weights
+  mean_weighted <- sum(data$weighted_value)
+  # Standard deviation is calculated differently for weighted values than unweighted
+  sd_weighted <- sqrt(sum(data$weight * (data$value - mean(data$value))^2) / ((n - 1) / n * sum(data$weight)))
+  # So is variance
+  variance_weighted <- weighted_variance(values = data$value,
+                                         weights = data$weight,
+                                         na_remove = FALSE)
+  bounds_weighted <- ci_mean(mean = mean_weighted,
+                             sd = sd_weighted,
+                             n = n,
+                             alpha = alpha)
+
+  data.frame(n = n,
+             alpha = alpha,
+             mean = mean_weighted,
+             sd = sd_weighted,
+             variance = variance_weighted,
+             lower_bound = bounds_weighted$lower_bound,
+             upper_bound = bounds_weighted$upper_bound)
+}
+
 #' Estimation of weighted proportions of categorical data
 #' @description Given categorical data and the weights for the individual observations, calculate estimated proportions by category and Goodman's multinomial confidence intervals.
 #' @param data Data frame. Categorical data with the unique identifiers for each observation/row in the variable \code{id_var} and the assigned category for each observation/row in \code{cat_var}. Note that the unique identifiers are the link between \code{data} and \code{weights}
@@ -83,7 +331,8 @@ analyze_cat <- function(data,
 
   # Paring this down too.
   weights <- dplyr::select(.data = weights,
-                           tidyselect::all_of(required_weights_vars))
+                           tidyselect::all_of(id_var),
+                           weight = tidyselect::matches(match = paste0("^", wgt_var, "$")))
 
   # What categories were observed?
   present_categories <- unique(data[[cat_var]])
@@ -126,15 +375,15 @@ analyze_cat <- function(data,
 
   # Calculate the sum of the weights for each of the observed categories
   category_weight_summary <- dplyr::summarize(.data = weighted_categories,
-                                           .by = tidyselect::matches(match = cat_var),
-                                           observation_count = dplyr::n(),
-                                           total_observation_weight = sum(wgt_var)) |>
+                                              .by = tidyselect::matches(match = cat_var),
+                                              observation_count = dplyr::n(),
+                                              total_observation_weight = sum(weight)) |>
     dplyr::rename(.data = _,
                   setNames(object = cat_var,
                            nm = "category")) |>
     dplyr::mutate(.data = _,
-                  observation_weighted_proportion = total_observation_weight / sum(weighted_categories[[wgt_var]]),
-                  observation_proportion = count / nrow(weighted_categories),
+                  observation_weighted_proportion = total_observation_weight / sum(weighted_categories$weight),
+                  observation_proportion = observation_count / nrow(weighted_categories),
                   adjusted_count = observation_count * observation_weighted_proportion)
 
   # Okay, so if we have definitions to catch categories with zero observations, add those
@@ -200,11 +449,11 @@ analyze_cat <- function(data,
 
   # Combine the results and confidence intervals
   output <- dplyr::left_join(x = category_weight_summary,
-                  y = dplyr::select(.data = confidence_intervals,
-                                    category,
-                                    weighted_observation_proportion_lower_bound,
-                                    weighted_observation_proportion_upper_bound),
-                  by = "category")
+                             y = dplyr::select(.data = confidence_intervals,
+                                               category,
+                                               weighted_observation_proportion_lower_bound,
+                                               weighted_observation_proportion_upper_bound),
+                             by = "category")
 
   # Get the variables restricted to what we care about and ordered properly
   dplyr::select(.data = output,
@@ -212,7 +461,7 @@ analyze_cat <- function(data,
                 observation_count,
                 observation_proportion,
                 total_observation_weight,
-                weighted_observation_proportion,
+                weighted_observation_proportion = observation_weighted_proportion,
                 weighted_observation_proportion_lower_bound,
                 weighted_observation_proportion_upper_bound)
 }
@@ -308,7 +557,7 @@ analyze_cat_multi <- function(data,
                            })
   non_unique_ids_subsets <- list_names[non_unique_ids]
   if (any(non_unique_ids)) {
-    if (non_unique_ids_subsets == "only") {
+    if (is.null(split_vars)) {
       stop("There are non-unique values in ", id_var, " in data. Did you intend to subset your data with split_vars?")
     } else {
       stop("There are non-unique values in ", id_var, " in data the following unique combinations of values in ",

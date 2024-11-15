@@ -1,3 +1,11 @@
+indicator_lookup <- function(tdat_version = "2"){
+  read.csv(paste0(path.package("aim.analysis"),
+                  "/defaults/indicator_lut",
+                  tdat_version,
+                  ".csv"),
+           stringsAsFactors = FALSE)[,c(1,2)]
+}
+
 #' Reading in the benchmarks from the Data Explorer
 #'
 #' @param filename Character string. The filename, including filetype extension, of the .XLSX, .CSV, .XLSM, or .XLS containing the benchmarks. Expects to find columns with headers matching "Management Question", "Benchmark Source", "Benchmark Group", "Reporting Unit", "Lower Limit", "LL Relation", "Indicator", "UL Relation", "Upper Limit", "Unit", "Condition Category", "Proportion Relation", and "Required Proportion".
@@ -9,11 +17,10 @@
 #' read_benchmarks()
 #' @export
 
-## TODO: Add capitalization sanitization stuff
 read_benchmarks <- function(filename = "",
                             filepath = NULL,
                             sheet_name = "Monitoring Objectives",
-                            eval_strings = list(c("Lower_Limit", "LL_Relation", "x"),
+                            eval_strings = list(c("x", "LL_Relation", "Lower_Limit"),
                                                 c("x", "UL_Relation", "Upper_Limit"),
                                                 c("x", "Proportion_Relation", "Required_Proportion"))){
   ## Check for the file extension
@@ -46,7 +53,7 @@ read_benchmarks <- function(filename = "",
       }
     }
     ## Change all the header names to use "_" instead of " " for consistency
-    names(benchmarks_raw) <- sttingr::str_replace_all(string = names(benchmarks_raw),
+    names(benchmarks_raw) <- stringr::str_replace_all(string = names(benchmarks_raw),
                                                       pattern = " ",
                                                       replacement = "_")
 
@@ -58,7 +65,7 @@ read_benchmarks <- function(filename = "",
   }
 
   ## Strip out the extraneous columns and rows, which includes if they left the example in there. The pattern to look for is "e.g"
-  benchmarks <- dplyr::select(.data = benchmarks,
+  benchmarks <- dplyr::select(.data = benchmarks_raw,
                               -tidyselect::matches(match = "__\\d+$")) |>
     dplyr::filter(.data = _,
                   !stringr::str_detect(string = Management_Question,
@@ -70,7 +77,7 @@ read_benchmarks <- function(filename = "",
     # Figure out if any are missing (the character "x" is fine though because it's the indicator stand-in)
     varnames <- unlist(eval_strings)[unlist(eval_strings) != "x"]
     missing_varnames <- varnames[!(varnames %in% names(benchmarks))]
-    if (length(missing.varnames) > 0) {
+    if (length(missing_varnames) > 0) {
       stop(paste("The following expected variables for constructing eval strings are missing:", paste0(missing.varnames, collapse = ", ")))
     }
     # If none were missing, rename each of the vectors with "evalstring" and a suffix number. This will be their variable names in the data frame

@@ -207,7 +207,8 @@ analyze_con <- function(data,
                            tidyselect::all_of(required_weights_vars)) |>
     dplyr::rename(.data = _,
                   setNames(object = required_weights_vars,
-                           nm = c("id", "weight")))
+                           nm = c("id", "weight"))) |>
+    tidyr::drop_na()
 
   if (!all(data[[id_var]] %in% weights[[id_var]])) {
     warning("Not all data have corresponding weights. They will be dropped from the calculations.")
@@ -221,7 +222,7 @@ analyze_con <- function(data,
                             by = "id",
                             relationship = "one-to-one") |>
     dplyr::mutate(.data = _,
-                  weighted_value = value * weight)
+                  weighted_value = value * weight / sum(weights$weight))
 
   n <- nrow(data)
   # Weighted mean is the sum of the weight-adjusted values divided by the sum of all weights
@@ -241,9 +242,11 @@ analyze_con <- function(data,
              alpha = alpha,
              mean = mean_weighted,
              sd = sd_weighted,
-             variance = variance_weighted,
-             lower_bound = bounds_weighted$lower_bound,
-             upper_bound = bounds_weighted$upper_bound)
+             std_error = sd_weighted / sqrt(n),
+             cv = sd_weighted / mean_weighted,
+             variance = variance_weighted) |>
+    dplyr::bind_cols(.x = _,
+                     bounds_weighted)
 }
 
 #' Estimation of weighted proportions of categorical data
@@ -293,59 +296,50 @@ analyze_cat <- function(data,
     stop("conf must be a value between 0 and 100")
   }
 
-
   # Make sure all the variables are in place
   required_data_vars <- c(id_var,
-                          cat_var,
-                          split_vars)
+                          cat_var)
   missing_data_vars <- required_data_vars[!(required_data_vars %in% names(data))]
   if (length(missing_data_vars) > 0) {
-    stop("The following variables are missing from data: ",
-         paste(missing_data_vars,
-               collapse = , ", "))
+    stop("The following variables are missing from data: ", paste(missing_data_vars, collapse = , ", "))
   }
-
-  # Just want the bare minimum here.
-  data <- dplyr::select(.data = data,
-                        tidyselect::all_of(required_data_vars))
-
-  # Check to make sure the unique identifiers are, in fact, unique
-  non_unique_ids <- any(table(data[[id_var]]) > 1)
-  if (non_unique_ids) {
-    stop("There are non-unique values in ", id_var, " in data.")
-  }
-
-  required_weights_vars <- c(id_var,
-                             wgt_var)
-  missing_weights_vars <- required_weights_vars[!(required_weights_vars %in% names(weights))]
-  if (length(missing_weights_vars) > 0) {
-    stop("The following variables are missing from weights: ",
-         paste(missing_weights_vars,
-               collapse = , ", "))
-  }
-
-  non_unique_ids <- any(table(weights[[id_var]]) > 1)
-  if (non_unique_ids) {
-    stop("There are non-unique values in ", id_var, " in weights.")
-  }
-
-  # Paring this down too.
-  weights <- dplyr::select(.data = weights,
-                           tidyselect::all_of(id_var),
-                           weight = tidyselect::matches(match = paste0("^", wgt_var, "$")))
-
+  data <- data[, required_data_vars]
+  category_class <- class(data[[cat_var]])
   # What categories were observed?
-  present_categories <- unique(data[[cat_var]])
+  present_categories <- setNames(object = unique(data[[cat_var]]),
+                                 nm = unique(data[[cat_var]]))
 
-  # And what if the user provided definitions?
-  # This is important for if there are categories that have no data that qualified!
   if (!is.null(definitions)) {
-    if (!(class(data[[cat_var]]) %in% class(definitions))) {
+    if (!(category_class %in% class(definitions))) {
       stop("definitions must be the same class as the category values in data")
     }
     if (length(definitions) < 1) {
       stop("There are no values in definitions")
     }
+  }
+
+  # # Check to make sure the unique identifiers are, in fact, unique
+  # non_unique_ids <- any(table(data[[id_var]]) > 1)
+  # if (any(non_unique_ids)) {
+  #   stop("There are non-unique values in ", id_var, " in data.")
+  # }
+
+
+  required_weights_vars <- c(id_var, wgt_var)
+  missing_weights_vars <- required_weights_vars[!(required_weights_vars %in% names(weights))]
+  if (length(missing_weights_vars) > 0) {
+    stop("The following variables are missing from weights: ", paste(missing_weights_vars, collapse = , ", "))
+  }
+  non_unique_ids <- any(table(weights[[id_var]]) > 1)
+  if (non_unique_ids) {
+    stop("There are non-unique values in ", id_var, " in weights.")
+  }
+  weights <- weights[, required_weights_vars] |>
+    tidyr::drop_na()
+
+  # And what if the user provided definitions?
+  # This is important for if there are categories that have no data that qualified!
+  if (!is.null(definitions)) {
     missing_categories <- !(present_categories %in% definitions)
     if (any(missing_categories)) {
       stop("The following categories appear in data but not in categories: ",
@@ -358,112 +352,149 @@ analyze_cat <- function(data,
   if (!all(data_ids_in_weights_indices)) {
     stop("Not all unique IDs in data appear in weights")
   }
-  weight_ids_in_data_indices <- weights[[id_var]] %in% data[[id_var]]
-  if (verbose & !all(weight_ids_in_data_indices)) {
+  weight_ids_in_weights_indices <- weights[[id_var]] %in% data[[id_var]]
+  if (verbose & !all(weight_ids_in_weights_indices)) {
     message("Not all unique IDs in weights appear in data, just so you know.")
   }
-  weights <- weights[weight_ids_in_data_indices, ]
+  weights <- weights[weight_ids_in_weights_indices, ]
 
 
   # Get each observation with just its category and weight
-  weighted_categories <- dplyr::left_join(x = dplyr::select(.data = data,
-                                                            tidyselect::all_of(c(id_var,
-                                                                                 cat_var))),
-                                          y = weights,
-                                          by = id_var,
-                                          relationship = "one-to-one")
+  weighted_categories <- merge(x = data[, c(id_var, cat_var)],
+                               y = weights,
+                               by = id_var,
+                               all.y = FALSE)
 
   # Calculate the sum of the weights for each of the observed categories
-  category_weight_summary <- dplyr::summarize(.data = weighted_categories,
-                                              .by = tidyselect::matches(match = cat_var),
-                                              observation_count = dplyr::n(),
-                                              total_observation_weight = sum(weight)) |>
-    dplyr::rename(.data = _,
-                  setNames(object = cat_var,
-                           nm = "category")) |>
-    dplyr::mutate(.data = _,
-                  observation_weighted_proportion = total_observation_weight / sum(weighted_categories$weight),
-                  observation_proportion = observation_count / nrow(weighted_categories),
-                  adjusted_count = observation_count * observation_weighted_proportion)
+  category_weight_sums <- sapply(X = present_categories,
+                                 data = weighted_categories,
+                                 cat_var = cat_var,
+                                 wgt_var = wgt_var,
+                                 USE.NAMES = TRUE,
+                                 FUN = function(X,
+                                                data,
+                                                cat_var,
+                                                wgt_var){
+                                   relevant_indices <- data[[cat_var]] == X
+                                   current_weights <- data[relevant_indices, wgt_var]
+                                   weight_sum <- sum(as.numeric(current_weights))
+                                   return(weight_sum)
+                                 })
+  # Calculate the weighted proportions for each category
+  category_weighted_proportions <- category_weight_sums / sum(category_weight_sums)
+  # Get the pure counts of the categories
+  category_counts <- table(weighted_categories[[cat_var]])
+  # And the total number of observations. This should be the same as nrow(weighted_categories)
+  total_observations <- sum(category_counts)
+  # Using the total number of observations and the weighted proportions to calculate "adjusted counts"
+  adjusted_counts <- (category_weighted_proportions * total_observations) |>
+    setNames(object = _,
+             nm = present_categories)
+
+  # Here's a tricky bit! Calculating weighted standard error, which should be done
+  # for each category as well
+  category_weighted_se <- sapply(X = present_categories,
+                                 data = weighted_categories,
+                                 cat_var = cat_var,
+                                 wgt_var = wgt_var,
+                                 USE.NAMES = TRUE,
+                                 FUN = function(X,
+                                                data,
+                                                cat_var,
+                                                wgt_var){
+                                   # For each category, we're going to treat that
+                                   # category's records as 1 and the others as 0
+                                   weighted_se(values = as.numeric(data[[cat_var]] %in% X),
+                                                    weights = data[[wgt_var]])
+                                 })
+  category_weighted_cv <- sapply(X = present_categories,
+                                 data = weighted_categories,
+                                 cat_var = cat_var,
+                                 wgt_var = wgt_var,
+                                 USE.NAMES = TRUE,
+                                 FUN = function(X,
+                                                data,
+                                                cat_var,
+                                                wgt_var){
+                                   # For each category, we're going to treat that
+                                   # category's records as 1 and the others as 0
+                                   weighted_cv(values = as.numeric(data[[cat_var]] %in% X),
+                                                            weights = data[[wgt_var]])
+                                 })
+
+  category_weighted_variance <- sapply(X = present_categories,
+                                       data = weighted_categories,
+                                       cat_var = cat_var,
+                                       wgt_var = wgt_var,
+                                       USE.NAMES = TRUE,
+                                       FUN = function(X,
+                                                      data,
+                                                      cat_var,
+                                                      wgt_var){
+                                         weighted_variance(values = as.numeric(data[[cat_var]] %in% X),
+                                                           weights = data[[wgt_var]],
+                                                           na_remove = FALSE)
+                                       })
 
   # Okay, so if we have definitions to catch categories with zero observations, add those
   # Because it should matter for calculating confidence intervals
   if (!is.null(definitions)) {
-    missing_categories <- definitions[!(definitions %in% present_categories)]
-
-    if (length(missing_categories) > 0) {
-      empty_category_weight_summary <- lapply(X = missing_categories,
-                                              FUN = function(X){
-                                                data.frame(category = X,
-                                                           count = 0,
-                                                           weight_sum = 0,
-                                                           weighted_proportion = 0,
-                                                           adjusted_count = 0)
-                                              }) |>
-        dplyr::bind_rows()
-
-      category_weight_summary <- dplyr::bind_rows(category_weight_summary,
-                                                  empty_category_weight_summary)
+    defined_categories <- definitions
+    missing_categories <- defined_categories[!(defined_categories %in% present_categories)]
+    # Looping because it's easy, not because it's the best solution
+    # But we want to populate the 0s for all of these!
+    for (category in missing_categories) {
+      category_weighted_proportions[[category]] <- 0
+      category_weight_sums[[category]] <- 0
+      category_counts[[category]] <- 0
+      adjusted_counts[[category]] <- 0
     }
   }
-
-  # # Calculate the weighted proportions for each category
-  # category_weighted_proportions <- category_weight_sums / sum(category_weight_sums)
-  # # Get the pure counts of the categories
-  # category_counts <- table(weighted_categories[[cat_var]])
-  # # And the total number of observations. This should be the same as nrow(weighted_categories)
-  # total_observations <- sum(category_counts)
-  # # Using the total number of observations and the weighted proportions to calculate "adjusted counts"
-  # adjusted_counts <- category_weighted_proportions * total_observations
-  #
-  # # Okay, so if we have definitions to catch categories with zero observations, add those
-  # # Because it should matter for calculating confidence intervals
-  # if (!is.null(definitions)) {
-  #   defined_categories <- definitions[[cat_var]]
-  #   missing_categories <- defined_categories[!(defined_categories %in% present_categories)]
-  #   # Looping because it's easy, not because it's the best solution
-  #   # But we want to populate the 0s for all of these!
-  #   for (category in missing_categories) {
-  #     category_weighted_proportions[[category]] <- 0
-  #     category_weight_sums[[category]] <- 0
-  #     category_counts[[category]] <- 0
-  #     adjusted_counts[[category]] <- 0
-  #   }
-  # }
 
   # Finally ready to calculate confidence intervals!
   # But first we need the alpha value for our confidence level
   alpha <- 1 - (conf / 100)
 
-  confidence_intervals <- goodman_cis(counts = setNames(object = category_weight_summary[["adjusted_count"]],
-                                                        nm = category_weight_summary[["category"]]),
+  confidence_intervals <- goodman_cis(counts = adjusted_counts,
                                       alpha = alpha,
                                       chisq = "best",
                                       verbose = verbose)
-  confidence_interval_vars <- c("category",
-                                "weighted_observation_count",
-                                "weighted_observation_proportion",
-                                "weighted_observation_proportion_lower_bound",
-                                "weighted_observation_proportion_upper_bound")
+  confidence_interval_vars <- c("category", "weighted_observation_count", "weighted_observation_proportion",
+                                paste0(c("weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound"),
+                                       "_", conf, "pct"))
   names(confidence_intervals) <- confidence_interval_vars
 
+  # And now it's a matter of combining and formatting
+  # Yeah, yeah, yeah. It's not """best practice""" to calculate within the data frame construction
+  # but I don't care. I'll do math and slicing wherever I want to. Deal with it.
+  results <- data.frame(category = names(category_counts),
+                        observation_count = as.vector(category_counts[names(category_counts)]),
+                        observation_proportion = as.vector(category_counts[names(category_counts)] / total_observations),
+                        total_observation_weight = category_weight_sums[names(category_counts)],
+                        weighted_observation_proportion = category_weighted_proportions[names(category_counts)],
+                        weighted_standard_error = category_weighted_se[names(category_counts)],
+                        weighted_coefficient_of_variance = category_weighted_cv[names(category_counts)],
+                        weighted_variance = category_weighted_variance[names(category_counts)],
+                        row.names = NULL,
+                        stringsAsFactors = FALSE)
+
+  confidence_interval_keep_vars <- c("category",
+                                     paste0(c("weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound"),
+                                            "_", conf, "pct"))
+
   # Combine the results and confidence intervals
-  output <- dplyr::left_join(x = category_weight_summary,
-                             y = dplyr::select(.data = confidence_intervals,
-                                               category,
-                                               weighted_observation_proportion_lower_bound,
-                                               weighted_observation_proportion_upper_bound),
-                             by = "category")
+  output <- merge(x = results,
+                  y = confidence_intervals[, confidence_interval_keep_vars],
+                  by = c("category"))
 
   # Get the variables restricted to what we care about and ordered properly
-  dplyr::select(.data = output,
-                category,
-                observation_count,
-                observation_proportion,
-                total_observation_weight,
-                weighted_observation_proportion = observation_weighted_proportion,
-                weighted_observation_proportion_lower_bound,
-                weighted_observation_proportion_upper_bound)
+  output_vars <- c("category", "observation_count", "observation_proportion", "total_observation_weight", "weighted_observation_proportion", "weighted_standard_error", "weighted_coefficient_of_variance", "weighted_variance",
+                   paste0(c("weighted_observation_proportion_lower_bound", "weighted_observation_proportion_upper_bound"),
+                          "_", conf, "pct"))
+
+  output <- output[, output_vars]
+
+  return(output)
 }
 
 
@@ -814,5 +845,100 @@ goodman_cis <- function(counts,
   return(output)
 }
 
-# wilson_cis
+# Literally just from https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+weighted_se <- function(values,
+                             weights){
+  normalized_weights <- weights / sum(weights)
+  variance <- var(x = values)
+  sqrt(variance) * sqrt(sum(normalized_weights^2))
+}
 
+weighted_mean <- function(values,
+                          weights){
+  if (!is.numeric(values) | !is.vector(values)) {
+    stop("values must be a numeric vector.")
+  }
+
+  if (is.numeric(weights) | !is.vector(weights)) {
+    stop("weights must be a numeric vector.")
+  }
+
+  if (length(weights) != length(values)) {
+    stop("values and weights must be the same length")
+  }
+
+  sum(values * weights) / sum(weights)
+}
+
+weighted_sd <- function(values,
+                        weights){
+  if (!is.numeric(values) | !is.vector(values)) {
+    stop("values must be a numeric vector.")
+  }
+
+  if (is.numeric(weights) | !is.vector(weights)) {
+    stop("weights must be a numeric vector.")
+  }
+
+  if (!length(weights) %in% c(length(values), 1)) {
+    stop("values and weights must be the same length or weights must be a single value.")
+  }
+
+  sqrt(sum(weights * values * values) / sum(weights) - weighted_mean(values = values,
+                                                                     weights = weights)^2)
+}
+
+weighted_cv <- function(values,
+                        weights){
+  if (!is.numeric(values) | !is.vector(values)) {
+    stop("values must be a numeric vector.")
+  }
+
+  if (is.numeric(weights) | !is.vector(weights)) {
+    stop("weights must be a numeric vector.")
+  }
+
+  if (!length(weights) %in% c(length(values), 1)) {
+    stop("values and weights must be the same length or weights must be a single value.")
+  }
+
+  weighted_sd(values = values,
+              weights = weights) / weighted_mean(values = values,
+                                                 weights = weights)
+}
+
+#' Calculate a weighted variance
+#' @param values Numeric vector. The values to calculate the weighted variance for.
+#' @param weights Numeric vector. The weights for the vector \code{values}. They must be in the same order as \code{values}.
+#' @param na_remove Logical. If \code{TRUE} then any data with either a value or weight of \code{NA} will be removed before calculating. Defaults to \code{FALSE}.
+weighted_variance <- function(values,
+                              weights,
+                              na_remove = FALSE) {
+  # Remove the NAs if asked
+  if (na_remove) {
+    valid_indices <- !is.na(values) & !is.na(weights)
+    values <- values[valid_indices]
+    weights <- weights[valid_indices]
+  }
+  # Get the sum of the weights
+  sum_of_weights <- sum(weights)
+  # Get the sum of the squares of the weights
+  sum_of_weights_squared <- sum(weights^2)
+  # Get the weighted mean
+  weighted_mean <- sum(values * weights) / sum_of_weights
+  # Calculate variance!
+  variance <- (sum_of_weights / (sum_of_weights^2 - sum_of_weights_squared)) * sum(weights * (values - weighted_mean)^2,
+                                                                                   na.rm = na_remove)
+  return(variance)
+}
+
+
+# This is literally only here for the dang bootstrapping
+special_mean <- function(data, indices) {
+  mean(data[indices],
+       trim = 0)
+}
+
+
+
+w.mean()

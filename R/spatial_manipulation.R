@@ -363,3 +363,18 @@ add_coords <- function(points,
 
   points
 }
+
+
+full_union <- function(x, y){
+  # I never want to be told that geometries are assumed constant.
+  sf::st_agr(x) = "constant"
+  sf::st_agr(y) = "constant"
+
+
+  dplyr::bind_rows(list(x_only = sf::st_difference(x = x,
+                                                   y = sf::st_union(y)),
+                        y_only = sf::st_difference(x = y,
+                                                   y = sf::st_union(x)),
+                        both = sf::st_intersection(x = x,
+                                                   y = y)))
+}

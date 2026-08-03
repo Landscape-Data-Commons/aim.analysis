@@ -750,6 +750,672 @@ analyze_cat_multi <- function(data,
   dplyr::bind_rows(results_list)
 }
 
+analyze_weighted <- function(data,
+                             weights = NULL,
+                             id_vars,
+                             indicator_type,
+                             indicator_var = "indicator",
+                             value_var = "value",
+                             possible_categorical_values = NULL,
+                             # continuous_transformation = c("logit",
+                             #                               "log"),
+                             # cat_estimate_type = "proportion",
+                             conf = 80,
+                             combine = c("none",
+                                         "delta",
+                                         "bootstrap",
+                                         "mean",
+                                         "mean_weights"),
+                             bootstrap_replicates = 10000,
+                             bootstrap_type = "bca",
+                             verbose = FALSE){
+  valid_combine_values <- c("none",
+                            "bootstrap",
+                            "delta",
+                            "mean",
+                            "mean_weights")
+  combine <- intersect(unique(combine),
+                       valid_combine_values)
+  if (length(combine) < 1) {
+    stop(paste0("combine must be one or more of the following: '", paste(valid_combine_values,
+                                                                         collapse = "', '"), "'"))
+  }
+
+  # valid_cat_estimate_types <- c("proportion",
+  #                               "percent")
+  # cat_estimate_type <- intersect(unique(cat_estimate_type),
+  #                                valid_cat_estimate_types)
+  # if (length(cat_estimate_type) < 1) {
+  #   stop(paste0("cat_estimate_type must be one of the following: '", paste(valid_cat_estimate_types,
+  #                                                                          collapse = "', '"), "'"))
+  # }
+
+  if (any(is.na(data[[value_var]]))) {
+    warning(paste0("There are ", sum(is.na(data[[value_var]])), " records NA in the variable '", value_var, "'. These will be dropped."))
+    data <- data[!is.na(data[[value_var]]), ]
+  }
+
+  if (is.character(weights) & length(weights) == 1) {
+    weights <- tidyr::unite(data = data,
+                            col = "internal_uid_var",
+                            tidyselect::all_of(id_vars)) |>
+      dplyr::select(.data = _,
+                    tidyselect::all_of(x = c("internal_uid_var")),
+                    weight = tidyselect::all_of(x = weights)) |>
+      dplyr::distinct() |>
+      list(.x = _)
+  } else if (is.data.frame(weights)) {
+    weights <- tidyr::unite(data = weights,
+                            col = "internal_uid_var",
+                            tidyselect::all_of(id_vars)) |>
+      dplyr::select(.data = _,
+                    tidyselect::all_of(x = c("internal_uid_var",
+                                             "weight"))) |>
+      dplyr::distinct() |>
+      list(.x = _)
+  } else if ("list" %in% class(weights)) {
+    weights <- lapply(X = weights,
+                      FUN = function(X){
+                        sf::st_drop_geometry(X) |>
+                          tidyr::unite(data = _,
+                                       col = "internal_uid_var",
+                                       tidyselect::all_of(id_vars)) |>
+                          dplyr::select(.data = _,
+                                        tidyselect::all_of(x = c("internal_uid_var",
+                                                                 "weight"))) |>
+                          dplyr::distinct()
+                      })
+  }
+
+  # If weights didn't qualify for any of the conversions above, it must be an
+  # illegal format, so we'll tell the user.
+  if (!("list" %in% class(weights))) {
+    stop("weights must be a data frame with the id_vars variables and a 'weight' variable; the name of the variable in data containing the weights; or a list of data frames each with the id_vars variables and a 'weight' variable.")
+  }
+
+  weights <- lapply(X = weights,
+                    FUN = tidyr::drop_na)
+
+  if (length(weights) > 1) {
+    all_weights_identical <- purrr::reduce(.x = weights,
+                                           .f = identical)
+  }
+
+  data <- tidyr::unite(data = data,
+                       col = "internal_uid_var",
+                       tidyselect::all_of(id_vars),
+                       remove = FALSE) |>
+    dplyr::select(.data = _,
+                  tidyselect::all_of(x = c("internal_uid_var",
+                                           id_vars,
+                                           indicator = indicator_var,
+                                           value = value_var))) |>
+    dplyr::filter(.data = _,
+                  !is.na(value)) |>
+    dplyr::distinct()
+
+
+
+  if (length(indicator_type) == 1) {
+    if ("character" %in% class(indicator_type)) {
+      indicator_type <- intersect(x = indicator_type,
+                                  y = c("continuous",
+                                        "categorical"))
+      if (length(indicator_type) != 1) {
+        stop("When providing a single indicator_type value, it must be either 'categorical' or 'continuous'")
+      }
+
+      indicator_type <- rep(x = indicator_type,
+                            times = length(unique(data[["indicator"]]))) |>
+        setNames(object = _,
+                 nm = unique(data[["indicator"]]))
+    } else {
+      stop("When providing a single indicator_type value, it must be either 'categorical' or 'continuous'")
+    }
+  } else {
+    if ("list" %in% class(indicator_type)) {
+      if (!all(names(indicator_type) %in% c("continuous",
+                                            "categorical"))) {
+        stop("When indicator_type is a list, it must contain vectors of values corresponding to values in the indicator_var variable of data, each of the vectors named 'continuous' or 'categorical' according to the kind of indicators in the vector.")
+      }
+      indicator_type <- lapply(X = seq_len(length.out = length(indicator_type)),
+                               indicator_type = indicator_type,
+                               FUN = function(X, indicator_type){
+                                 rep(x = names(indicator_type[X]),
+                                     times = length(indicator_type[[X]])) |>
+                                   setNames(object = _,
+                                            nm = unique(indicator_type[[X]]))
+                               }) |>
+        unlist()
+    } else if (is.character(indicator_type)) {
+      if (!all(indicator_type %in% c("continuous",
+                                     "categorical"))) {
+        stop("When indicator_type is a vector, it must be a named vector containing only 'categorical' or 'continuous' with the names corresponding to values in the indicator_var in data.")
+      }
+      indicator_type <- rep(x = indicator_type,
+                            times = length(unique(data[["indicator"]]))) |>
+        setNames(object = _,
+                 nm = unique(data[["indicator"]]))
+    }
+  }
+
+  # SUPPORT FOR MULTIPLE possible_categorical_values VALUES
+  # Just in case someone is trying to jam a bunch through that have different
+  # categories like "Meeting" and "Not Meeting" for some but "Suitable",
+  # "Marginal", and "Unsuitable" for others. What a pain.
+  # This makes sure that possible_categorical_values ends up as a named list
+  # where the names are the categorical indicators and the vectors stored at the
+  # indices are the possible categories for those indicators.
+
+  # This any() looks like overkill, but at this point in the process
+  # indicator_type should be a vector with a value for every indicator
+  # represented in the data regardless of the format the user provided it in,
+  # so it's actually rational.
+  if (any(indicator_type %in% "categorical")) {
+    if ("list" %in% class(possible_categorical_values)) {
+      if (!all(names(possible_categorical_values) %in% names(indicator_type)[indicator_type %in% c("categorical")])) {
+        stop("When providing a list as possible_categorical_values, all categorical indicators must be represented as a vector in the list. Not all categorical indicators appear in names(possible_categorical_values).")
+      }
+    } else if (is.vector(possible_categorical_values)) {
+      if (verbose) {
+        message("possible_categorical_values appears to be a vector of categories. Applying these to all categorical analyses.")
+      }
+      possible_categorical_values <- lapply(X = setNames(object = names(indicator_type)[indicator_type %in% c("categorical")],
+                                                         nm = names(indicator_type)[indicator_type %in% c("categorical")]),
+                                            possible_categorical_values = possible_categorical_values,
+                                            FUN = function(X, possible_categorical_values){
+                                              possible_categorical_values
+                                            })
+    } else if (is.null(possible_categorical_values)) {
+      if (verbose) {
+        message("Because possible_categorical_values is NULL, the possible values will be pulled from data. In the case that the data don't represent all possible values, this will produce incorrect results.")
+      }
+      possible_categorical_values <- lapply(X = setNames(object = names(indicator_type)[indicator_type %in% c("categorical")],
+                                                         nm = names(indicator_type)[indicator_type %in% c("categorical")]),
+                                            data = data,
+                                            FUN = function(X, data){
+                                              output <- data[["value"]][data[["indicator"]] %in% X] |>
+                                                unique()
+                                              if (length(output) < 2) {
+                                                stop(paste0("There are fewer than two categories represented in data for the indicator ", X, ". Please use possible_categorical_values to define all possible categories."))
+                                              }
+                                              output
+                                            })
+    } else {
+      stop("possible_categorical_values must either be a vector which contains the categories to use for all categorical analyses or a named list of vectors containing the categories for each categorical indicator.")
+    }
+
+    too_few_values <- names(possible_categorical_values)[sapply(X = possible_categorical_values,
+                                                                FUN = length) < 2]
+
+    if (length(too_few_values) > 0) {
+      stop(paste0("The following categorical indicator have fewer than two possible values in possible_categorical_values: ",
+                  paste(too_few_values,
+                        collapse = ", ")))
+    }
+  }
+
+  #### Analyses ----------------------------------------------------------------
+  analyses <- lapply(X = setNames(object = names(indicator_type),
+                                  nm = names(indicator_type))[!is.na(names(indicator_type))],
+                     weights = weights |>
+                       lapply(X = _,
+                              FUN = function(X){
+                                dplyr::mutate(.data = X,
+                                              dplyr::across(.cols = tidyselect::any_of(x = "weight_set_id"),
+                                                            .fns = as.character))
+                              }),
+                     data = data,
+                     indicator_type = indicator_type,
+                     value_var = value_var,
+                     possible_categorical_values = possible_categorical_values,
+                     conf = conf,
+                     # continuous_transformation = continuous_transformation,
+                     FUN = function(X, data, weights, indicator_type, value_var, possible_categorical_values, conf){
+                       current_indicator_type <- indicator_type[X]
+                       current_indicator <- X
+                       current_data <- data[data[["indicator"]] %in% X, ]
+                       if (current_indicator_type == "categorical") {
+                         current_possible_categorical_values <- possible_categorical_values[[X]]
+                       } else {
+                         current_possible_categorical_values <- NULL
+                       }
+
+                       output_list <- list()
+                       # Per indicator!
+                       output_list[["none"]] <- lapply(weights = weights,
+                                                       current_data = current_data,
+                                                       current_indicator_type = current_indicator_type,
+                                                       current_indicator = X,
+                                                       value_var = "value",
+                                                       current_possible_categorical_values = current_possible_categorical_values,
+                                                       conf = conf,
+                                                       # continuous_transformation = continuous_transformation,
+                                                       # This X argument is down here so it
+                                                       # doesn't mess with the other
+                                                       # arguments that are using the
+                                                       # previous layer's X value.
+                                                       X = seq_len(length.out = length(weights)),
+                                                       FUN = function(X, weights, current_data, current_indicator_type, current_indicator, value_var, current_possible_categorical_values, conf){
+
+
+                                                         if (nrow(current_data) == 1) {
+                                                           # When there's only one data point, can't do much about that.
+                                                           analysis <- data.frame(n = 1,
+                                                                                  alpha = 1 - conf / 100,
+                                                                                  mean = current_data[[value_var]],
+                                                                                  sd = 0,
+                                                                                  variance = 0,
+                                                                                  lower_bound = NA,
+                                                                                  upper_bound = NA)
+                                                         } else {
+                                                           missing_weights <- setdiff(x = current_data$internal_uid_var,
+                                                                                      y = weights[[X]]$internal_uid_var) |>
+                                                             length()
+                                                           if (missing_weights > 0) {
+                                                             warning(paste0("Not all the provided records in data have a corresponding weight. Dropping unweighted records (", missing_weights, " of ", nrow(current_data), ")"))
+                                                           }
+                                                           current_data <- dplyr::inner_join(x = current_data,
+                                                                                             y = weights[[X]],
+                                                                                             by = "internal_uid_var",
+                                                                                             relationship = "one-to-one")
+
+                                                           if (nrow(current_data) < 1) {
+                                                             warning("No data had corresponding weights. Returning NULL.")
+                                                             return(NULL)
+                                                           }
+
+                                                           # Make sure we calculate using the correct method
+                                                           if (current_indicator_type == "continuous") {
+                                                             analysis <- dplyr::mutate(.data = current_data,
+                                                                                       # Enforcing that these must be numeric!
+                                                                                       value = as.numeric(value)) |>
+                                                               analyze_con(data = _,
+                                                                           weights = weights[[X]],
+                                                                           id_var = "internal_uid_var",
+                                                                           value_var = value_var,
+                                                                           wgt_var = "weight",
+                                                                           conf = conf,
+                                                                           verbose = verbose) |>
+                                                               dplyr::mutate(.data = _,
+                                                                             standard_error = sd / sqrt(n),
+                                                                             variance = sd^2) |>
+                                                               dplyr::rename(.data = _,
+                                                                             estimate = mean,
+                                                                             standard_deviation = sd,
+                                                                             coefficient_of_variance = cv)
+                                                           } else {
+                                                             analysis <- analyze_cat(data = current_data,
+                                                                                     weights = weights[[X]],
+                                                                                     id_var = "internal_uid_var",
+                                                                                     cat_var = value_var,
+                                                                                     wgt_var = "weight",
+                                                                                     definitions = current_possible_categorical_values,
+                                                                                     conf = conf,
+                                                                                     # estimate_type = "percent",
+                                                                                     verbose = verbose) |>
+                                                               dplyr::select(.data = _,
+                                                                             -tidyselect::any_of(x = c("observation_proportion"))) |>
+                                                               dplyr::rename_with(.data = _,
+                                                                                  .fn = ~ stringr::str_remove(string = .x,
+                                                                                                              pattern = "_\\d+pct") |>
+                                                                                    stringr::str_remove(string = _,
+                                                                                                        pattern = "weighted_(observation_)?(proportion_)?")) |>
+                                                               dplyr::rename(.data = _,
+                                                                             n = observation_count,
+                                                                             estimate = proportion) |>
+                                                               dplyr::mutate(.data = _,
+                                                                             standard_deviation = sqrt(variance),
+                                                                             # standard_deviation = standard_error * n * n,
+                                                                             #variance = standard_deviation^2
+                                                               )
+                                                           }
+                                                         }
+                                                         dplyr::mutate(.data = analysis,
+                                                                       indicator = current_indicator,
+                                                                       weight_set_id = X,
+                                                                       alpha = 1 - conf / 100) |>
+                                                           dplyr::select(.data = _,
+                                                                         indicator,
+                                                                         weight_set_id,
+                                                                         tidyselect::everything())
+                                                       }) |>
+                         purrr::discard(.x = _,
+                                        .p = is.null)
+
+                       if (length(output_list[["none"]]) < 1) {
+                         warning("No analysis possible. Returning NULL.")
+                         return(NULL)
+                       } else {
+                         output_list[["none"]] <- dplyr::bind_rows(output_list[["none"]]) |>
+                           dplyr::mutate(.data = _,
+                                         combine = "none")
+                       }
+
+
+                       # if (current_indicator_type == "categorical") {
+                       #   current_analysis_list <- split(x = output_list[["none"]],
+                       #                                  f = ~ category)
+                       # } else {
+                       #   current_analysis_list <- list(output_list[["none"]])
+                       # }
+
+                       ##### Combining -------------------------------------
+                       if ("bootstrap" %in% combine) {
+                         # if (verbose) {
+                         #   message("BOOTSTRAPPING")
+                         # }
+                         # Handling categorical indicators which
+                         # will have multiple records per-run
+                         # unlike continuous indicators which have
+                         # a single value per-run.
+                         # THIS ASSUMES category IS A VARIABLE
+                         # PRESENT IN CATEGORICAL DATA.
+                         # It will also treat unclassified indicators
+                         # as continuous but with a warning.
+                         if (current_indicator_type == "categorical") {
+                           current_analysis_list <- split(x = output_list[["none"]],
+                                                          f = ~ category)
+                         } else {
+                           current_analysis_list <- list(output_list[["none"]])
+                         }
+
+                         # Now do the bootstrapping on each data
+                         # frame in the list. For continuous
+                         # indicators this should be just one data
+                         # frame and for categorical it'll be one
+                         # per category.
+                         output_list[["bootstrap"]] <- lapply(X = current_analysis_list,
+                                                              current_indicator_type = current_indicator_type,
+                                                              FUN = function(X, current_indicator_type){
+                                                                bootstrap_results <- boot::boot(data = X$estimate,
+                                                                                                # The function special_mean()
+                                                                                                # is just mean() but with an
+                                                                                                # added index argument so that
+                                                                                                # the data are subset appropriately
+                                                                                                # for each bootstrap replicate.
+                                                                                                statistic = special_mean,
+                                                                                                R = bootstrap_replicates)
+
+                                                                output <- data.frame(indicator = X$indicator[1],
+                                                                                     category = if ("category" %in% names(X)) {
+                                                                                       X$category[1]
+                                                                                     } else {
+                                                                                       NA
+                                                                                     },
+                                                                                     estimate = bootstrap_results$t[1],
+                                                                                     alpha = 1 - conf / 100,
+                                                                                     n_input_estimates = nrow(X),
+                                                                                     booststrap_replicates = bootstrap_replicates,
+                                                                                     lower_bound = bootstrap_results$t[1],
+                                                                                     upper_bound = bootstrap_results$t[1],
+                                                                                     ci_bootstrap_type = "none")
+
+                                                                # Remove the category variable if all the values are NA
+                                                                # which we'd expect in the case of a continuous indicator.
+                                                                if (all(is.na(output$category))) {
+                                                                  output <- dplyr::select(.data = output,
+                                                                                          -category)
+                                                                }
+
+                                                                # If we can, calculate confidence intervals.
+                                                                # This isn't possible when there's just one
+                                                                # result.
+                                                                if (length(unique(bootstrap_results$t)) != 1) {
+                                                                  bootstrap_cis <- boot::boot.ci(boot.out = bootstrap_results,
+                                                                                                 conf = conf / 100,
+                                                                                                 type = bootstrap_type)
+                                                                  output <- lapply(X = setdiff(x = names(bootstrap_cis),
+                                                                                               y = c("R", "t0", "call")),
+                                                                                   bootstrap_cis = bootstrap_cis,
+                                                                                   output = output,
+                                                                                   FUN = function(X, bootstrap_cis, output){
+                                                                                     bounds <- bootstrap_cis[[X]][(length(bootstrap_cis[[X]]) - 1):length(bootstrap_cis[[X]])]
+                                                                                     dplyr::mutate(.data = output,
+                                                                                                   lower_bound = bounds[1],
+                                                                                                   upper_bound = bounds[2],
+                                                                                                   ci_bootstrap_type = X)
+                                                                                   }) |>
+                                                                    dplyr::bind_rows()
+                                                                }
+                                                                output
+                                                              }) |>
+                           dplyr::bind_rows() |>
+                           dplyr::mutate(.data = _,
+                                         combine = "bootstrap")
+                       }
+
+                       if ("delta" %in% combine) {
+                         if (current_indicator_type == "categorical") {
+                           current_analysis_list <- split(x = output_list[["none"]],
+                                                          f = ~ category)
+                         } else {
+                           current_analysis_list <- list(output_list[["none"]])
+                         }
+
+                         output_list[["delta"]] <- lapply(X = current_analysis_list,
+                                                          FUN = function(X){
+                                                            # variance_covariance_matrix <- diag(X[["standard_error"]])
+                                                            # matrix_variance <-  matrix(1 / nrow(X),
+                                                            #                            nrow = 1,
+                                                            #                            ncol = nrow(X)) %*%
+                                                            #   variance_covariance_matrix %*%
+                                                            #   matrix(1 / nrow(X),
+                                                            #          ncol = 1,
+                                                            #          nrow = nrow(X)) |>
+                                                            #   as.vector()
+
+
+                                                            output <- data.frame(indicator = X$indicator[1],
+                                                                                 category = if ("category" %in% names(X)) {
+                                                                                   X$category[1]
+                                                                                 } else {
+                                                                                   NA
+                                                                                 },
+                                                                                 estimate = mean(X[["estimate"]]),
+                                                                                 alpha = 1 - conf / 100,
+                                                                                 n_input_estimates = nrow(X),
+                                                                                 # variance = matrix_variance,
+                                                                                 variance = var(X[["estimate"]]) + mean(X[["variance"]])
+                                                            )
+
+                                                            output <- lapply(X = c("none",
+                                                                                   "logit"#,
+                                                                                   # "log"
+                                                            ),
+                                                            mean = output$estimate,
+                                                            variance = output$variance,
+                                                            alpha = output$alpha,
+                                                            FUN = function(X, mean, variance, alpha){
+                                                              ci_delta(mean = mean,
+                                                                       variance = variance,
+                                                                       transform = X,
+                                                                       alpha = alpha) |>
+                                                                matrix(data =_,
+                                                                       ncol = 2) |>
+                                                                as.data.frame(x = _) |>
+                                                                setNames(object = _,
+                                                                         nm = paste0(c("lower_bound_",
+                                                                                       "upper_bound_"), X))
+                                                            }) |>
+                                                              # dplyr::bind_cols() |>
+                                                              dplyr::bind_cols(output,
+                                                                               .x = _)
+
+
+                                                            # Remove the category variable if all the values are NA
+                                                            # which we'd expect in the case of a continuous indicator.
+                                                            if (all(is.na(output$category))) {
+                                                              output <- dplyr::select(.data = output,
+                                                                                      -category)
+                                                            }
+
+                                                            output
+                                                          }) |>
+                           dplyr::bind_rows() |>
+                           dplyr::mutate(.data = _,
+                                         combine = "delta")
+                       }
+
+                       if ("mean" %in% combine) {
+                         if (current_indicator_type == "categorical") {
+                           current_analysis_list <- split(x = output_list[["none"]],
+                                                          f = ~ category)
+                         } else {
+                           current_analysis_list <- list(output_list[["none"]])
+                         }
+                         analysis <- lapply(X = current_analysis_list,
+                                            FUN = function(X){
+                                              X <- dplyr::mutate(.data = X,
+                                                                 variance = standard_deviation^2)
+                                              # This is the variance used for the
+                                              # calculation of confidence intervals that
+                                              # account for the underlying variance in
+                                              # the various samples and not just the
+                                              # estimates from those samples
+                                              total_variance <- var(x = X$estimate) + mean(X$variance)
+
+                                              output <- data.frame(indicator = X$indicator[1],
+                                                                   category = if ("category" %in% names(X)) {
+                                                                     X$category[1]
+                                                                   } else {
+                                                                     NA
+                                                                   },
+                                                                   estimate = mean(X[["estimate"]]),
+                                                                   alpha = 1 - conf / 100,
+                                                                   n_input_estimates = nrow(X),
+                                                                   variance = total_variance) |>
+                                                dplyr::mutate(.data = _,
+                                                              lower_bound = estimate - abs(sqrt(variance) * qt(p = alpha / 2,
+                                                                                                               df = n_input_estimates - 1)),
+                                                              upper_bound = estimate + abs(sqrt(variance) * qt(p = alpha / 2,
+                                                                                                               df = n_input_estimates - 1)))
+
+                                              # Remove the category variable if all the values are NA
+                                              # which we'd expect in the case of a continuous indicator.
+                                              if (all(is.na(output$category))) {
+                                                output <- dplyr::select(.data = output,
+                                                                        -category)
+                                              }
+
+                                              output
+                                            }) |>
+                           dplyr::bind_rows()
+
+                         output_list[["mean"]] <- dplyr::mutate(.data = analysis,
+                                                                indicator = current_indicator,
+                                                                weight_set_id = X,
+                                                                alpha = 1 - conf / 100) |>
+                           dplyr::select(.data = _,
+                                         indicator,
+                                         weight_set_id,
+                                         tidyselect::everything()) |>
+                           dplyr::mutate(.data = _,
+                                         combine = "mean")
+                       }
+
+                       if ("mean_weights" %in% combine) {
+                         mean_weights <- lapply(X = seq_len(length(weights)),
+                                                weights = weights,
+                                                FUN = function(X, weights){
+                                                  dplyr::mutate(.data = weights[[X]],
+                                                                weightset_id = as.character(X))
+                                                }) |>
+                           dplyr::bind_rows(weights) |>
+                           dplyr::summarize(.data = _,
+                                            .by = tidyselect::all_of(x = c("internal_uid_var")),
+                                            weight = mean(weight))
+
+                         if (nrow(current_data) == 1) {
+                           # When there's only one data point, can't do much about that.
+                           analysis <- data.frame(n = 1,
+                                                  alpha = 1 - conf / 100,
+                                                  mean = data[[value_var]],
+                                                  sd = 0,
+                                                  variance = 0,
+                                                  lower_bound = NA,
+                                                  upper_bound = NA)
+                         } else {
+                           missing_weights <- setdiff(x = current_data$internal_uid_var,
+                                                      y = mean_weights$internal_uid_var) |>
+                             length()
+                           if (missing_weights > 0) {
+                             warning(paste0("Not all the provided records in data have a corresponding weight. Dropping unweighted records (", missing_weights, " of ", nrow(current_data), ")"))
+                           }
+                           current_data <- dplyr::inner_join(x = current_data,
+                                                             y = mean_weights,
+                                                             by = "internal_uid_var",
+                                                             relationship = "one-to-one")
+
+                           # Make sure we calculate using the correct method
+                           if (current_indicator_type == "continuous") {
+                             analysis <- dplyr::mutate(.data = current_data,
+                                                       # Enforcing that these must be numeric!
+                                                       value = as.numeric(value)) |>
+                               analyze_con(data = _,
+                                           weights = mean_weights,
+                                           id_var = "internal_uid_var",
+                                           value_var = value_var,
+                                           wgt_var = "weight",
+                                           conf = conf,
+                                           verbose = verbose) |>
+                               dplyr::mutate(.data = _,
+                                             standard_error = sd / sqrt(n)) |>
+                               dplyr::rename(.data = _,
+                                             estimate = mean,
+                                             standard_deviation = sd,
+                                             coefficient_of_variance = cv)
+                           } else {
+                             analysis <- analyze_cat(data = current_data,
+                                                     weights = mean_weights,
+                                                     id_var = "internal_uid_var",
+                                                     cat_var = value_var,
+                                                     wgt_var = "weight",
+                                                     definitions = current_possible_categorical_values,
+                                                     conf = conf,
+                                                     # estimate_type = "percent",
+                                                     verbose = verbose) |>
+                               dplyr::select(.data = _,
+                                             -tidyselect::any_of(x = c("observation_proportion"))) |>
+                               dplyr::rename_with(.data = _,
+                                                  .fn = ~ stringr::str_remove(string = .x,
+                                                                              pattern = "_\\d+pct") |>
+                                                    stringr::str_remove(string = _,
+                                                                        pattern = "weighted_(observation_)?(proportion_)?")) |>
+                               dplyr::rename(.data = _,
+                                             n = observation_count,
+                                             estimate = proportion) |>
+                               dplyr::mutate(.data = _,
+                                             standard_deviation = standard_error * n * n)
+                           }
+                         }
+                         output_list[["mean_weights"]] <- dplyr::mutate(.data = analysis,
+                                                                        indicator = current_indicator,
+                                                                        weight_set_id = X,
+                                                                        alpha = 1 - conf / 100) |>
+                           dplyr::select(.data = _,
+                                         indicator,
+                                         weight_set_id,
+                                         tidyselect::everything()) |>
+                           dplyr::mutate(.data = _,
+                                         combine = "mean_weights")
+                       }
+
+                       # We needed the un-combined results for any combining,
+                       # but they get dropped here if they weren't requested
+                       # explicitly as outputs.
+                       output <- lapply(X = output_list[combine],
+                                        FUN = function(X){
+                                          dplyr::mutate(.data = X,
+                                                        dplyr::across(.cols = tidyselect::any_of(x = "weight_set_id"),
+                                                                      .fns = as.character))
+                                        }) |>
+                         dplyr::bind_rows()
+
+                       output
+                     })
+  analyses
+}
 
 #' Calculate Goodman's multinomial confidence intervals
 #' @description Calculate confidence intervals for multinomial proportions using the method described by Leo Goodman in "On Simultaneous Confidence Intervals for Multinomial Proportions" in Technometrics in 1965. This function can only handle one group of categorical counts at a time, so if you want to calculate confidence intervals for multiple groups, you need to do each separately.

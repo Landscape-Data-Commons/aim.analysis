@@ -750,6 +750,8 @@ analyze_cat_multi <- function(data,
   dplyr::bind_rows(results_list)
 }
 
+#' Weighted analyses
+#' @export
 analyze_weighted <- function(data,
                              weights = NULL,
                              id_vars,
@@ -1512,6 +1514,8 @@ goodman_cis <- function(counts,
 }
 
 # Literally just from https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+#' Calcualted weighted standard error
+#' @export
 weighted_se <- function(values,
                              weights){
   normalized_weights <- weights / sum(weights)
@@ -1519,6 +1523,8 @@ weighted_se <- function(values,
   sqrt(variance) * sqrt(sum(normalized_weights^2))
 }
 
+#' Calculate a weighted mean
+#' @export
 weighted_mean <- function(values,
                           weights){
   if (!is.numeric(values) | !is.vector(values)) {
@@ -1536,6 +1542,8 @@ weighted_mean <- function(values,
   sum(values * weights) / sum(weights)
 }
 
+#' Calculate a weighted standard deviation
+#' @export
 weighted_sd <- function(values,
                         weights){
   if (!is.numeric(values) | !is.vector(values)) {
@@ -1554,6 +1562,8 @@ weighted_sd <- function(values,
                                                                      weights = weights)^2)
 }
 
+#' Calculate a weighted coefficient of variance
+#' @export
 weighted_cv <- function(values,
                         weights){
   if (!is.numeric(values) | !is.vector(values)) {
@@ -1577,6 +1587,7 @@ weighted_cv <- function(values,
 #' @param values Numeric vector. The values to calculate the weighted variance for.
 #' @param weights Numeric vector. The weights for the vector \code{values}. They must be in the same order as \code{values}.
 #' @param na_remove Logical. If \code{TRUE} then any data with either a value or weight of \code{NA} will be removed before calculating. Defaults to \code{FALSE}.
+#' @export
 weighted_variance <- function(values,
                               weights,
                               na_remove = FALSE) {
@@ -1604,7 +1615,3 @@ special_mean <- function(data, indices) {
   mean(data[indices],
        trim = 0)
 }
-
-
-
-w.mean()

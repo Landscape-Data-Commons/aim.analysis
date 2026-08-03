@@ -364,7 +364,8 @@ add_coords <- function(points,
   points
 }
 
-
+#' Produce a "full union" of two sf polygon objects
+#' @export
 full_union <- function(x, y){
   # I never want to be told that geometries are assumed constant.
   sf::st_agr(x) = "constant"

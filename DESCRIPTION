@@ -9,7 +9,7 @@ Depends: R (>= 4.4.0)
 License: MIT License
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.3.1
 Imports: tidyverse,
   sf
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

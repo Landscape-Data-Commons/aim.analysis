@@ -1649,6 +1649,64 @@ ci_mean <- function(mean,
        upper_bound = mean_bound_upper)
 }
 
+# calculates transformed SD/SE and CIs on the logit scale to avoid CIs going
+# outside boundaries
+#
+# Inputs: mean on real scale, sd on real scale, alpha as confidence level
+#' Calcualte (un)transformed CIs
+#' @export
+ci_delta <- function(mean,
+                     stddev = NULL,
+                     variance = NULL,
+                     transform = "none",
+                     alpha = 0.05) {
+
+  valid_transforms <- c("logit", "log", "none")
+  if (!transform %in% valid_transforms) {
+    stop(paste0("Invalid value provided for transform. Valid values are: '",
+                paste(valid_transforms,
+                      collapse = "', '"), "'"))
+  }
+
+  # Let the user provide SD or variance.
+  if (is.null(stddev)) {
+    if (is.null(variance)) {
+      stop("Provide a value for either stddev or variance")
+    }
+    stddev <- sqrt(variance)
+  }
+
+  # Transform mean (or don't, but we're still calling it "transformed")
+  mean_transformed <- switch(EXPR = transform,
+                             "logit" = log(mean / (1 - mean)),
+                             "log" = log(mean),
+                             "none" = mean)
+
+  # Partial derivative of with respect to the untransformed mean
+  partial_derivative <- switch(EXPR = transform,
+                               "logit" = -1 / (mean * (1 - mean)),
+                               "log" = 1 / mean,
+                               "none" = 1)
+
+  # Use delta method to calculate SD
+  sd_delta <- sqrt(partial_derivative^2 * stddev^2)
+
+  # Calculate CIs
+  ci <- mean_transformed + qnorm(c(alpha/2, 1 - alpha/2)) * sd_delta
+
+  # Transform CIs back to real scale (or don't)
+  output <- switch(EXPR = transform,
+                   "logit" = plogis(ci),
+                   "log" = exp(ci),
+                   "none" = ci)
+
+  output |>
+    unlist(x = _) |>
+    setNames(object = _,
+             nm = c("lower_bound",
+                    "upper_bound"))
+}
+
 # This is literally only here for the dang bootstrapping
 special_mean <- function(data, indices) {
   mean(data[indices],

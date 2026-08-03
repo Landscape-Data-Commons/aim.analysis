@@ -1609,6 +1609,45 @@ weighted_variance <- function(values,
   return(variance)
 }
 
+#' Calculate the upper and lower bounds for a mean given and alpha value
+#' @param mean Numeric value. The mean to compute bounds for.
+#' @param sd Numeric value. The standard deviation of \code{mean}.
+#' @param n Numeric value. The number of observations that were used to calculate \code{mean}.
+#' @param alpha Numeric value. The alpha value to use to compute the upper and lower confidence bounds for \code{mean}. Defaults to \code{0.05}.
+#' @returns A named list containing the upper and lower bounds for the mean for the given confidence.
+#' @export
+ci_mean <- function(mean,
+                    sd,
+                    n,
+                    alpha) {
+  if (!is.numeric(mean)) {
+    stop("`mean` must be a numeric value")
+  }
+  if (!is.numeric(sd)) {
+    stop("`sd` must be a numeric value")
+  }
+  if (!is.numeric(n)) {
+    stop("`n` must be a numeric value")
+  } else if (n <= 1) {
+    stop("`n` must be greater than 1")
+  }
+  if (!is.numeric(alpha)) {
+    stop("`alpha` must be a numeric value")
+  } else if (alpha <= 0 | alpha >= 1) {
+    stop("`alpha` must be a value between 0 and 1")
+  }
+
+  standard_error <- sd / sqrt(n)
+  degrees_freedom <- n - 1
+  t_score <- qt(p = alpha / 2,
+                df = degrees_freedom)
+  margin_error <- abs(standard_error * t_score)
+  mean_bound_lower <- mean - margin_error
+  mean_bound_upper <- mean + margin_error
+
+  list(lower_bound = mean_bound_lower,
+       upper_bound = mean_bound_upper)
+}
 
 # This is literally only here for the dang bootstrapping
 special_mean <- function(data, indices) {

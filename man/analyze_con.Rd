@@ -11,6 +11,7 @@ analyze_con(
   value_var,
   wgt_var,
   conf = 80,
+  transform = c("none"),
   verbose = FALSE
 )
 }

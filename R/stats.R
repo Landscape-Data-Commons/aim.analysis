@@ -36,7 +36,7 @@ weighted_se <- function(values,
     weighted_categorical_se(values = values,
                             weights = weights)
   } else {
-    stop("value_type must be either 'continuous' or 'categorical'.")
+    stop(paste0("The current value_type, '", value_type, "', is invalid and must be either 'continuous' or 'categorical'."))
   }
 }
 

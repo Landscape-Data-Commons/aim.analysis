@@ -28,18 +28,15 @@ weighted_mean <- function(values,
 #' @export
 weighted_se <- function(values,
                         weights,
-                        value_type = "continuous",
-                        normalize_weights = FALSE){
+                        value_type = "continuous"){
   output <- switch(EXPR = value_type,
          "continuous" = {
            weighted_continuous_se(values,
-                                  weights,
-                                  normalize_weights)
+                                  weights)
          },
          "categorical" = {
            weighted_categorical_se(values,
-                                   weights,
-                                   normalize_weights)
+                                   weights)
          })
 
   output

@@ -28,9 +28,9 @@ weighted_mean <- function(values,
 #' @export
 weighted_se <- function(values,
                         weights,
-                        value_type = c("continuous"),
+                        value_type = "continuous",
                         normalize_weights = FALSE){
-  switch(EXPR = value_type,
+  output <- switch(EXPR = value_type,
          "continuous" = {
            weighted_continuous_se(values,
                                   weights,
@@ -41,6 +41,8 @@ weighted_se <- function(values,
                                    weights,
                                    normalize_weights)
          })
+
+  output
 }
 
 # Literally just from https://en.wikipedia.org/wiki/Weighted_arithmetic_mean

@@ -29,17 +29,15 @@ weighted_mean <- function(values,
 weighted_se <- function(values,
                         weights,
                         value_type = "continuous"){
-  output <- switch(EXPR = value_type,
-         "continuous" = {
-           weighted_continuous_se(values,
-                                  weights)
-         },
-         "categorical" = {
-           weighted_categorical_se(values,
-                                   weights)
-         })
-
-  output
+  if (value_type == "continuous") {
+    weighted_continuous_se(values = data[["value"]],
+                           weights = data[["weight"]])
+  } else if (value_type == "categorical") {
+    weighted_categorical_se(values = values,
+                            weights = weights)
+  } else {
+    stop("value_type must be either 'continuous' or 'categorical'.")
+  }
 }
 
 # Literally just from https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
@@ -67,11 +65,12 @@ weighted_categorical_se <- function(values,
   weighted_proportion <- weighted_mean(values,
                                        weights)
 
+  # Using the effective sample size derived from weights was suggested by
+  # Cindy Yu
   effective_sample_size <- sum_of_weights^2 / sum_of_squared_weights
 
-  variance <- weighted_proportion * (1 - weighted_proportion)
-
-  standard_error <- sqrt(variance / effective_sample_size)
+  standard_error <- sqrt(weighted_proportion * (1 - weighted_proportion) /
+                           effective_sample_size)
 
   standard_error
 }

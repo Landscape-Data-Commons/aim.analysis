@@ -135,6 +135,7 @@ analyze_con <- function(data,
                         value_var,
                         wgt_var,
                         conf = 80,
+                        transform = c("none"),
                         verbose = FALSE){
   # Make sure everything is the right class/length
   if (!("data.frame" %in% class(data))) {
@@ -220,30 +221,71 @@ analyze_con <- function(data,
   data <- dplyr::inner_join(x = data,
                             y = weights,
                             by = "id",
-                            relationship = "one-to-one") |>
-    dplyr::mutate(.data = _,
-                  weighted_value = value * weight / sum(weights$weight))
+                            relationship = "one-to-one")# |>
+    # dplyr::mutate(.data = _,
+    #               weighted_value = value * weight / sum(weights$weight))
 
   n <- nrow(data)
   # Weighted mean is the sum of the weight-adjusted values divided by the sum of all weights
-  mean_weighted <- sum(data$weighted_value)
+  mean_weighted <- weighted_mean(values = data[["value"]],
+                                 weights = data[["weight"]])
   # Standard deviation is calculated differently for weighted values than unweighted
-  sd_weighted <- sqrt(sum(data$weight * (data$value - mean(data$value))^2) / ((n - 1) / n * sum(data$weight)))
+  # sd_weighted <- sqrt(sum(data$weight * (data$value - mean(data$value))^2) / ((n - 1) / n * sum(data$weight)))
+  sd_weighted <- weighted_sd(values = data[["value"]],
+                             weights = data[["weight"]])
   # So is variance
-  variance_weighted <- weighted_variance(values = data$value,
-                                         weights = data$weight,
+  variance_weighted <- weighted_variance(values = data[["value"]],
+                                         weights = data[["weight"]],
                                          na_remove = FALSE)
+
   bounds_weighted <- ci_mean(mean = mean_weighted,
                              sd = sd_weighted,
                              n = n,
                              alpha = alpha)
 
+  # This applies transformations requested by the user
+  bounds_weighted <- lapply(X = transform |>
+                              setNames(object = _,
+                                       nm = transform),
+                            mean = mean_weighted,
+                            stddev = sd_weighted,
+                            alpha = alpha,
+                            FUN = function(X, mean, stddev, alpha){
+                              ci_delta(mean = mean_weighted,
+                                       stddev = stddev,
+                                       alpha = alpha,
+                                       transform = "none") |>
+                                # as.list() |>
+                                as.data.frame(x = _) |>
+                                dplyr::mutate(.data = _,
+                                              transform = X,
+                                              type = c("lower_bound",
+                                                       "upper_bound")) |>
+                                tidyr::unite(data = _,
+                                             col = "bound",
+                                             tidyselect::all_of(x = c("transform",
+                                                                      "type"))) |>
+                                tidyr::pivot_wider(data = _,
+                                                   names_from = bound,
+                                                   values_from = !tidyselect::all_of(x = "bound")) |>
+                                dplyr::rename_with(.data = _,
+                                                   .fn = ~ stringr::str_remove(string = .x,
+                                                                               pattern = "_?none_?"))
+
+                            }) |>
+    dplyr::bind_cols()
+
   data.frame(n = n,
              alpha = alpha,
              mean = mean_weighted,
              sd = sd_weighted,
-             std_error = sd_weighted / sqrt(n),
-             cv = sd_weighted / mean_weighted,
+             std_error = weighted_se(values = data[["value"]],
+                                     weights = data[["weight"]],
+                                     value_type = "continous"),
+             # std_error = sd_weighted / sqrt(n),
+             cv = weighted_cv(values = data[["value"]],
+                              weights = data[["weight"]]),
+             # cv = sd_weighted / mean_weighted,
              variance = variance_weighted) |>
     dplyr::bind_cols(.x = _,
                      bounds_weighted)
@@ -405,7 +447,8 @@ analyze_cat <- function(data,
                                    # For each category, we're going to treat that
                                    # category's records as 1 and the others as 0
                                    weighted_se(values = as.numeric(data[[cat_var]] %in% X),
-                                                    weights = data[[wgt_var]])
+                                                    weights = data[[wgt_var]],
+                                               value_type = "categorical")
                                  })
   category_weighted_cv <- sapply(X = present_categories,
                                  data = weighted_categories,

@@ -222,8 +222,8 @@ analyze_con <- function(data,
                             y = weights,
                             by = "id",
                             relationship = "one-to-one")# |>
-    # dplyr::mutate(.data = _,
-    #               weighted_value = value * weight / sum(weights$weight))
+  # dplyr::mutate(.data = _,
+  #               weighted_value = value * weight / sum(weights$weight))
 
   n <- nrow(data)
   # Weighted mean is the sum of the weight-adjusted values divided by the sum of all weights
@@ -447,7 +447,7 @@ analyze_cat <- function(data,
                                    # For each category, we're going to treat that
                                    # category's records as 1 and the others as 0
                                    weighted_se(values = as.numeric(data[[cat_var]] %in% X),
-                                                    weights = data[[wgt_var]],
+                                               weights = data[[wgt_var]],
                                                value_type = "categorical")
                                  })
   category_weighted_cv <- sapply(X = present_categories,
@@ -462,7 +462,7 @@ analyze_cat <- function(data,
                                    # For each category, we're going to treat that
                                    # category's records as 1 and the others as 0
                                    weighted_cv(values = as.numeric(data[[cat_var]] %in% X),
-                                                            weights = data[[wgt_var]])
+                                               weights = data[[wgt_var]])
                                  })
 
   category_weighted_variance <- sapply(X = present_categories,
@@ -1260,30 +1260,37 @@ analyze_weighted <- function(data,
                                                                                  estimate = mean(X[["estimate"]]),
                                                                                  alpha = 1 - conf / 100,
                                                                                  n_input_estimates = nrow(X),
-                                                                                 # variance = matrix_variance,
+                                                                                 # We're calculating standard error with the estimates themselves
+                                                                                 # and then adding the mean of the standard errors of the samples of
+                                                                                 # that were used to make the estimates to reflect the underlying
+                                                                                 # noise.
+                                                                                 standard_error = DescTools::MeanSE(x = X[["estimate"]]) + mean(X[["standard_error"]],
+                                                                                                                                                na.rm = TRUE),
+                                                                                 # Calculating the variance of the estimates themselves then adding
+                                                                                 # the mean of the variances of the underlying samples to reflect the
+                                                                                 # noise in those.
                                                                                  variance = var(X[["estimate"]]) + mean(X[["variance"]])
                                                             )
 
                                                             output <- lapply(X = c("none",
-                                                                                   "logit"#,
-                                                                                   # "log"
-                                                            ),
-                                                            mean = output$estimate,
-                                                            variance = output$variance,
-                                                            alpha = output$alpha,
-                                                            FUN = function(X, mean, variance, alpha){
-                                                              ci_delta(mean = mean,
-                                                                       variance = variance,
-                                                                       transform = X,
-                                                                       alpha = alpha) |>
-                                                                matrix(data =_,
-                                                                       ncol = 2) |>
-                                                                as.data.frame(x = _) |>
-                                                                setNames(object = _,
-                                                                         nm = paste0(c("lower_bound_",
-                                                                                       "upper_bound_"), X))
-                                                            }) |>
-                                                              # dplyr::bind_cols() |>
+                                                                                   "logit"),
+                                                                             mean = output$estimate,
+                                                                             variance = output$variance,
+                                                                             stderr = output$std_error,
+                                                                             alpha = output$alpha,
+                                                                             FUN = function(X, mean, variance, stderr, alpha){
+                                                                               ci_delta(mean = mean,
+                                                                                        stderr = stderr,
+                                                                                        # variance = variance,
+                                                                                        transform = X,
+                                                                                        alpha = alpha) |>
+                                                                                 matrix(data =_,
+                                                                                        ncol = 2) |>
+                                                                                 as.data.frame(x = _) |>
+                                                                                 setNames(object = _,
+                                                                                          nm = paste0(c("lower_bound_",
+                                                                                                        "upper_bound_"), X))
+                                                                             }) |>
                                                               dplyr::bind_cols(output,
                                                                                .x = _)
 

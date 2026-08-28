@@ -308,13 +308,16 @@ ci_mean <- function(mean,
 # outside boundaries
 #
 # Inputs: mean on real scale, sd on real scale, alpha as confidence level
-#' Calcualte (un)transformed CIs
+#' Calculate (un)transformed confidence intervals
+#' This will calculate confidence intervals centered around the mean based on standard deviation, variance, or standard error. If more than one of those statistics is provided, they are defaulted to in that order.
 #' @export
 ci_delta <- function(mean,
                      stddev = NULL,
                      variance = NULL,
+                     stderr = NULL,
                      transform = "none",
-                     alpha = 0.05) {
+                     alpha = 0.05,
+                     verbose = FALSE) {
 
   valid_transforms <- c("logit", "log", "none")
   if (!transform %in% valid_transforms) {
@@ -323,12 +326,23 @@ ci_delta <- function(mean,
                       collapse = "', '"), "'"))
   }
 
-  # Let the user provide SD or variance.
-  if (is.null(stddev)) {
-    if (is.null(variance)) {
-      stop("Provide a value for either stddev or variance")
+  if (is.null(stddev) & is.null(stderr) & is.null(variance)) {
+    stop("Provide a value for one of stddev, stderr, or variance.")
+  } else if (!is.null(stddev)) {
+    if (verbose) {
+      message("Using provided stddev value.")
     }
-    stddev <- sqrt(variance)
+    value <- stddev
+  } else if (is.null(stddev) & !is.null(variance)) {
+    if (verbose) {
+      message("Using provided variance value.")
+    }
+    value <- sqrt(variance)
+  } else if (!is.null(stderr)) {
+    if (verbose) {
+      message("Using provided stderr value.")
+    }
+    value <- stderr
   }
 
   # Transform mean (or don't, but we're still calling it "transformed")
@@ -343,11 +357,12 @@ ci_delta <- function(mean,
                                "log" = 1 / mean,
                                "none" = 1)
 
-  # Use delta method to calculate SD
-  sd_delta <- sqrt(partial_derivative^2 * stddev^2)
+
+  # Use delta method to calculate SD or SE
+  value_delta <- sqrt(partial_derivative^2 * value^2)
 
   # Calculate CIs
-  ci <- mean_transformed + qnorm(c(alpha/2, 1 - alpha/2)) * sd_delta
+  ci <- mean_transformed + qnorm(c(alpha/2, 1 - alpha/2)) * value_delta
 
   # Transform CIs back to real scale (or don't)
   output <- switch(EXPR = transform,

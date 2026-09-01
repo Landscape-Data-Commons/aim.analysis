@@ -1240,16 +1240,6 @@ analyze_weighted <- function(data,
 
                          output_list[["delta"]] <- lapply(X = current_analysis_list,
                                                           FUN = function(X){
-                                                            # variance_covariance_matrix <- diag(X[["standard_error"]])
-                                                            # matrix_variance <-  matrix(1 / nrow(X),
-                                                            #                            nrow = 1,
-                                                            #                            ncol = nrow(X)) %*%
-                                                            #   variance_covariance_matrix %*%
-                                                            #   matrix(1 / nrow(X),
-                                                            #          ncol = 1,
-                                                            #          nrow = nrow(X)) |>
-                                                            #   as.vector()
-
 
                                                             output <- data.frame(indicator = X$indicator[1],
                                                                                  category = if ("category" %in% names(X)) {
@@ -1260,12 +1250,12 @@ analyze_weighted <- function(data,
                                                                                  estimate = mean(X[["estimate"]]),
                                                                                  alpha = 1 - conf / 100,
                                                                                  n_input_estimates = nrow(X),
-                                                                                 # We're calculating standard error with the estimates themselves
-                                                                                 # and then adding the mean of the standard errors of the samples of
-                                                                                 # that were used to make the estimates to reflect the underlying
-                                                                                 # noise.
-                                                                                 standard_error = DescTools::MeanSE(x = X[["estimate"]]) + mean(X[["standard_error"]],
-                                                                                                                                                na.rm = TRUE),
+                                                                                 # We're calculating TOTAL standard error as the square root of the sum of
+                                                                                 # within-solution variance (the mean of the squared standard errors) and
+                                                                                 # between-solution variance (the variance of the estimates) to reflect
+                                                                                 # the underlying noise.
+                                                                                 standard_error = sqrt(variance(x = X[["estimate"]]) + mean(X[["standard_error"]]^2,
+                                                                                                                                                na.rm = TRUE)),
                                                                                  # Calculating the variance of the estimates themselves then adding
                                                                                  # the mean of the variances of the underlying samples to reflect the
                                                                                  # noise in those.

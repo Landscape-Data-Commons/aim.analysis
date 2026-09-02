@@ -1269,7 +1269,7 @@ analyze_weighted <- function(data,
                                                                                    "logit"),
                                                                              mean = output$estimate,
                                                                              variance = output$variance,
-                                                                             stderr = output$std_error,
+                                                                             stderr = output$standard_error,
                                                                              alpha = output$alpha,
                                                                              FUN = function(X, mean, variance, stderr, alpha){
                                                                                ci_delta(mean = mean,

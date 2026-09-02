@@ -1257,7 +1257,7 @@ analyze_weighted <- function(data,
                                                                                  # within-solution variance (the mean of the squared standard errors) and
                                                                                  # between-solution variance (the variance of the estimates) to reflect
                                                                                  # the underlying noise.
-                                                                                 standard_error = sqrt(variance(x = X[["estimate"]]) + mean(X[["standard_error"]]^2,
+                                                                                 standard_error = sqrt(var(x = X[["estimate"]]) + mean(X[["standard_error"]]^2,
                                                                                                                                                 na.rm = TRUE)),
                                                                                  # Calculating the variance of the estimates themselves then adding
                                                                                  # the mean of the variances of the underlying samples to reflect the

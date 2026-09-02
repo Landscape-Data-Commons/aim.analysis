@@ -1027,6 +1027,7 @@ analyze_weighted <- function(data,
                        }
 
                        output_list <- list()
+                       ##### Per-weight set ------------------------------------
                        # Per indicator!
                        output_list[["none"]] <- lapply(weights = weights,
                                                        current_data = current_data,
@@ -1146,6 +1147,7 @@ analyze_weighted <- function(data,
                        # }
 
                        ##### Combining -------------------------------------
+                       ###### Bootstrapping ------------------------------------
                        if ("bootstrap" %in% combine) {
                          # if (verbose) {
                          #   message("BOOTSTRAPPING")
@@ -1230,6 +1232,7 @@ analyze_weighted <- function(data,
                                          combine = "bootstrap")
                        }
 
+                       ###### Delta ------------------------------------
                        if ("delta" %in% combine) {
                          if (current_indicator_type == "categorical") {
                            current_analysis_list <- split(x = output_list[["none"]],
@@ -1299,6 +1302,7 @@ analyze_weighted <- function(data,
                                          combine = "delta")
                        }
 
+                       ###### Mean ------------------------------------
                        if ("mean" %in% combine) {
                          if (current_indicator_type == "categorical") {
                            current_analysis_list <- split(x = output_list[["none"]],
@@ -1356,6 +1360,7 @@ analyze_weighted <- function(data,
                                          combine = "mean")
                        }
 
+                       ###### Mean weights ------------------------------------
                        if ("mean_weights" %in% combine) {
                          mean_weights <- lapply(X = seq_len(length(weights)),
                                                 weights = weights,

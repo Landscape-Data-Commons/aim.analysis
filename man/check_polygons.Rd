@@ -12,6 +12,22 @@ check_polygons(
   verbose = FALSE
 )
 }
+\arguments{
+\item{polygons}{SF polygon object. The only required variable is the geometry. If \code{polygon_id_var} is not \code{NULL} then that variable must also be present. Any other variables are extraneous and ignored.}
+
+\item{points}{SF points object. The only required variable is the geometry. Any other variables are extraneous and ignored.}
+
+\item{minimum}{Numeric value. The minimum number of points which must fall within each polygon. Defaults to \code{1}.}
+
+\item{polygon_id_var}{Optional character string. The name of the variable containing polygon identities. This is only necessary if there are multiple polygons which should be treated as a single unit for the sake of evaluation. If \code{NULL} then each record in \code{polygons} will be treated as distinct. Defaults to \code{NULL}.}
+
+\item{verbose}{Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.}
+}
+\value{
+A single logical value representing if all polygons contained the minimum number of points.
+}
 \description{
-Confirm polygons contain points
+This is intended for use in weighting with random Thiessen polygons where it's important that each polygon contains a minimum number of points.
+The final output is either \code{TRUE} if every polygon contains enough points or \code{FALSE} if any polygon did not contain at least the specified minimum.
+If the provided polygons are not spatially discrete, the provided points will count towards the minimum for every polygon they fall within.
 }

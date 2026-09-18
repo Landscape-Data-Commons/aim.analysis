@@ -377,3 +377,8 @@ ci_delta <- function(mean,
                     "upper_bound"))
 }
 
+# This is literally only here for the dang bootstrapping
+special_mean <- function(data, indices) {
+  mean(data[indices],
+       trim = 0)
+}

@@ -2,16 +2,20 @@
 % Please edit documentation in R/stats.R
 \name{ci_delta}
 \alias{ci_delta}
-\title{Calcualte (un)transformed CIs}
+\title{Calculate (un)transformed confidence intervals
+This will calculate confidence intervals centered around the mean based on standard deviation, variance, or standard error. If more than one of those statistics is provided, they are defaulted to in that order.}
 \usage{
 ci_delta(
   mean,
   stddev = NULL,
   variance = NULL,
+  stderr = NULL,
   transform = "none",
-  alpha = 0.05
+  alpha = 0.05,
+  verbose = FALSE
 )
 }
 \description{
-Calcualte (un)transformed CIs
+Calculate (un)transformed confidence intervals
+This will calculate confidence intervals centered around the mean based on standard deviation, variance, or standard error. If more than one of those statistics is provided, they are defaulted to in that order.
 }

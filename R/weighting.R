@@ -1,3 +1,248 @@
+#' Generate weights using density partitions and/or Thiessen polygons
+#' @description
+#' Produce sets of weights based on polygons created via density partitioning, random Thiessen polygons, or a combination of the two.
+#' @param frame SF polygon object. The spatial extent to create weights for. This will be subdivided into the weighting polygons according to the other parameters. Any points provided in \code{points} which fall outside this area will not be considered.
+#' @param points SF points object. The points to generate weights for. Any points which do not fall within \code{frame} will be ignored.
+#' @param n_dpart Numeric. The number of density partitions to divide the frame into. The specific sampling density ranges assigned to each partition is automatically determined. A value of \code{1} is equivalent to not partitioning by density. Default to \code{1}.
+#' @param n_tpolys Numeric. The number of random Thiessen polygons to generate within the frame (if \code{n_dpart} is \code{1}) or within *each* density partition (if \code{n_dpart} is greater than \code{1}). Default to \code{1}.
+#' @param n_tpolys_min Numeric. The minimum number of Thiessen polygons to accept within the frame (or each density partition). This is checked only if \code{accept_failure} is \code{FALSE}. Defaults to the value of \code{n_tpolys}.
+#' @param min_dpart_points Numeric. The minimum number of points which must be found in each density partition. If not all density partitions meet this requirement, the function will return an error. Defaults to \code{1}.
+#' @param min_tpoly_points Numeric. The minimum number of points which must be found in each Thiessen polygon. If not all density partitions meet this requirement, the function will return an error. Defaults to \code{1}.
+#' @param n_tpoly_solutions Numeric. The number of unique, random Thiessen polygon solutions to find. Defaults to \code{1}.
+#' @param seed_number Optional numeric. If this is not \code{NULL} it will be used to set seeds for all function calls which use randomness so that Thiessen polygon outputs are reproducible. Defaults to \code{NULL}.
+#' @param tpoly_iteration_limit Numeric. The number of attempts to iterate on a Thiessen polygon seed number to find a valid solution (defined by \code{min_tpoly_points}) before abandoning the attempt. Higher values may be necessary for unevenly-distributed, low-density points. Defaults to \code{1000}.
+#' @param accept_failure Logical. This determines if a failure to find a valid set of density partitions or Thiessen polygons will produce an error or be accepted. The intended use cases are those where the distribution of points makes the validity of any given set of random Theissen polygons particularly unlikely and it is more advantageous to find fewer Thiessen polygon solutions than to increase the value of \code{tpoly_iteration_limit} due to the increased computation time. Defaults to \code{FALSE}.
+#' @param sub_frame Logical. If \code{accept_failure} is \code{TRUE}, this determines if the original \code{frame} be used when valid density partitions or Thiessen polygons were not produced. Defaults to \code{TRUE}.
+#' @param dpart_iteration_limit Numeric. The number of times to increase the *generated* density partition count and consolidate the lowest-density partitions. This only happens when the low-density partitions contain fewer than \code{min_dpart_points} points and does not affect the number of *returned* density partitions. Defaults to \code{1}.
+#' @param density_sample_spacing Numeric. The resolution of the density raster used to find partitions in meters. Higher values are coarser but computationally cheaper and faster. Defaults to \code{100}.
+#' @param buffer_distance Numeric. The distance to buffer \code{frame} by when finding density to ensure that the resulting density partitions fully cover the original frame despite being raster-derived. Defaults to \code{density_sample_spacing * 0.55} to avoid parts of \code{frame} not being covered by cells.
+#' @param max_cells_subset Numeric. If the number of cells in the density raster exceeds this value, the density partition break calculations will only use this many density values. This can dramatically increase calculation speeds. See \code{\link[BAMMtools:getJenksBreaks]{getJenksBreaks()}} documentation for additional details. Defaults to \code{500000}.
+#' @param return_polygons Logical. If \code{TRUE} then the weighting polygons will be returned along with the weights. Defaults to \code{FALSE}.
+#' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.
+#' @returns If \code{return_polygons} is \code{FALSE}, the \code{points} with their weights added. If \code{return_polygons} is \code{TRUE}, a named list containing the \code{points} with their weights added and the weighting polygons.
+#' @export
+weight_gen <- function(frame,
+                       points,
+                       n_dpart = 1,
+                       n_tpolys = 1,
+                       n_tpolys_min = n_tpolys,
+                       min_dpart_points = 1,
+                       min_tpoly_points = 1,
+                       n_tpoly_solutions = 1,
+                       seed_number = NULL,
+                       tpoly_iteration_limit = 1000,
+                       accept_failure = FALSE,
+                       sub_frame = TRUE,
+                       dpart_iteration_limit = 1,
+                       density_sample_spacing = 100,
+                       buffer_distance = density_sample_spacing * 0.55,
+                       max_cells_subset = 500000,
+                       return_polygons = FALSE,
+                       verbose = FALSE) {
+  if (!"sf" %in% class(frame)) {
+    stop("polygon must be an sf object.")
+  }
+  if (!"sf" %in% class(points)) {
+    stop("polygon must be an sf object.")
+  }
+
+  output_proj <- sf::st_crs(x = frame)
+
+  points <- sf::st_transform(points,
+                             output_proj)
+
+  # This is so that sf doesn't constantly warn us about attributes being
+  # assumed constant.
+  sf::st_agr(frame) = "constant"
+  sf::st_agr(points) = "constant"
+
+  points <- sf::st_intersection(x = points,
+                                y = dplyr::mutate(.data = frame,
+                                                  internal_reference_uid = 1) |>
+                                  dplyr::select(.data = _,
+                                                internal_reference_uid)) |>
+    dplyr::select(.data = _,
+                  -internal_reference_uid)
+
+
+  if (nrow(points) < 1) {
+    stop("No points fall within the provided frame.")
+  }
+
+  if (!accept_failure) {
+    if (nrow(points) < (n_dpart * n_tpolys_min * min_tpoly_points)) {
+      stop(paste0("The minimum required number of points for the current values of n_dpart, n_tpolys_min, and min_tpoly_points is ",
+                  n_dpart * n_tpolys_min * min_tpoly_points, " but only ", nrow(points), " points fall within the provided frame."))
+    }
+  }
+
+  if (n_dpart < 2) {
+    if (verbose) {
+      message("The current n_dpart value is less than 2, so no density partitioning will be used.")
+    }
+    use_dpart <- FALSE
+  } else {
+    use_dpart <- TRUE
+  }
+  if (n_tpolys < 2) {
+    if (verbose) {
+      message("The current n_tpolys value is less than 2, so no Thiessen polygons will be used.")
+    }
+    use_tpoly <- FALSE
+  } else {
+    use_tpoly <- TRUE
+  }
+
+  # First, find the density partitions if appropriate.
+  # If n_dpart is < 2, then we'll just put the original frame into frames with
+  # a single uid
+  if (use_dpart) {
+    frames <- dpart_gen(frame = frame,
+                        points = points,
+                        n_dpart = n_dpart,
+                        min_points = min_dpart_points,
+                        iteration_limit = dpart_iteration_limit,
+                        # This is the sampling distance in meters for calculating density.
+                        # The smaller this number, the finer-grained the density map but that can cause
+                        # serious memory allocation issues when you have larger areas.
+                        density_sample_spacing = density_sample_spacing,
+                        buffer_distance = buffer_distance,
+                        max_cells_subset = max_cells_subset,
+                        output_list = FALSE,
+                        accept_failure = accept_failure,
+                        sub_frame = sub_frame,
+                        verbose = verbose)
+
+    # If we returned just the original frame
+    if (sub_frame) {
+      if (nrow(frames) == 1) {
+        frames <- dplyr::mutate(frames,
+                                uid = "none")
+      }
+    }
+
+  } else {
+    frames <- sf::st_union(x = frame) |>
+      sf::st_as_sf(x = _) |>
+      dplyr::mutate(.data = _,
+                    uid = "none")
+  }
+
+  # To check if we actually produced any Thiessen polygons after the next step
+  pre_tpoly_uid_count <- length(unique(frames[["uid"]]))
+  # Flagging this so we can report that no density partitions were actually
+  # produced when prepping the output
+  if (pre_tpoly_uid_count < 2) {
+    use_dpart <- FALSE
+  }
+
+  if (use_tpoly) {
+    frames <- tpoly_gen(frame = frames,
+                        n_tpolys = n_tpolys,
+                        n_tpolys_min = n_tpolys_min,
+                        points = points,
+                        polygon_id_var = "uid",
+                        min_points = min_tpoly_points,
+                        n_tpoly_solutions = n_tpoly_solutions,
+                        accept_failure = accept_failure,
+                        sub_frame = sub_frame,
+                        envelope = NULL,
+                        seed_number = seed_number,
+                        seed_increment = 100000,
+                        iteration_limit = tpoly_iteration_limit,
+                        keep_crs = TRUE,
+                        verbose = verbose)
+
+
+  } else {
+    frames <- frames
+  }
+
+  # And now for the bit that actually calculates weights.
+  if (!"list" %in% class(frames)) {
+    frames <- list(frames)
+  }
+
+  # To confirm that tpolys were actually produced.
+  frames <- lapply(X = frames,
+                   pre_tpoly_uid_count = pre_tpoly_uid_count,
+                   FUN = function(X, pre_tpoly_uid_count){
+                     dplyr::mutate(.data = X,
+                                   used_tpolys = length(unique(X[["uid"]])) != pre_tpoly_uid_count)
+
+                   })
+
+  # Which polygons in the list used Thiessen polygons?
+  tpoly_indices <- sapply(X = frames,
+                          var = "used_tpolys",
+                          FUN = function(X, var){
+                            unique(X[[var]])
+                          })
+
+  # If none did, keep only the first one because all of them will be identical
+  if (!any(tpoly_indices)) {
+    frames <- frames[1]
+  } else {
+    frames[tpoly_indices]
+  }
+
+
+  output <- lapply(X = frames,
+                   points = points,
+                   use_dpart = use_dpart,
+                   FUN = function(X, points, use_dpart){
+                     X$area <- as.numeric(sf::st_area(X))
+
+                     # This is so that sf doesn't constantly warn us about attributes being
+                     # assumed constant.
+                     sf::st_agr(X) = "constant"
+                     sf::st_agr(points) = "constant"
+
+                     points_attributed <- sf::st_intersection(x = dplyr::select(.data = points,
+                                                                                -tidyselect::all_of(x = c("uid"))),
+                                                              y = dplyr::select(X,
+                                                                                uid = uid) |>
+                                                                dplyr::mutate(uid = as.character(uid)))
+                     current_weight_summary <- sf::st_drop_geometry(points_attributed) |>
+                       dplyr::summarize(.data = _,
+                                        .by = uid,
+                                        n_points = dplyr::n()) |>
+                       dplyr::left_join(x = _,
+                                        y = sf::st_drop_geometry(X) |>
+                                          dplyr::select(.data = _,
+                                                        uid,
+                                                        used_tpolys,
+                                                        area),
+                                        by = "uid",
+                                        relationship = "many-to-one") |>
+                       dplyr::mutate(.data = _,
+                                     weight = area / n_points)
+
+                     dplyr::left_join(x = points_attributed,
+                                      y = dplyr::select(current_weight_summary,
+                                                        uid,
+                                                        used_tpolys,
+                                                        weight),
+                                      by = "uid",
+                                      relationship = "many-to-one") |>
+                       dplyr::mutate(.data = _,
+                                     used_dparts = use_dpart)
+                   })
+
+
+
+  if (return_polygons) {
+    list(points = output,
+         polygons = if (length(frames) == 1) {
+           frames[[1]]
+         } else {
+           frames
+         })
+  } else {
+    output
+  }
+}
+
 # #' Calculate sample weights for points using design polygons
 # #' @description Calculate the weight for points in a sample design based on the sample frame or strata used to draw them and the point fate. The outputs are a data frame of the points and their weights, a data frame summary of the fates of the points (optionally by year), and a data frame summary of the strata (optionally by year) if strata were used. No spatial checks are done, so make sure that \code{pts} and \code{frame.spdf} are from the same design, limited to the extent of the original sample frame, and have complete overlap.
 # #' @param pts Data frame or spatial points data frame. This should be the points information. At minimum, it must contain a field matching the string \code{pts.fatefield} containing string values matching those in \code{target.values}, \code{unknown.values}, etc. If providing \code{pts.groupfield} it must also have a field matching that containing values matching values found in \code{frame.spdf$frame.groupfield}. If \code{date.field} or \code{year.source.field} is provided, then fields matching those must exist.

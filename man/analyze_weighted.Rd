@@ -2,7 +2,7 @@
 % Please edit documentation in R/analyzing.R
 \name{analyze_weighted}
 \alias{analyze_weighted}
-\title{Weighted analyses}
+\title{Produce weighted estimates for continuous or categorical ecological indicators}
 \usage{
 analyze_weighted(
   data,
@@ -13,12 +13,36 @@ analyze_weighted(
   value_var = "value",
   possible_categorical_values = NULL,
   conf = 80,
-  combine = c("none", "delta", "bootstrap", "mean", "mean_weights"),
+  combine = c("none", "delta"),
   bootstrap_replicates = 10000,
   bootstrap_type = "bca",
   verbose = FALSE
 )
 }
+\arguments{
+\item{data}{Data frame. A long/tall data frame with one record for each indicator for each weighted point. This must contain one or more variables which together uniquely identify each point, specified with \code{id_vars}. It must always include a variable for the name of the indicator(s) and a variable for the indicator values, specified with \code{indicator_var} and \code{value_var}.}
+
+\item{weights}{Character string, data frame, or list of data frames. If this is a character string, it must specify the variable name in \code{data} that contains the weights. If this is a data frame, it must contain a variable called "weight" that contains the weights and all variables in \code{id_vars}. If this is a list, it must contain data frames meeting the previous requirements.}
+
+\item{id_vars}{Vector of character strings. One or more variable names corresponding to variables in \code{data} (and possible \code{weights}) which uniquely identify points.}
+
+\item{indicator_type}{Character string, character vector, or list. If this is a character string, it must be either \code{"categorical"} or \code{"continuous"} and will determine how *all* indicators are handled. If this is a character vector, it must contain only \code{"categorical"} and \code{"continuous"} and be named with the values found in \code{data)} in \code{indicator_var} such that each each indicator type is specifiec, e.g. \code{c("habitat_rating" = "categorical", "TotalFoliarCover" = "continuous", "BareSoilCover" = "continuous")}. If this is a list, it must contain a named vector for each represented indicator type that contain the corresponding values from \code{indicator_var} in \code{data}, e.g. \code{list("categorical" = c("habitat_rating"), "continuous" = c("TotalFoliarcover", "BareSoilCover"))}}
+
+\item{indicator_var}{Character string. The name of the variable in \code{data} that contains the indicator names. Defaults to \code{"indicator"}.}
+
+\item{value_var}{Character string. The name of the variable in \code{data} that contains the indicator values. Defaults to \code{"value"}.}
+
+\item{possible_categorical_values}{Optional character vector or list of character strings. If \code{indicator_type} includes at least one categorical indicator, this can be used to specify the possible values for the categorical indicators. This is critical to accurate estimates for cases where there are possible categorical values that are not represented in \code{data}, e.g. if possible habitat ratings are "Unsuitable", "Marginal", and "Suitable", but no records contain "Suitable". If this is a character vector, the values will be applied to every categorical indicator. If this is a list of character vectors, each vector must contain the possible values for an indicator and be named with the indicator name from \code{indicator_var} in \code{data}, e.g. \code{list(habitat_rating = c("Unsuitable", "Marginal", "Suitable"), invasive_species_count = c("Not Meeting", "Meeting"))}. If this is \code{NULL}, the values in \code{data} for each categorical indicator will be treated as the only possible values, which may be incorrect. Defaults to \code{NULL}.}
+
+\item{conf}{Numeric. The desired confidence of the estimate(s) in percent, equivalent to \eqn{(1 - \alpha) * 100}. Defaults to \code{80}.}
+
+\item{combine}{Character vector. If \code{weights} is a list, this specifies how should the estimates be combined and can contain one or more of \code{"none"} for no combining and \code{"delta"} to use the delta method. Defaults to \code{c("none", "delta")}.}
+
+\item{verbose}{Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.}
+}
+\value{
+A data frame with one record for each estimate and variable for various associated statistics.
+}
 \description{
-Weighted analyses
+This function is a wrapper for \code{\link[aim.analysis:analyze_cat]{analyze_cat()}} and \code{\link[aim.analysis:analyze_cat]{analyze_con()}} that can produce weighted estimates for multiple indicators at once. If multiple sets of weights are provided (e.g., equivalent weights coming from different random Thiessen polygon sets) the individual estimates for an indicator can be combined in a model-based approach to produce a single estimate value.
 }

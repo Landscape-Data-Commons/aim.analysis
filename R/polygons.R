@@ -1,4 +1,14 @@
 #' Confirm polygons contain points
+#' @description
+#' This is intended for use in weighting with random Thiessen polygons where it's important that each polygon contains a minimum number of points.
+#' The final output is either \code{TRUE} if every polygon contains enough points or \code{FALSE} if any polygon did not contain at least the specified minimum.
+#' If the provided polygons are not spatially discrete, the provided points will count towards the minimum for every polygon they fall within.
+#' @param polygons SF polygon object. The only required variable is the geometry. If \code{polygon_id_var} is not \code{NULL} then that variable must also be present. Any other variables are extraneous and ignored.
+#' @param points SF points object. The only required variable is the geometry. Any other variables are extraneous and ignored.
+#' @param minimum Numeric value. The minimum number of points which must fall within each polygon. Defaults to \code{1}.
+#' @param polygon_id_var Optional character string. The name of the variable containing polygon identities. This is only necessary if there are multiple polygons which should be treated as a single unit for the sake of evaluation. If \code{NULL} then each record in \code{polygons} will be treated as distinct. Defaults to \code{NULL}.
+#' @param verbose Logical. If \code{TRUE} then the function will generate additional messages as it executes. Defaults to \code{FALSE}.
+#' @returns A single logical value representing if all polygons contained the minimum number of points.
 #' @export
 check_polygons <- function(polygons,
                            points,
@@ -6,9 +16,9 @@ check_polygons <- function(polygons,
                            polygon_id_var = NULL,
                            verbose = FALSE) {
   if (is.null(polygon_id_var)) {
-    # if (verbose) {
-    #   message("Assuming each record in polygons is a separate polygont to check. If this is not true, please provide the variable containing the unique identifiers for the polygons.")
-    # }
+    if (verbose) {
+      message("Assuming each record in polygons is a separate polygon to check. If this is not true, please provide the variable containing the unique identifiers for the polygons.")
+    }
     polygons[["internal_use_uid"]] <- seq_len(length.out = nrow(polygons))
   } else {
     polygons[["internal_use_uid"]] <- polygons[[polygon_id_var]]
@@ -32,6 +42,93 @@ check_polygons <- function(polygons,
   all(polygons[["internal_use_uid"]] %in% represented_polygons)
 }
 
+
+# #' Generate points within a given frame by one of three methods
+# #' @param frame sf polygon object. The sample frame within which points will be drawn. This should probably be a single simple polygon.
+# #' @param sample_type Character string. The method to draw points by. Valid values are \code{"simple"} (simple random), \code{"balanced"} (spatially-balanced random using GRTS), and \code{"cluster} (two-stage clustered). Defaults to \code{"simple"}.
+# #' @param n_points Numeric value. The number of points to draw in the sample frame.
+# #' @param seed_number Optional numeric value. The seed used to generate random points. A random seed will be used if this is \code{NULL}. Defaults to \code{NULL}.
+# #' @param projection Optional character string or CRS object. The coordinate reference system for the points. May be a PROJ4 string or a CRS object. Defaults to the projection of \code{frame}.
+# #' @returns An sf points object with the variables \code{"sample_id"} containing the unique identifiers for the points and \code{sample_seed} containing the random seed number used.
+points_gen <- function(frame,
+                       sample_type = "simple",
+                       n_points,
+                       seed_number = NULL,
+                       projection = NULL) {
+  if (!("sf" %in% class(frame))) {
+    stop("`frame` must be an sf object of geometry type 'POLYGON' or 'MULTIPOLYGON'")
+  } else if (!any(c("POLYGON", "MULTIPOLYGON") %in% sf::st_geometry_type(frame))) {
+    stop("`frame` must be an sf object of geometry type 'POLYGON' or 'MULTIPOLYGON'")
+  }
+
+  if (!(class(n_points) %in% c("numeric", "integer")) | length(n_points) > 1) {
+    stop("`n_points` must be a single numeric value")
+  }
+
+  if (!(sample_type %in% c("simple", "balanced", "cluster"))) {
+    stop("`sample_type` must be 'simple', 'balanced', or 'cluster'")
+  }
+
+  if (!is.null(seed_number)) {
+    if (!(class(seed_number) %in% c("numeric", "integer")) | length(seed_number) > 1) {
+      stop("`seed_number` must be a single numeric value")
+    }
+  } else {
+    seed_number <- sample(x = 1:9999999,
+                          size = 1)
+  }
+
+  if (is.null(projection)) {
+    projection <- sf::st_crs(frame)
+  } else if (class(projection) == "character") {
+    projection <- sp::CRS(projection)
+  } else if (!("CRS" %in% class(projection))) {
+    stop("`projection` must either be a valid PROJ4 string or CRS object")
+  }
+  # Reproject
+  frame <- sf::st_transform(x = frame,
+                            crs = projection)
+
+  # Do the correct kind of sample draw
+  points <- switch(sample_type,
+                   "simple" = {
+                     set.seed(seed_number)
+                     sp::spsample(x = methods::as(frame, "Spatial"),
+                                  n = n_points,
+                                  type = "random",
+                                  iter = 10)
+                   },
+                   "balanced" = {
+                     set.seed(seed_number)
+                     spsurvey::grts(sframe = frame,
+                                    n_base = n_points,
+                                    n_over = 0,
+                                    DesignID = "design",
+                                    seltype = "equal",
+                                    sep = "-")
+                   },
+                   "cluster" = {
+                     set.seed(seed_number)
+
+                   })
+
+  # Convert to sf
+  if (!("sf" %in% class(points))) {
+    points <- methods::as(points, "sf")
+  }
+
+  # Add our ID in the format *I* want
+  points$sample_id <- paste0("sample_",
+                             seed_number,
+                             "-",
+                             seq_len(nrow(points)))
+
+  points$sample_seed <- seed_number
+
+  output <- points[, c("sample_id", "sample_seed")]
+
+  return(output)
+}
 
 #' Generate density partitions
 #' @export

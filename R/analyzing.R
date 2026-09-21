@@ -899,6 +899,14 @@ analyze_weighted <- function(data,
   if (length(weights) > 1) {
     all_weights_identical <- purrr::reduce(.x = weights,
                                            .f = identical)
+  } else if (length(weights) == 1 &
+             !identical(x = c("none"),
+                        y = combine)) {
+    warning(paste0("Because there is only one set of weights, no combining of estimates is possible. The following values in the combine argument will be ignored: ",
+                   paste(setdiff(x = combine,
+                                 y = "none"),
+                         collapse = ", ")))
+    combine <- "none"
   }
 
   data <- tidyr::unite(data = data,

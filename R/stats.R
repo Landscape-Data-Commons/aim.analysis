@@ -30,8 +30,8 @@ weighted_se <- function(values,
                         weights,
                         value_type = "continuous"){
   if (value_type == "continuous") {
-    weighted_continuous_se(values = data[["value"]],
-                           weights = data[["weight"]])
+    weighted_continuous_se(values = values,
+                           weights = weights)
   } else if (value_type == "categorical") {
     weighted_categorical_se(values = values,
                             weights = weights)

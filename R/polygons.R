@@ -696,14 +696,18 @@ tpoly_gen <- function(frame,
                 frame$area_m2 <- sf::st_area(x = frame)  |>
                   as.vector() |>
                   as.numeric()
-                tpoly_list[[paste0(current_frame_index)]][[paste0(current_seed_index)]] <- dplyr::select(.data = frame,
-                                                                                                         uid,
-                                                                                                         area_m2)
+                thiessen_polygons <- dplyr::select(.data = frame,
+                                                   uid,
+                                                   area_m2)
+                # tpoly_list[[paste0(current_frame_index)]][[paste0(current_seed_index)]] <- dplyr::select(.data = frame,
+                #                                                                                          uid,
+                #                                                                                          area_m2)
               } else {
                 if (verbose) {
                   message("Unable to find a valid Thiessen polygon solution for the current seed. Moving on and returning NULL for this 'solution'.")
                 }
-                tpoly_list[[paste0(current_frame_index)]][[paste0(current_seed_index)]] <- NULL
+                thiessen_polygons <- NULL
+                # tpoly_list[[paste0(current_frame_index)]][[paste0(current_seed_index)]] <- NULL
               }
             } else {
               stop("Unable to find a valid Thiessen polygon solution for the current seed for this frame. To skip seeds that fail, set accept_failure to TRUE and sub_frame to either TRUE or FALSE.")
@@ -727,10 +731,15 @@ tpoly_gen <- function(frame,
       # This also puts them in the intended output projection to match the input
       # frame.
       end_time <- Sys.time()
-      tpoly_list[[paste0(current_frame_index)]][[paste0(current_seed_index)]] <- sf::st_transform(x = thiessen_polygons,
-                                                                                                  crs = output_crs) |>
-        dplyr::mutate(.data = _,
-                      elapsed_time = end_time - start_time)
+
+      if (!is.null(thiessen_polygons)) {
+        thiessen_polygons <- sf::st_transform(x = thiessen_polygons,
+                                                  crs = output_crs) |>
+          dplyr::mutate(.data = _,
+                        elapsed_time = end_time - start_time)
+      }
+
+      tpoly_list[[paste0(current_frame_index)]][[paste0(current_seed_index)]] <- thiessen_polygons
     }
 
     if (skipped_seed_count > 0) {
